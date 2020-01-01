@@ -1408,6 +1408,19 @@ func (b *Bot) addToPanel(params []string) error {
 	if len(params) == 0 {
 		return nil
 	}
+	// Search whether a command is valid
+	var found = false
+	for _, cmd := range panelCmdIconArray {
+		if cmd.cmd == params[0] {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("Unknown command: %s", params[0])
+	}
+
 	if !b.conf.AddPanelButton(params[0]) {
 		return fmt.Errorf("Button already exists in user's prefs: %s", params[0])
 	}
