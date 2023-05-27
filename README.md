@@ -1,4 +1,4 @@
-### Spin it up 🏎
+### Spin it up 🌱
 ```bash
 make install && make run
 ```
@@ -8,7 +8,8 @@ make install && make run
 - Simplicity: The code accomplishes its goal in the simplest way possible.
 - Concision: The code has a high signal-to-noise ratio.
 - Maintainability: The code is written such that it can be easily maintained.
-- Consistency: The code is consistent across the database
+- Consistency: The code is consistent across the database  
+Refer to [developer's handbook](https://github.com/zakirullin/cognitive-load) for more comprehensive guiding rules.
 
 ### Decisions
 - Write tests!
