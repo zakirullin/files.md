@@ -14,7 +14,6 @@ or
 go get ./.. && go run ./cmd
 ```
 
-
 ### Overarching design principles
 - `Clarity`: The code’s purpose and rationale is clear to the reader.
 - `Simplicity`: The code accomplishes its goal in the simplest way possible.
@@ -40,9 +39,7 @@ Refer to [developer's handbook](https://github.com/zakirullin/cognitive-load) fo
 - `content` - note's content (body/text)
 - `dir` - a dir that is meant to store notes under some category, like "happiness"
 - `userID` - chatID. For the most part we're only using chatID as userID (PM with the bot)
-- `mtime` - modification time (content only, renaming doesn't affect)
 - `ctime` - file's ownership, location, file type and permission settings changed time (parent folder rename won't affect). We need this to track file's location changes, like to understand when it was moved to _trash_
-- `atime` - access time
 
 ### ADRs (Architecture Decision Records)
 - everywhere where we have user input - we should use fs.hash, otherwise we get long filenames, and tg returns `INVALID_DATA` error (callbackData max 64 bytes)
