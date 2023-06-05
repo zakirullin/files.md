@@ -28,9 +28,13 @@ func main() {
 		panic(fmt.Sprintf("Error loading .env file: %s\n", err))
 	}
 
-	err = i18n.Load("assets/i18n/ru.json")
+	err = i18n.LoadLangFile("assets/i18n/ru.json")
 	if err != nil {
 		panic(fmt.Sprintf("Error loading i18n: %s\n", err))
+	}
+	err = i18n.LoadEmojiFile("assets/emoji.json")
+	if err != nil {
+		panic(fmt.Sprintf("Error loading emoji: %s\n", err))
 	}
 
 	api, err := tgbotapi.NewBotAPI(os.Getenv("BOT_API_TOKEN"))
