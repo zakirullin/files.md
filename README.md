@@ -1,4 +1,4 @@
-![Gopher](https://github.com/zakirullin/stuff-bot/raw/main/assets/_img_/gopherv2.png)
+![Gopher](https://github.com/zakirullin/stuff-bot/raw/main/assets/_img_/gopherv3.png)
 
 ### Spin it up 🌱
 ```bash
