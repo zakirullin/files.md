@@ -121,7 +121,7 @@ func (b *Bot) handlers() map[string]func([]string) error {
 		"mv_to_chk":     b.moveToChecklist,
 		"mv_to_new_chk": b.moveToNewChecklist,
 		"sc":            b.schedule,
-		"c":             b.complete,
+		"complete":      b.complete,
 		"p":             b.postpone,
 	}
 }
@@ -364,7 +364,7 @@ func (b *Bot) showList(params []string) error {
 			cmd := tg.NewCmd("task", []string{dir, fs.Hash(file.Name)})
 			btn = tg.NewBtn(str.Emoji("👀", file.Title), cmd)
 		} else {
-			cmd := tg.NewCmd("c", []string{dir, fs.Hash(file.Name)})
+			cmd := tg.NewCmd("complete", []string{dir, fs.Hash(file.Name)})
 			btn = tg.NewBtn(file.Title, cmd)
 		}
 
@@ -400,7 +400,7 @@ func (b *Bot) showNotes(params []string) error {
 
 	var kb tg.Keyboard
 	for _, dir := range dirs {
-		cmd := tg.NewCmd("c", []string{dir.Name, fs.Hash(dir.Name)})
+		cmd := tg.NewCmd("complete", []string{dir.Name, fs.Hash(dir.Name)})
 		btn := tg.NewBtn(dir.Title, cmd)
 
 		kb.AddRow(btn)
@@ -661,7 +661,7 @@ func (b *Bot) showChecklist(params []string) error {
 
 	kb := tg.NewKeyboard(nil)
 	for _, item := range items {
-		kb.AddRow(tg.NewBtn(item.Title, tg.NewCmd("c", []string{})))
+		kb.AddRow(tg.NewBtn(item.Title, tg.NewCmd("complete", []string{})))
 	}
 	kb.AddRow(tg.NewRow(tg.NewBtn("back", tg.NewCmd("docs", nil))))
 
