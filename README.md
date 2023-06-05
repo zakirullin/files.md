@@ -20,7 +20,7 @@ Refer to [developer's handbook](https://github.com/zakirullin/cognitive-load) fo
 - With portability in mind, everything is stored in **plain text files**
 - Write tests!
 - Don't use get* prefix for methods
-- Panics are part of business logic, don't use them
+- Dont use panics, errors are part of business logic
 - If you're ignoring an error - leave a WHY comment
 - Wrap errors all the time, we should add method's context
 - Prefer fakes/real implementations over mocks and stubs
