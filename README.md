@@ -1,6 +1,6 @@
-![Gopher](https://github.com/zakirullin/stuff-bot/raw/main/cmd/testdata/_img_/gopherv3.svg)
+<img src="https://github.com/zakirullin/stuff-bot/raw/main/cmd/testdata/_img_/gopher_only.svg" alt="Stuff Bot logo" title="Stuff Bot" align="right" height="60" />
 
-A telegram bot for handling all your personal stuff.
+# A telegram bot for your stuff
 
 ## Spin it up
 1) Register new telegram bot via [@BotFather](https://t.me/BotFather)

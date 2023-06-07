@@ -1,3 +1,4 @@
 *
 !.gitignore
+!gopher_only.svg
 !gopherv3.svg
