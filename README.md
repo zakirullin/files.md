@@ -1,5 +1,7 @@
 ![Gopher](https://github.com/zakirullin/stuff-bot/raw/main/cmd/testdata/_img_/gopherv3.svg)
 
+---
+
 ## Spin it up
 1) Register new telegram bot via [@BotFather](https://t.me/BotFather)
 2) Copy your bot token to `.env` file (see `.env.example`)
