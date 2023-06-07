@@ -15,6 +15,18 @@ $ go run ./cmd
 
 Locally bot's artficats can be seen in `cmd/testdata`
 
+## How we work
+- No long-lived branches except `main`
+- Feature branches are [short-lived](https://trunkbaseddevelopment.com/short-lived-feature-branches/)
+- **We commit often, so pull `main` every once in a while**
+- Once your feature is ready, open a PR to `main`
+
+```bash
+$ git checkout main
+$ git pull
+$ git checkout -b feature/feature_name
+```
+
 ## Glossary
 - `filename` - a filename with extension, like "note.md" (USE THIS AS ID)
 - `title` - an extension-stripped and capitalized filename, like "Note"
