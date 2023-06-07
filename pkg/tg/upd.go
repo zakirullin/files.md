@@ -79,11 +79,11 @@ func (u *Upd) CallbackQueryID() (string, error) {
 }
 
 func (u *Upd) InlineQueryID() (string, error) {
-	if u.raw.CallbackQuery == nil {
+	if u.raw.InlineQuery == nil {
 		return "", fmt.Errorf("b.InlineQueryID: %w", errNoSuchKey)
 	}
 
-	return u.raw.CallbackQuery.ID, nil
+	return u.raw.InlineQuery.ID, nil
 }
 
 func (u *Upd) InlineQuery() (string, error) {

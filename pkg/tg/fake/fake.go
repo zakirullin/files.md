@@ -1,6 +1,8 @@
 package fake
 
 import (
+	"errors"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
 	"zakirullin/dumpbot/pkg/tg"
@@ -45,7 +47,7 @@ func (m *Upd) CallbackQueryID() (string, error) {
 }
 
 func (m *Upd) InlineQueryID() (string, error) {
-	return "", nil
+	return "", errors.New("no key")
 }
 
 func (m *Upd) InlineQuery() (string, error) {

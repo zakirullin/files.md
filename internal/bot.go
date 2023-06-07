@@ -63,7 +63,7 @@ func NewBot(userID int64, tg TGInterface, fs *fs.FS, db *db.DB) *Bot {
 
 // Reply to incoming text message or command (inline queries aren't supported yet)
 func (b *Bot) Reply(u UpdInterface) error {
-	if _, err := u.InlineQueryID(); err != nil {
+	if _, err := u.InlineQueryID(); err == nil {
 		return b.replyToInlineQuery(u)
 	}
 
