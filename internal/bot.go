@@ -1122,69 +1122,70 @@ func (b *Bot) todayLabel() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("b.todayLabel: can't get today label: %w", err)
 	}
+	tasks = fs.ExcludePomodoro(tasks)
 	todo := len(tasks)
 
-	dir, err := b.pomodoroTaskDir()
+	hasPomodoro, err := b.fs.Exists("today", fs.FilePomodoro)
 	if err != nil {
 		return "", fmt.Errorf("b.todayLabel: can't get pomodoro task's dir: %w", err)
 	}
-	pomodoro := dir == fs.DirToday
 
 	// TODO add short labels
-	label := "🌴 You don't have any tasks!"
-	if todo > 1 || (!pomodoro && todo > 0) { // Pomodoro task is not counted
+	icons := []string{"🌴"}
+	label := "You don't have any tasks!"
+	if todo > 1 {
 		label = b.tr("<b>%d</b> left", todo)
+		icons = nil
 	}
 
-	if pomodoro {
-		label = "🍅" + label
+	if hasPomodoro {
+		icons = append([]string{"🍅"}, icons...)
 	}
 
-	return label, nil
-}
-
-// Returns the name of directory, where pomodoro task is currently stored: either today or trash
-// "" is returned if pomodoro task is not found, which means that pomodoro is not running
-func (b *Bot) pomodoroTaskDir() (string, error) {
-	filename := fs.Filename(fs.FilePomodoro)
-	for _, dir := range []string{fs.DirToday, fs.DirTrash} {
-		exists, err := b.fs.Exists(dir, filename)
-		if err != nil {
-			return "", fmt.Errorf("b.pomodoro: failed find pomodoro task %w", err)
-		}
-		if exists {
-			return dir, nil
-		}
+	if len(icons) > 0 {
+		icons = append(icons, " ")
 	}
-	return "", nil
+
+	return strings.Join(icons, "") + label, nil
 }
 
 func (b *Bot) togglePomodoro(_ []string) error {
 	// Check if Pomodoro is already running
-	filename := fs.Filename(fs.FilePomodoro)
-	pomodoroTaskDir, err := b.pomodoroTaskDir()
+	hasPomodoroInToday, err := b.fs.Exists(fs.DirToday, fs.FilePomodoro)
 	if err != nil {
-		return fmt.Errorf("b.pomodoro: failed to check if pomodoro is already running %w", err)
+		return fmt.Errorf("b.togglePomodoro: failed to check if pomodoro is already running %w", err)
 	}
-	if pomodoroTaskDir != "" {
-		err = b.fs.Del(pomodoroTaskDir, filename)
+	hasPomodoroInLater, err := b.fs.Exists(fs.DirLater, fs.FilePomodoro)
+	if err != nil {
+		return fmt.Errorf("b.togglePomodoro: failed to check if pomodoro is already running %w", err)
+	}
+
+	if hasPomodoroInToday || hasPomodoroInLater {
+		err = b.fs.Del(fs.FilePomodoro, fs.FilePomodoro)
 		if err != nil {
-			return fmt.Errorf("b.pomodoro: failed to delete pomodoro file from %v folder %w", pomodoroTaskDir, err)
+			return fmt.Errorf("b.togglePomodoro: failed to delete pomodoro file: %w", err)
 		}
 		err := b.send(fmt.Sprintf("Pomodoro is stopped: no new \"%v\" tasks will appear automatially", fs.FilePomodoro))
 		if err != nil {
-			return fmt.Errorf("b.pomodoro: failed to show pomodoro hint message %w", err)
+			return fmt.Errorf("b.togglePomodoro: failed to show pomodoro hint message %w", err)
 		}
 		return b.showToday(nil)
 	}
 
 	// Create Pomodoro task
-	b.createOrAdd(fs.DirToday, filename, "")
+	err = b.fs.Touch(fs.DirToday, fs.FilePomodoro)
+	if err != nil {
+		if err != nil {
+			return fmt.Errorf("b.togglePomodoro: failed to show pomodoro hint message %w", err)
+		}
+	}
+
 	err = b.send(fmt.Sprintf("Pomodoro is run: you can see \"%v\" task in your %v folder. Once are ready to focus on something and start working, just complete this task."+
 		" It will get back in %v to let you know that you worked enough and deserved a break. To stop it just use /%v comand again",
 		fs.FilePomodoro, fs.DirToday, pomodoroDuration, cmdPomodoro))
 	if err != nil {
-		return fmt.Errorf("b.pomodoro: failed to show pomodoro hint message %w", err)
+		return fmt.Errorf("b.togglePomodoro: failed to show pomodoro hint message %w", err)
 	}
+
 	return b.showToday(nil)
 }
