@@ -25,15 +25,16 @@ var (
 )
 
 const (
-	DirTrash   = "_trash_"
-	DirToday   = "today"
-	DirLater   = "later"
-	DirInbox   = "inbox"
-	DirImg     = "img"
-	DirJournal = "journal"
-	DirRead    = "-read-"
-	DirWatch   = "-watch-"
-	DirShop    = "-shop-"
+	DirTrash     = "_trash_"
+	DirToday     = "today"
+	DirLater     = "later"
+	DirInbox     = "inbox"
+	DirImg       = "img"
+	DirJournal   = "journal"
+	DirRead      = "-read-"
+	DirWatch     = "-watch-"
+	DirShop      = "-shop-"
+	FilePomodoro = "Take a break.md"
 )
 
 // FS allows us to manipulate user files. We can use different

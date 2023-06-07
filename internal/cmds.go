@@ -1,11 +1,6 @@
 package internal
 
-import "time"
-
 const (
-	pomodoroDuration      = 10 * time.Second
-	pomodoroTaskName      = "🍅Take a break"
-	maxTitleLength        = 100
 	cmdShowStart          = "start"
 	cmdShowLater          = "later"
 	cmdShowToday          = "today"

@@ -22,6 +22,11 @@ var now = func() time.Time {
 	return time.Now()
 }
 
+const (
+	maxTitleLength   = 100
+	pomodoroDuration = 10 * time.Second
+)
+
 // TGInterface provides a simple interface to telegram API
 type TGInterface interface {
 	Send(userID int64, text string, kb *tg.Keyboard, markup string) (int, error)
@@ -121,52 +126,6 @@ func (b *Bot) handlers() map[string]func([]string) error {
 		cmdPostpone:           b.postpone,
 		cmdPomodoro:           b.togglePomodoro,
 	}
-}
-
-// Returns the name of directory, where pomodoro task is currently stored: either today or trash
-// "" is returned if pomodoro task is not found, which means that pomodoro is not running
-func (b *Bot) pomodoroTaskDir() (string, error) {
-	filename := fs.Filename(pomodoroTaskName)
-	for _, dir := range []string{fs.DirToday, fs.DirTrash} {
-		exists, err := b.fs.Exists(dir, filename)
-		if err != nil {
-			return "", fmt.Errorf("b.pomodoro: failed find pomodoro task %w", err)
-		}
-		if exists {
-			return dir, nil
-		}
-	}
-	return "", nil
-}
-
-func (b *Bot) togglePomodoro(_ []string) error {
-	// Check if Pomodoro is already running
-	filename := fs.Filename(pomodoroTaskName)
-	pomodoroTaskDir, err := b.pomodoroTaskDir()
-	if err != nil {
-		return fmt.Errorf("b.pomodoro: failed to check if pomodoro is already running %w", err)
-	}
-	if pomodoroTaskDir != "" {
-		err = b.fs.Del(pomodoroTaskDir, filename)
-		if err != nil {
-			return fmt.Errorf("b.pomodoro: failed to delete pomodoro file from %v folder %w", pomodoroTaskDir, err)
-		}
-		err := b.send(fmt.Sprintf("Pomodoro is stopped: no new \"%v\" tasks will appear automatially", pomodoroTaskName))
-		if err != nil {
-			return fmt.Errorf("b.pomodoro: failed to show pomodoro hint message %w", err)
-		}
-		return b.showToday(nil)
-	}
-
-	// Create Pomodoro task
-	b.createOrAdd(fs.DirToday, filename, "")
-	err = b.send(fmt.Sprintf("Pomodoro is run: you can see \"%v\" task in your %v folder. Once are ready to focus on something and start working, just complete this task."+
-		" It will get back in %v to let you know that you worked enough and deserved a break. To stop it just use /%v comand again",
-		pomodoroTaskName, fs.DirToday, pomodoroDuration, cmdPomodoro))
-	if err != nil {
-		return fmt.Errorf("b.pomodoro: failed to show pomodoro hint message %w", err)
-	}
-	return b.showToday(nil)
 }
 
 func (b *Bot) cmd(u UpdInterface) (*tg.Cmd, error) {
@@ -913,7 +872,7 @@ func (b *Bot) complete(params []string) error {
 		return fmt.Errorf("b.complete: can't complete %s: %w", filename, err)
 	}
 
-	if dir == fs.DirToday && fs.Title(filename) == pomodoroTaskName {
+	if dir == fs.DirToday && filename == fs.FilePomodoro {
 		err = b.db.AddToSchedule(b.userID, filename, time.Now().Unix()+int64(pomodoroDuration.Seconds()), "")
 		if err != nil {
 			return fmt.Errorf("b.complete: can't add pomodoro task to schedule: %w", err)
@@ -1182,4 +1141,50 @@ func (b *Bot) todayLabel() (string, error) {
 	}
 
 	return label, nil
+}
+
+// Returns the name of directory, where pomodoro task is currently stored: either today or trash
+// "" is returned if pomodoro task is not found, which means that pomodoro is not running
+func (b *Bot) pomodoroTaskDir() (string, error) {
+	filename := fs.Filename(fs.FilePomodoro)
+	for _, dir := range []string{fs.DirToday, fs.DirTrash} {
+		exists, err := b.fs.Exists(dir, filename)
+		if err != nil {
+			return "", fmt.Errorf("b.pomodoro: failed find pomodoro task %w", err)
+		}
+		if exists {
+			return dir, nil
+		}
+	}
+	return "", nil
+}
+
+func (b *Bot) togglePomodoro(_ []string) error {
+	// Check if Pomodoro is already running
+	filename := fs.Filename(fs.FilePomodoro)
+	pomodoroTaskDir, err := b.pomodoroTaskDir()
+	if err != nil {
+		return fmt.Errorf("b.pomodoro: failed to check if pomodoro is already running %w", err)
+	}
+	if pomodoroTaskDir != "" {
+		err = b.fs.Del(pomodoroTaskDir, filename)
+		if err != nil {
+			return fmt.Errorf("b.pomodoro: failed to delete pomodoro file from %v folder %w", pomodoroTaskDir, err)
+		}
+		err := b.send(fmt.Sprintf("Pomodoro is stopped: no new \"%v\" tasks will appear automatially", fs.FilePomodoro))
+		if err != nil {
+			return fmt.Errorf("b.pomodoro: failed to show pomodoro hint message %w", err)
+		}
+		return b.showToday(nil)
+	}
+
+	// Create Pomodoro task
+	b.createOrAdd(fs.DirToday, filename, "")
+	err = b.send(fmt.Sprintf("Pomodoro is run: you can see \"%v\" task in your %v folder. Once are ready to focus on something and start working, just complete this task."+
+		" It will get back in %v to let you know that you worked enough and deserved a break. To stop it just use /%v comand again",
+		fs.FilePomodoro, fs.DirToday, pomodoroDuration, cmdPomodoro))
+	if err != nil {
+		return fmt.Errorf("b.pomodoro: failed to show pomodoro hint message %w", err)
+	}
+	return b.showToday(nil)
 }
