@@ -429,3 +429,43 @@ func TestBot_pomodoroCompletion(t *testing.T) {
 	r.Nil(err)
 	r.True(pomodoroIn(fs.DirToday) && !pomodoroIn(fs.DirTrash))
 }
+
+func TestBot_todayLabelIcons(t *testing.T) {
+	r := require.New(t)
+	t.Setenv("ADMIN_USER_ID", "-1")
+	fsys, err := fs.NewFS(-1, afero.NewMemMapFs())
+	r.Nil(err)
+	tgram := fake.NewTG()
+	redis, err := miniredis.Run()
+	r.Nil(err)
+	defer redis.Close()
+	b := NewBot(-1, tgram, fsys, db.NewDB(redis), &userconfig.DefaultConfig)
+
+	// Pomodoro is the only task in today
+	r.Nil(b.togglePomodoro(nil))
+	label, err := b.todayLabel()
+	r.Nil(err)
+	r.Contains(label, "🌴")
+	r.Contains(label, "🍅")
+
+	// Pomodoro and another task in today
+	r.Nil(b.fs.Put(fs.DirToday, "Item.md", ""))
+	label, err = b.todayLabel()
+	r.Nil(err)
+	r.NotContains(label, "🌴")
+	r.Contains(label, "🍅")
+
+	// No pomodoro, but there is another task in today
+	r.Nil(b.complete([]string{fs.DirToday, fs.FilePomodoro}))
+	label, err = b.todayLabel()
+	r.Nil(err)
+	r.NotContains(label, "🌴")
+	r.NotContains(label, "🍅")
+
+	// No pomodoro, no other tasks in today
+	r.Nil(b.complete([]string{fs.DirToday, "Item.md"}))
+	label, err = b.todayLabel()
+	r.Nil(err)
+	r.Contains(label, "🌴")
+	r.NotContains(label, "🍅")
+}
