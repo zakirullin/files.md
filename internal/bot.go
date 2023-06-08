@@ -252,27 +252,25 @@ func (b *Bot) saveForward(u UpdInterface) error {
 }
 
 func (b *Bot) replyToInlineQuery(u UpdInterface) error {
-	//query, ok := u.InlineQuery()
-	//if !ok {
-	//	return nil
-	//}
+	query, ok := u.InlineQuery()
+	if !ok {
+		return nil
+	}
 
-	fmt.Println("here")
-	//matchedNotes, err := b.fs.SearchNotes(query)
-	//if err != nil {
-	//	return fmt.Errorf("can't search for notes: %w", err)
-	//}
-	//
-	//var results []interface{}
-	//for id, note := range matchedNotes {
-	//	results = append(results, tgbotapi.NewInlineQueryResultArticle(strconv.Itoa(id), note.Title, note.Title))
-	//}
-	//
-	//queryID, _ := u.InlineQueryID()
-	//b.tg.AnswerInlineQuery(queryID, results, inlineResultsCacheTime, "")
+	matchedNotes, err := b.fs.SearchNotes(query)
+	if err != nil {
+		return fmt.Errorf("can't search for notes: %w", err)
+	}
+
+	var results []interface{}
+	for id, note := range matchedNotes {
+		results = append(results, tgbotapi.NewInlineQueryResultArticle(strconv.Itoa(id), note.Title, note.Title))
+	}
+
+	queryID, _ := u.InlineQueryID()
+	b.tg.AnswerInlineQuery(queryID, results, inlineResultsCacheTime, "")
 
 	// TODO move to config
-	//imgUrl := "http://inmind.tech/img/notev14.png"
 
 	return nil
 }

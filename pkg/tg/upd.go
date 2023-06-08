@@ -32,9 +32,9 @@ func (u *Upd) UserID() int64 {
 	switch {
 	case u.raw.Message != nil:
 		return u.raw.Message.Chat.ID
-	case u.raw.CallbackQuery.Message.Chat != nil:
+	case u.raw.CallbackQuery != nil && u.raw.CallbackQuery.Message != nil && u.raw.CallbackQuery.Message.Chat != nil:
 		return u.raw.CallbackQuery.Message.Chat.ID
-	case u.raw.InlineQuery.From != nil:
+	case u.raw.InlineQuery != nil && u.raw.InlineQuery.From != nil:
 		return u.raw.InlineQuery.From.ID
 	default:
 		panic(errNoUserID)
