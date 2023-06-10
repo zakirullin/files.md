@@ -267,10 +267,10 @@ func (fs FS) isSafe(path string) bool {
 		return false
 	}
 
-	//// Path traversal attack
-	//if strings.Contains(path, "..") {
-	//	return false
-	//}
+	// Path traversal attack
+	if strings.Contains(path, "../") {
+		return false
+	}
 
 	return true
 }
@@ -559,9 +559,12 @@ func (fs FS) Touch(dir, filename string) error {
 
 // TODO fix empty dir
 func (fs FS) path(dir, filename string) string {
+	dir = strings.ReplaceAll(dir, "/", "|")
 	if len(dir) == 0 {
 		return fmt.Sprintf("%s/%s", fs.rootPath, filename)
 	}
+
+	filename = strings.ReplaceAll(filename, "/", "|")
 
 	return fmt.Sprintf("%s/%s/%s", fs.rootPath, dir, filename)
 }
