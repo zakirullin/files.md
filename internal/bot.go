@@ -25,9 +25,8 @@ var now = func() time.Time {
 }
 
 const (
-	maxTitleLength          = 100
-	inlineResultsCacheTime  = 15 // seconds
-	defaultPomodoroDuration = 15 * time.Minute
+	maxTitleLength         = 100
+	inlineResultsCacheTime = 15 // seconds
 )
 
 // TGInterface provides a simple interface to telegram API
@@ -917,7 +916,7 @@ func (b *Bot) complete(params []string) error {
 	}
 
 	if dir == fs.DirToday && filename == fs.FilePomodoro {
-		err = b.db.AddToSchedule(b.userID, filename, time.Now().Unix()+int64(b.pomodoroDuration().Seconds()), "")
+		err = b.db.AddToSchedule(b.userID, filename, time.Now().Unix()+int64(b.conf.PomodoroDuration().Seconds()), "")
 		if err != nil {
 			return fmt.Errorf("complete: can't add pomodoro task to schedule: %w", err)
 		}
@@ -929,15 +928,6 @@ func (b *Bot) complete(params []string) error {
 	}
 
 	return nil
-}
-
-func (b *Bot) pomodoroDuration() time.Duration {
-	pomodoroDuration, err := time.ParseDuration(b.conf.PomodoroDuration)
-	if err == nil {
-		return pomodoroDuration
-	}
-	fmt.Printf("can't parse pomodoro duration \"%v\" from the userconfig: %v", b.conf.PomodoroDuration, err)
-	return defaultPomodoroDuration
 }
 
 func (b *Bot) schedule(params []string) error {
@@ -1244,7 +1234,7 @@ func (b *Bot) togglePomodoro(_ []string) error {
 
 	err = b.send(fmt.Sprintf("Pomodoro is run: you can see \"%v\" task in your %v folder. Once are ready to focus on something and start working, just complete this task."+
 		" It will get back in %v to let you know that you worked enough and deserved a break. To stop it just use /%v comand again",
-		fs.FilePomodoro, fs.DirToday, b.pomodoroDuration(), cmdPomodoro))
+		fs.FilePomodoro, fs.DirToday, b.conf.PomodoroDuration(), cmdPomodoro))
 	if err != nil {
 		return fmt.Errorf("toggle pomodoro: failed to show pomodoro hint message %w", err)
 	}

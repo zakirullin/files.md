@@ -412,7 +412,7 @@ func TestBot_pomodoroCompletion(t *testing.T) {
 	r.Nil(b.togglePomodoro(nil))
 	r.True(pomodoroIn(fs.DirToday) && !pomodoroIn(fs.DirTrash))
 	// set pomodoro duration to 100ms
-	b.conf.PomodoroDuration = "1s"
+	b.conf.SetPomodoroDuration(time.Second)
 	// complete it
 	r.Nil(b.complete([]string{fs.DirToday, fs.FilePomodoro}))
 	r.True(!pomodoroIn(fs.DirToday) && pomodoroIn(fs.DirTrash))

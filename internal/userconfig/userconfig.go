@@ -4,9 +4,11 @@ package userconfig
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"time"
 )
 
 var DefaultConfig = Config{
@@ -14,7 +16,7 @@ var DefaultConfig = Config{
 		Language:         "en",
 		HomeCmd:          "today",
 		MoveToButtons:    []string{"tomorrow", "later", "day", "note", "checklist", "doc", "recent", "journal"},
-		PomodoroDuration: "25m",
+		PomodoroDuration: strDuration(25 * time.Minute),
 	},
 }
 
@@ -37,10 +39,10 @@ type Config struct {
 }
 
 type config struct {
-	Language         string   `json:"language"`
-	HomeCmd          string   `json:"homeCmd"`
-	MoveToButtons    []string `json:"moveToButtons"`
-	PomodoroDuration string   `json:"pomodoroDuration"`
+	Language         string      `json:"language"`
+	HomeCmd          string      `json:"homeCmd"`
+	MoveToButtons    []string    `json:"moveToButtons"`
+	PomodoroDuration strDuration `json:"pomodoroDuration"`
 }
 
 func NewConfig() *Config {
@@ -109,4 +111,35 @@ func mapConfigButtonNamesToRealNames(configNames []string) []string {
 	}
 
 	return realNames
+}
+
+type strDuration time.Duration
+
+func (d *strDuration) UnmarshalJSON(b []byte) error {
+	dd := (*time.Duration)(d)
+	var v interface{}
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	switch value := v.(type) {
+	case float64:
+		*dd = time.Duration(value)
+		return nil
+	case string:
+		var err error
+		*dd, err = time.ParseDuration(value)
+		if err != nil {
+			return err
+		}
+		return nil
+	default:
+		return errors.New("invalid duration")
+	}
+}
+func (c *Config) SetPomodoroDuration(value time.Duration) {
+	c.config.PomodoroDuration = strDuration(value)
+}
+
+func (c *Config) PomodoroDuration() time.Duration {
+	return time.Duration(c.config.PomodoroDuration)
 }
