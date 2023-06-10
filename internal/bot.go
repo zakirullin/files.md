@@ -26,7 +26,6 @@ var now = func() time.Time {
 
 const (
 	maxTitleLength          = 100
-	pomodoroDuration        = 10 * time.Second
 	inlineResultsCacheTime  = 15 // seconds
 	defaultPomodoroDuration = 15 * time.Minute
 )
