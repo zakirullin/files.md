@@ -655,8 +655,19 @@ func (b *Bot) showTask(params []string) error {
 		return fmt.Errorf("show task: %w", err)
 	}
 
+	var moveToBtn tg.Btn
+	if dir == fs.DirToday {
+		moveToBtn = tg.NewBtn(strBtnMoveToLater, tg.NewCmd(cmdMove, []string{dir, filenameHash, fs.DirLater}))
+	} else {
+		moveToBtn = tg.NewBtn(strBtnMoveToToday, tg.NewCmd(cmdMove, []string{dir, filenameHash, fs.DirToday}))
+	}
+
 	kb := tg.NewKeyboard([]tg.Row{
-		tg.NewRow(tg.NewBtn(strBtnBack, tg.NewCmd(dir, []string{dir}))),
+		tg.NewRow(moveToBtn),
+		tg.NewRow(
+			tg.NewBtn(strBtnBack, tg.NewCmd(dir, []string{dir})),
+			tg.NewBtn(strBtnComplete, tg.NewCmd(cmdComplete, []string{dir, filenameHash})),
+		),
 	})
 
 	err = b.show(fmt.Sprintf("%s\n%s", fs.Title(filename), content), kb, tg.MarkupHTML)
