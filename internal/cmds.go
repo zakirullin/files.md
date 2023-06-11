@@ -28,4 +28,5 @@ const (
 	cmdMoveToNewChecklist = "mv_to_new_chk"
 	cmdSchedule           = "sc"
 	cmdPomodoro           = "pomodoro"
+	cmdShowRecurringKB    = "recur_kb"
 )

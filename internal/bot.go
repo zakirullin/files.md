@@ -141,6 +141,7 @@ func (b *Bot) handlers() map[string]func([]string) error {
 		cmdComplete:           b.complete,
 		cmdPostpone:           b.postpone,
 		cmdPomodoro:           b.togglePomodoro,
+		cmdShowRecurringKB:    b.showRecurringKeyBoard,
 	}
 }
 
@@ -1025,7 +1026,7 @@ func (b *Bot) forADayKeyboard(filenameHash string) (*tg.Keyboard, error) {
 	}
 
 	kb := tg.NewKeyboard([]tg.Row{
-		tg.NewRow(tg.NewBtn("Repeat the task", tg.NewCmd("ss", nil))),
+		tg.NewRow(tg.NewBtn("Repeat the task", tg.NewCmd(cmdShowRecurringKB, []string{filenameHash}))),
 		tg.NewRow(
 			newBtn("Mn", "0 0 * * 1"),
 			newBtn("Tu", "0 0 * * 2"),
@@ -1264,4 +1265,48 @@ func (b *Bot) togglePomodoro(_ []string) error {
 	}
 
 	return b.showToday(nil)
+}
+
+func (b *Bot) showRecurringKeyBoard(params []string) error {
+	filenameHash := params[0]
+
+	newBtn := func(name, cron string) tg.Btn {
+		return tg.NewBtn(name, tg.NewCmd(cmdSchedule, []string{filenameHash, str.I64(sched.Next(cron)), cron}))
+	}
+
+	kb := tg.NewKeyboard([]tg.Row{
+		// Cron format: Minute Hour DayOfMonth Month DayOfWeek
+		tg.NewRow(
+			newBtn("🏭 Week days", "0 0 * * 1-5"),
+			newBtn("☀️ Every day", "0 0 * * 1-5"),
+		),
+		tg.NewRow(
+			newBtn("1️⃣Mn", "0 0 * * 1"),
+			newBtn("2️⃣Tu", "0 0 * * 2"),
+			newBtn("3️⃣Wd", "0 0 * * 3"),
+			newBtn("4️⃣Th", "0 0 * * 4"),
+		),
+		tg.NewRow(
+			newBtn("5️⃣😊Fr", "0 0 * * 5"),
+			newBtn("6️⃣😃St", "0 0 * * 6"),
+			newBtn("7️⃣☀️Sn", "0 0 * * 0"),
+		),
+	})
+
+	for week := 0; week < 4; week++ {
+		row := tg.NewRow()
+		for day := 1; day < 8; day++ {
+			i := week*7 + day
+			cron := fmt.Sprintf("0 0 %d * *", i)
+			row = append(row, newBtn(str.I64(int64(i)), cron))
+		}
+		kb.AddRow(row)
+	}
+
+	err := b.show("Configure schedule", kb, tg.MarkupHTML)
+	if err != nil {
+		return fmt.Errorf("showRecuringKeyBoard : %w", err)
+	}
+
+	return nil
 }

@@ -34,15 +34,16 @@ func MoveDueTasksToToday(redis *miniredis.Miniredis, fsBackend afero.Fs) error {
 			if time.Now().Unix() >= cron.RunAt {
 				err = moveTaskToToday(filename, fsys)
 				if err != nil {
-					slog.Error(fmt.Sprintf("moveDueTasksForToday: can't move: %s", err))
+					slog.Error("moveDueTasksForToday: can't move", "err", err)
 				}
-
+				slog.Debug("Scheduled task moved to today", filename, "filename")
 				if len(cron.Cron) != 0 {
-					err = database.AddToSchedule(id, filename, sched.Next(cron.Cron), cron.Cron)
+					runAt := sched.Next(cron.Cron)
+					err = database.AddToSchedule(id, filename, runAt, cron.Cron)
 					if err != nil {
-						fmt.Printf("err")
+						slog.Error("can't reschedule task", "filename", filename, "cron", cron.Cron, "err", err)
 					}
-
+					slog.Debug("Task was rescheduled", "filename", filename, "cron", cron.Cron, "runAt", runAt)
 					continue
 				}
 
