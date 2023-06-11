@@ -12,6 +12,6 @@ const (
 	StrForDay         = "📆 For a day"
 	StrToNote         = "📌 To Note"
 	StrToChecklist    = "☑️ To Checklist"
-	StrToDoc        = "📝 To Doc"
-	StrBtnGoToToday = "➡️ Today"
+	StrToDoc          = "📝 To Doc"
+	StrBtnGoToToday   = "➡️ Today"
 )
