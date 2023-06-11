@@ -102,14 +102,14 @@ func (tg *TG) buildInlineKeyboard(kb *Keyboard) *tgbotapi.InlineKeyboardMarkup {
 		case Btn:
 			btn := tg.buildBtn(row.(Btn))
 			inlineKb.InlineKeyboard = append(inlineKb.InlineKeyboard, tgbotapi.NewInlineKeyboardRow(btn))
-		case RowOfBtns:
+		case []Btn:
 			inlineRow := tgbotapi.NewInlineKeyboardRow()
-			for _, b := range row.(RowOfBtns).Btns {
-				btn := tg.buildBtn(b)
-				inlineRow = append(inlineRow, btn)
+			for _, b := range row.([]Btn) {
+				inlineRow = append(inlineRow, tg.buildBtn(b))
 			}
 			inlineKb.InlineKeyboard = append(inlineKb.InlineKeyboard, inlineRow)
 		}
+
 	}
 
 	return &inlineKb

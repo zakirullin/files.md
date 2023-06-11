@@ -32,9 +32,9 @@ func TestRowAddBtn(t *testing.T) {
 	r := require.New(t)
 
 	row := NewRow()
-	row.AddBtn(NewBtn("test", NewCmd("cmd", nil)))
-	row.AddBtn(NewBtn("test2", NewCmd("cmd2", nil)))
+	row = append(row, NewBtn("test", NewCmd("cmd", nil)))
+	row = append(row, NewBtn("test2", NewCmd("cmd2", nil)))
 
 	expectedBtns := []Btn{NewBtn("test", NewCmd("cmd", nil)), NewBtn("test2", NewCmd("cmd2", nil))}
-	r.Equal(expectedBtns, row.Btns)
+	r.Equal(expectedBtns, row)
 }

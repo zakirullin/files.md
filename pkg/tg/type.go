@@ -16,16 +16,9 @@ func NewBtn(name string, cmd Cmd) Btn {
 	return Btn{name, cmd}
 }
 
-type RowOfBtns struct {
-	Btns []Btn
-}
-
-func NewRow(btns ...Btn) RowOfBtns {
-	return RowOfBtns{btns}
-}
-
-func (r *RowOfBtns) AddBtn(b Btn) {
-	r.Btns = append(r.Btns, b)
+// TODO remove this unnecessary method
+func NewRow(btns ...Btn) []Btn {
+	return btns
 }
 
 type Cmd struct {

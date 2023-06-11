@@ -382,7 +382,7 @@ func (b *Bot) showMove(params []string) error {
 	var kb tg.Keyboard
 	userBtnsByRows := slice.Chunk(btns, btnsPerRow)
 	for _, row := range userBtnsByRows {
-		kb.AddRow(tg.NewRow(row...))
+		kb.AddRow(row)
 	}
 	kb.AddRow(tg.NewBtn(i18n.StrBtnGoToToday, tg.NewCmd(cmdShowToday, nil)))
 
@@ -1043,7 +1043,7 @@ func (b *Bot) forADayKeyboard(filenameHash string) (*tg.Keyboard, error) {
 		row := tg.NewRow()
 		for i := iAndj[0]; i <= iAndj[1]; i++ {
 			cron := fmt.Sprintf("0 0 %d * *", i)
-			row.AddBtn(newBtn(str.I64(int64(i)), cron))
+			row = append(row, newBtn(str.I64(int64(i)), cron))
 		}
 		kb.AddRow(row)
 	}
