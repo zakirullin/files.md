@@ -10,6 +10,7 @@ import (
 	"github.com/gomarkdown/markdown/parser"
 )
 
+// MarkdownToHtml converts user's markdown to Telegram supported subset of HTML
 func MarkdownToHtml(md string) string {
 	extensions := parser.CommonExtensions | parser.NoEmptyLineBeforeBlock
 	p := parser.NewWithExtensions(extensions)
