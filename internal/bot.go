@@ -1026,17 +1026,17 @@ func (b *Bot) forADayKeyboard(filenameHash string) (*tg.Keyboard, error) {
 	}
 
 	kb := tg.NewKeyboard([]tg.Row{
-		tg.NewRow(tg.NewBtn("Repeat the task", tg.NewCmd(cmdShowRecurringKB, []string{filenameHash}))),
+		tg.NewRow(tg.NewBtn(i18n.StrBtnRepeat, tg.NewCmd(cmdShowRecurringKB, []string{filenameHash}))),
 		tg.NewRow(
-			newBtn("Mn", "0 0 * * 1"),
-			newBtn("Tu", "0 0 * * 2"),
-			newBtn("Wd", "0 0 * * 3"),
-			newBtn("Th", "0 0 * * 4"),
+			newBtn(i18n.StrMonday, "0 0 * * 1"),
+			newBtn(i18n.StrTuesday, "0 0 * * 2"),
+			newBtn(i18n.StrWednesday, "0 0 * * 3"),
+			newBtn(i18n.StrThursday, "0 0 * * 4"),
 		),
 		tg.NewRow(
-			newBtn("Fr", "0 0 * * 5"),
-			newBtn("St", "0 0 * * 6"),
-			newBtn("Sn", "0 0 * * 0"),
+			newBtn(i18n.StrFriday, "0 0 * * 5"),
+			newBtn(i18n.StrSaturday, "0 0 * * 6"),
+			newBtn(i18n.StrSunday, "0 0 * * 0"),
 		),
 	})
 
@@ -1277,19 +1277,19 @@ func (b *Bot) showRecurringKeyBoard(params []string) error {
 	kb := tg.NewKeyboard([]tg.Row{
 		// Cron format: Minute Hour DayOfMonth Month DayOfWeek
 		tg.NewRow(
-			newBtn("🏭 Week days", "0 0 * * 1-5"),
-			newBtn("☀️ Every day", "0 0 * * 1-5"),
+			newBtn(i18n.StrWeekdays, "0 0 * * 1-5"),
+			newBtn(i18n.StrEveryday, "0 0 * * *"),
 		),
 		tg.NewRow(
-			newBtn("1️⃣Mn", "0 0 * * 1"),
-			newBtn("2️⃣Tu", "0 0 * * 2"),
-			newBtn("3️⃣Wd", "0 0 * * 3"),
-			newBtn("4️⃣Th", "0 0 * * 4"),
+			newBtn(i18n.StrMonday, "0 0 * * 1"),
+			newBtn(i18n.StrTuesday, "0 0 * * 2"),
+			newBtn(i18n.StrWednesday, "0 0 * * 3"),
+			newBtn(i18n.StrThursday, "0 0 * * 4"),
 		),
 		tg.NewRow(
-			newBtn("5️⃣😊Fr", "0 0 * * 5"),
-			newBtn("6️⃣😃St", "0 0 * * 6"),
-			newBtn("7️⃣☀️Sn", "0 0 * * 0"),
+			newBtn(i18n.StrFriday, "0 0 * * 5"),
+			newBtn(i18n.StrSaturday, "0 0 * * 6"),
+			newBtn(i18n.StrSunday, "0 0 * * 0"),
 		),
 	})
 
