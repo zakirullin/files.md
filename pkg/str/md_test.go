@@ -33,6 +33,6 @@ func TestSpacedItalic(t *testing.T) {
 	}
 
 	markdown := EntitiesToMarkdown(text, messageEntities)
-	expectedMarkdown := "Header\nLeverage *one Minute Praising *instead"
+	expectedMarkdown := "Header\nLeverage *one Minute Praising* instead"
 	r.Equal(expectedMarkdown, markdown)
 }
