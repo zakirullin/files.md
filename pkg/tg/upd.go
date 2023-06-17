@@ -113,6 +113,30 @@ func (u *Upd) IsForwarded() bool {
 	return false
 }
 
+func (u *Upd) IsImage() bool {
+	if len(u.raw.Message.Photo) > 0 {
+		return true
+	}
+
+	return false
+}
+
+func (u *Upd) MsgCaption() string {
+	if u.raw.Message.Photo != nil {
+		return u.raw.Message.Caption
+	}
+
+	return ""
+}
+
+func (u *Upd) PhotoId() string {
+	if len(u.raw.Message.Photo) > 0 {
+		return u.raw.Message.Photo[0].FileID
+	}
+
+	return ""
+}
+
 // Takes into account Telegram's UTF-16 encoding
 // First we encode runes [128078 127997] into UTF-16 representation
 // We get string [55357 56398 55356 57341]

@@ -129,3 +129,9 @@ func (tg *TG) buildBtn(btn Btn) tgbotapi.InlineKeyboardButton {
 
 	return b
 }
+
+func (tg *TG) GetFileUrl(fileId string) (string, error) {
+	return tg.api.GetFileDirectURL(fileId)
+}
+
+

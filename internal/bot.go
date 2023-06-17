@@ -6,6 +6,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"os"
+	"io"
+	"net/http"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"golang.org/x/exp/slog"
@@ -38,18 +41,22 @@ type TGInterface interface {
 	Del(userID int64, msgID int) error
 	AnswerCallbackQuery(queryID string, text string) error
 	AnswerInlineQuery(queryID string, results []interface{}, cacheTime int, offset string) error
+	GetFileUrl(fileId string) (string, error)
 }
 
 // UpdInterface represents incoming user updates
 type UpdInterface interface {
 	MsgText() string
+	MsgCaption() string
 	UserID() int64
 	Cmd() *tg.Cmd
 	MsgEntities() []tgbotapi.MessageEntity
 	IsForwarded() bool
+	IsImage() bool
 	CallbackQueryID() (string, bool)
 	InlineQueryID() (string, bool)
 	InlineQuery() (string, bool)
+	PhotoId() string
 }
 
 // Bot provides commands that can be invoked by a user so to query
@@ -103,6 +110,10 @@ func (b *Bot) Reply(u UpdInterface) error {
 
 	if u.IsForwarded() {
 		return b.saveForward(u)
+	}
+
+	if u.IsImage() {
+		return b.saveImage(u)
 	}
 
 	return b.save(u)
@@ -212,6 +223,48 @@ func (b *Bot) save(u UpdInterface) error {
 	}
 
 	return b.showMove([]string{fs.Hash(filename)})
+}
+
+func DownLoadFile(url string, fileName string) (string, error) {
+	response, err := http.Get(url)
+	if err != nil {
+		return "", fmt.Errorf("DownLoadFile: %w", err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != 200 {
+		return "", fmt.Errorf("DownLoadFile: %w", response.StatusCode)
+	}
+	
+	downloadPath := "/tmp/" + fileName
+
+	file, err := os.Create(downloadPath)
+	if err != nil {
+		return "", fmt.Errorf("DownLoadFile: %w", err)
+	}
+	defer file.Close()
+
+	//Write the bytes to the fiel
+	_, err = io.Copy(file, response.Body)
+	if err != nil {
+		return "", fmt.Errorf("DownLoadFile: %w", err)
+	}
+
+	return downloadPath, nil
+}
+
+func (b *Bot) saveImage(u UpdInterface) error {
+
+	url, err := b.tg.GetFileUrl(u.PhotoId())
+	if err != nil {
+    	return fmt.Errorf("saveImage: %w", err)
+    }
+    test, err := DownLoadFile(url, u.PhotoId())
+    if err != nil {
+    	return fmt.Errorf("saveImage: %w", err)
+    }
+
+	return fmt.Errorf("saveImage:", u.PhotoId() + u.MsgCaption() + url + test)
 }
 
 func (b *Bot) saveForward(u UpdInterface) error {
