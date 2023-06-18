@@ -18,8 +18,12 @@ func init() {
 	}
 }
 
-// EntitiesToMarkdown converts plain text with Entities to Markdown and escapes Markdown special symbols (but it's not escapes those symbols in urls).
+// EntitiesToMarkdown converts plain text with Telegram entities to CommonMark Markdown.
+// Telegram's formatting entities don't take the new lines into account. I.e. if we have a multiline
+// bold text, it would be referred as a single bold entity, which is not what we want. This function
+// inserts the necessary closing tags before the new lines and opening tags after the new lines.
 // https://core.telegram.org/bots/api#messageentity
+// https://commonmark.org/help/
 func EntitiesToMarkdown(text string, messageEntities []tgbotapi.MessageEntity) string {
 	input := []rune(NormNewLines(text))
 	insertions := make(map[int]string)
@@ -34,7 +38,6 @@ func EntitiesToMarkdown(text string, messageEntities []tgbotapi.MessageEntity) s
 	for _, e := range messageEntities {
 		var before, after string
 
-		// https://commonmark.org/help/
 		if e.IsBold() {
 			before = "**"
 			after = "**"
@@ -57,7 +60,7 @@ func EntitiesToMarkdown(text string, messageEntities []tgbotapi.MessageEntity) s
 			stopEscape(&e)
 		} else if e.IsTextLink() {
 			before = "["
-			after = fmt.Sprintf(`](%s "%s")`, e.URL, e.URL)
+			after = fmt.Sprintf(`](%s)`, e.URL)
 		} else if e.IsURL() {
 			stopEscape(&e)
 		}

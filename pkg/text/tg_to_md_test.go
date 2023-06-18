@@ -15,8 +15,8 @@ func TestBold(t *testing.T) {
 		{Type: "bold", Offset: 0, Length: 4},
 	}
 
-	markdown := EntitiesToMarkdown(text, messageEntities)
-	r.Equal("**bold**", markdown)
+	md := EntitiesToMarkdown(text, messageEntities)
+	r.Equal("**bold**", md)
 }
 
 func TestItalic(t *testing.T) {
@@ -27,8 +27,8 @@ func TestItalic(t *testing.T) {
 		{Type: "italic", Offset: 0, Length: 6},
 	}
 
-	markdown := EntitiesToMarkdown(text, messageEntities)
-	r.Equal("*italic*", markdown)
+	md := EntitiesToMarkdown(text, messageEntities)
+	r.Equal("*italic*", md)
 }
 
 func TestBoldAndItalic(t *testing.T) {
@@ -40,8 +40,8 @@ func TestBoldAndItalic(t *testing.T) {
 		{Type: "italic", Offset: 0, Length: 13},
 	}
 
-	markdown := EntitiesToMarkdown(text, messageEntities)
-	r.Equal("***BoldAndItalic***", markdown)
+	md := EntitiesToMarkdown(text, messageEntities)
+	r.Equal("***BoldAndItalic***", md)
 }
 
 func TestBoldThenItalic(t *testing.T) {
@@ -53,8 +53,20 @@ func TestBoldThenItalic(t *testing.T) {
 		{Type: "italic", Offset: 4, Length: 6},
 	}
 
-	markdown := EntitiesToMarkdown(text, messageEntities)
-	r.Equal("**bold***italic*", markdown)
+	md := EntitiesToMarkdown(text, messageEntities)
+	r.Equal("**bold***italic*", md)
+}
+
+func TestLink(t *testing.T) {
+	r := require.New(t)
+
+	text := "l"
+	var messageEntities = []tgbotapi.MessageEntity{
+		{Type: "text_link", Offset: 0, Length: 1, URL: "google.com"},
+	}
+
+	md := EntitiesToMarkdown(text, messageEntities)
+	r.Equal("[l](google.com)", md)
 }
 
 func TestMultilineTextWithMarkdown(t *testing.T) {
