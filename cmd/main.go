@@ -104,7 +104,7 @@ func main() {
 
 			conf := userconfig.NewConfig()
 			// TODO paths to envs
-			configPath := "cmd/testdata/config.json.md"
+			configPath := "cmd/testdata/config.json"
 			err = conf.LoadOrCreate(configPath)
 			if err != nil {
 				slog.Error("Bot error: can't get or create config", "err", err)
