@@ -18,6 +18,15 @@ type TG struct {
 	api *tgbotapi.BotAPI
 }
 
+// TGInterface provides a simple interface to telegram API
+type TGInterface interface {
+	Send(userID int64, text string, kb *Keyboard, markup string) (int, error)
+	Edit(userID int64, msgID int, text string, kb *Keyboard, markup string) error
+	Del(userID int64, msgID int) error
+	AnswerCallbackQuery(queryID string, text string) error
+	AnswerInlineQuery(queryID string, results []interface{}, cacheTime int, offset string) error
+}
+
 func NewTG(api *tgbotapi.BotAPI) *TG {
 	return &TG{api}
 }
