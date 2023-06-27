@@ -13,6 +13,7 @@ import (
 	"zakirullin/stuffbot/i18n"
 	"zakirullin/stuffbot/internal/db"
 	"zakirullin/stuffbot/internal/fs"
+	"zakirullin/stuffbot/internal/plugins"
 	"zakirullin/stuffbot/internal/sched"
 	"zakirullin/stuffbot/internal/stats"
 	"zakirullin/stuffbot/internal/userconfig"
@@ -31,15 +32,6 @@ const (
 	btnsPerRow             = 3
 )
 
-// TGInterface provides a simple interface to telegram API
-type TGInterface interface {
-	Send(userID int64, text string, kb *tg.Keyboard, markup string) (int, error)
-	Edit(userID int64, msgID int, text string, kb *tg.Keyboard, markup string) error
-	Del(userID int64, msgID int) error
-	AnswerCallbackQuery(queryID string, text string) error
-	AnswerInlineQuery(queryID string, results []interface{}, cacheTime int, offset string) error
-}
-
 // UpdInterface represents incoming user updates
 type UpdInterface interface {
 	MsgText() string
@@ -56,21 +48,40 @@ type UpdInterface interface {
 // server files and database. A user can also send all sort of things
 // to bot (texts, photos) - in that case we'd save everything.
 type Bot struct {
-	userID int64
-	tg     TGInterface
-	fs     *fs.FS
-	db     *db.DB
-	conf   *userconfig.Config
+	userID  int64
+	tg      tg.TGInterface
+	fs      *fs.FS
+	db      *db.DB
+	conf    *userconfig.Config
+	plugins []BotPluginInterface
 }
 
-func NewBot(userID int64, tg TGInterface, fs *fs.FS, db *db.DB, conf *userconfig.Config) *Bot {
-	return &Bot{userID, tg, fs, db, conf}
+type BotPluginInterface interface {
+	ExecutePlugin(string) bool
+}
+
+func NewBot(userID int64, tg tg.TGInterface, fs *fs.FS, db *db.DB, conf *userconfig.Config) *Bot {
+	return &Bot{
+		userID: userID,
+		tg:     tg,
+		fs:     fs,
+		db:     db,
+		plugins: []BotPluginInterface{
+			plugins.NewWorldClockPlugin(userID, tg),
+		},
+	}
 }
 
 // Reply to incoming text message or command (inline queries aren't supported yet)
 func (b *Bot) Reply(u UpdInterface) error {
 	if _, ok := u.InlineQueryID(); ok {
 		return b.replyToInlineQuery(u)
+	}
+
+	for _, plugin := range b.plugins {
+		if plugin.ExecutePlugin(u.MsgText()) {
+			return nil
+		}
 	}
 
 	cmd, err := b.extractCmd(u)
