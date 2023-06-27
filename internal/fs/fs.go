@@ -95,7 +95,7 @@ func (fs FS) CreateUserDirs() error {
 }
 
 func (fs FS) Exists(dir, filename string) (bool, error) {
-	path := fs.path(dir, filename)
+	path := fs.Path(dir, filename)
 	if !fs.isSafe(path) {
 		return false, fmt.Errorf("exists: unsafe path '%s': %w", path, errUnsafePath)
 	}
@@ -109,7 +109,7 @@ func (fs FS) Exists(dir, filename string) (bool, error) {
 }
 
 func (fs FS) Content(dir, filename string) (string, error) {
-	path := fs.path(dir, filename)
+	path := fs.Path(dir, filename)
 	if !fs.isSafe(path) {
 		return "", fmt.Errorf("get content: unsafe path '%s': %w", path, errUnsafePath)
 	}
@@ -123,7 +123,7 @@ func (fs FS) Content(dir, filename string) (string, error) {
 }
 
 func (fs FS) Put(dir, filename, content string) error {
-	path := fs.path(dir, filename)
+	path := fs.Path(dir, filename)
 	if !fs.isSafe(path) {
 		return fmt.Errorf("put: unsafe path '%s': %w", path, errUnsafePath)
 	}
@@ -136,7 +136,7 @@ func (fs FS) Put(dir, filename, content string) error {
 }
 
 func (fs FS) MakeDir(dir string) error {
-	path := fs.path(dir, "")
+	path := fs.Path(dir, "")
 	if !fs.isSafe(path) {
 		return fmt.Errorf("make dir: unsafe path '%s': %w", path, errUnsafePath)
 	}
@@ -150,7 +150,7 @@ func (fs FS) MakeDir(dir string) error {
 }
 
 func (fs FS) Del(dir, filename string) error {
-	path := fs.path(dir, filename)
+	path := fs.Path(dir, filename)
 	if !fs.isSafe(path) {
 		return fmt.Errorf("delete file: unsafe path '%s': %w", path, errUnsafePath)
 	}
@@ -164,12 +164,12 @@ func (fs FS) Del(dir, filename string) error {
 }
 
 func (fs FS) Rename(oldDir, oldFilename, newDir, newFilename string) error {
-	oldPath := fs.path(oldDir, oldFilename)
+	oldPath := fs.Path(oldDir, oldFilename)
 	if !fs.isSafe(oldPath) {
 		return fmt.Errorf("can't rename from '%s': %w", oldPath, errUnsafePath)
 	}
 
-	newPath := fs.path(newDir, newFilename)
+	newPath := fs.Path(newDir, newFilename)
 	if !fs.isSafe(newPath) {
 		return fmt.Errorf("can't rename to '%s': %w", newPath, errUnsafePath)
 	}
@@ -217,7 +217,7 @@ func (fs FS) Unhash(dir, filenameHash string) (string, error) {
 }
 
 func (fs FS) FilesAndDirs(dir string) ([]File, error) {
-	path := fs.path(dir, "")
+	path := fs.Path(dir, "")
 	if !fs.isSafe(path) {
 		return nil, fmt.Errorf("can't get files: %w", errUnsafePath)
 	}
@@ -258,7 +258,7 @@ func (fs FS) Dirs() ([]File, error) {
 
 	var dirs []File
 	for _, file := range files {
-		isDir, err := afero.IsDir(fs.backend, fs.path("", file.Name))
+		isDir, err := afero.IsDir(fs.backend, fs.Path("", file.Name))
 		if err != nil {
 			return nil, fmt.Errorf("can't get dirs: %w", err)
 		}
@@ -274,7 +274,7 @@ func (fs FS) Dirs() ([]File, error) {
 
 // Maybe we should replace / with | and use filepath.Clean by default
 // instead of throwing an error up the stack
-// TODO test all Fs' public the methods for path traversal
+// TODO test all Fs' public the methods for Path traversal
 // TODO after you cover everything with the tests, we may remove this method
 // because we build our own paths
 func (fs FS) isSafe(path string) bool {
@@ -296,7 +296,7 @@ func (fs FS) md5(filename string) string {
 }
 
 func (fs FS) IsMultiline(dir, filename string) (bool, error) {
-	path := fs.path(dir, filename)
+	path := fs.Path(dir, filename)
 	stat, err := fs.backend.Stat(path)
 	if err != nil {
 		return false, fmt.Errorf("can't check for multiline: %w", err)
@@ -307,7 +307,7 @@ func (fs FS) IsMultiline(dir, filename string) (bool, error) {
 
 // RestoreContent restores original user's message text by given file
 func (fs FS) RestoreContent(dir, filename string) (string, error) {
-	path := fs.path(dir, filename)
+	path := fs.Path(dir, filename)
 	if !fs.isSafe(path) {
 		return "", fmt.Errorf("can't restore text: unsafe path '%s': %w", path, errUnsafePath)
 	}
@@ -580,7 +580,7 @@ func (fs FS) Touch(dir, filename string) error {
 		return fmt.Errorf("touch: %w", err)
 	}
 	if exists {
-		err = fs.backend.Chtimes(fs.path(dir, filename), time.Now(), time.Now())
+		err = fs.backend.Chtimes(fs.Path(dir, filename), time.Now(), time.Now())
 		if err != nil {
 			return fmt.Errorf("touch: can't update file's ctime: %w", err)
 		}
@@ -593,8 +593,7 @@ func (fs FS) Touch(dir, filename string) error {
 	return nil
 }
 
-// TODO fix empty dir
-func (fs FS) path(dir, filename string) string {
+func (fs FS) Path(dir, filename string) string {
 	dir = strings.ReplaceAll(dir, "/", "|")
 	filename = strings.ReplaceAll(filename, "/", "|")
 	if len(dir) == 0 {

@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/spf13/afero"
 	"golang.org/x/exp/slog"
 
 	"zakirullin/dumpbot/i18n"
@@ -38,6 +39,8 @@ var NotesOnlyConfig = Config{
 	},
 }
 
+var DefaultBackend = afero.NewOsFs()
+
 type Config struct {
 	raw
 }
@@ -61,8 +64,17 @@ func NewConfig() *Config {
 	return &Config{}
 }
 
-// TODO add file creation
 func (c *Config) LoadOrCreate(path string) error {
+	exists, err := afero.Exists(DefaultBackend, path)
+	if err != nil {
+		return fmt.Errorf("config load: %w", err)
+	}
+
+	if !exists {
+		c.raw = DefaultConfig.raw
+		return nil
+	}
+
 	configFile, err := os.Open(path)
 	if err != nil {
 		return fmt.Errorf("config load: %w", err)

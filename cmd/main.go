@@ -32,9 +32,9 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("Error loading .env file: %s\n", err))
 	}
-	config, err := internal.LoadConfig()
+	cfg, err := internal.LoadConfig()
 	if err != nil {
-		panic(fmt.Sprintf("Error loading config: %s\n", err))
+		panic(fmt.Sprintf("Error loading cfg: %s\n", err))
 	}
 
 	err = i18n.LoadLangFile("i18n/ru.json")
@@ -46,7 +46,7 @@ func main() {
 		panic(fmt.Sprintf("Error loading emoji: %s\n", err))
 	}
 
-	api, err := tgbotapi.NewBotAPI(config.BotAPIToken)
+	api, err := tgbotapi.NewBotAPI(cfg.BotAPIToken)
 	if err != nil {
 		panic(fmt.Sprintf("Can't create TG api: %s\n", err))
 	}
@@ -70,7 +70,7 @@ func main() {
 		for {
 			select {
 			case <-ticker.C:
-				err := worker.MoveDueTasksToToday(config.StoragePath, fsBackend)
+				err := worker.MoveDueTasksToToday(cfg, fsBackend)
 				if err != nil {
 					fmt.Printf("Worker's error: %s\n", err)
 				}
@@ -100,29 +100,28 @@ func main() {
 
 			u := tg.NewUpd(upd)
 			userID := u.UserID()
-			userPath := fs.UserPath(config.StoragePath, userID)
-			fsys, err := fs.NewFS(userPath, afero.NewOsFs())
+			userPath := fs.UserPath(cfg.StoragePath, userID)
+			userFS, err := fs.NewFS(userPath, afero.NewOsFs())
 			if err != nil {
 				slog.Error("Bot error: can't create fs", "err", err)
 				return
 			}
-			err = fsys.CreateUserDirs()
+			err = userFS.CreateUserDirs()
 			if err != nil {
 				slog.Error("Bot error: can't create user dirs", "err", err)
 				return
 			}
 
-			conf := userconfig.NewConfig()
-			// TODO paths to envs
-			configPath := "cmd/testdata/config.json"
-			err = conf.LoadOrCreate(configPath)
+			userconf := userconfig.NewConfig()
+			userconfPath := userFS.Path("", cfg.ConfigFilename)
+			err = userconf.LoadOrCreate(userconfPath)
 			if err != nil {
-				slog.Error("Bot error: can't get or create config", "err", err)
+				slog.Error("Bot error: can't get or create cfg", "err", err)
 				return
 			}
-			defer conf.Save(configPath)
+			defer userconf.Save(userconfPath)
 
-			bot := internal.NewBot(userID, telegram, fsys, db.NewDB(redis), conf)
+			bot := internal.NewBot(userID, telegram, userFS, db.NewDB(redis), userconf)
 
 			if err := bot.Reply(u); err != nil {
 				slog.Error("Bot error", "err", err)

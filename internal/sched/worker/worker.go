@@ -8,13 +8,14 @@ import (
 	"github.com/spf13/afero"
 	"golang.org/x/exp/slog"
 
+	"zakirullin/dumpbot/internal"
 	"zakirullin/dumpbot/internal/fs"
 	"zakirullin/dumpbot/internal/sched"
 	"zakirullin/dumpbot/internal/userconfig"
 )
 
-func MoveDueTasksToToday(storagePath string, fsBackend afero.Fs) error {
-	rootFS, _ := fs.NewFS(storagePath, fsBackend)
+func MoveDueTasksToToday(cfg internal.Config, fsBackend afero.Fs) error {
+	rootFS, _ := fs.NewFS(cfg.StoragePath, fsBackend)
 
 	userDirs, err := rootFS.FilesAndDirs("")
 	if err != nil {
@@ -23,38 +24,38 @@ func MoveDueTasksToToday(storagePath string, fsBackend afero.Fs) error {
 	userDirs = fs.OnlyUserDirs(userDirs)
 
 	for _, userDir := range userDirs {
-		userconf := userconfig.NewConfig()
 		userID, err := strconv.ParseInt(userDir.Name, 10, 64)
 		if err != nil {
 			return fmt.Errorf("schedule worker: can't parse user ID: %s", err)
 		}
-		userPath := fs.UserPath(storagePath, userID)
-		err = userconf.LoadOrCreate(userPath)
+		userPath := fs.UserPath(cfg.StoragePath, userID)
+		userFS, err := fs.NewFS(userPath, fsBackend)
+		if err != nil {
+			return fmt.Errorf("schedule worker: can't create FS: %s", err)
+		}
+
+		usercfg := userconfig.NewConfig()
+		usercfgPath := userFS.Path("", cfg.ConfigFilename)
+		err = usercfg.LoadOrCreate(usercfgPath)
 		if err != nil {
 			return fmt.Errorf("schedule worker: can't load user config: %s", err)
 		}
 
-		sch := userconf.Schedules()
-
-		fsys, err := fs.NewFS(userPath, fsBackend)
-		if err != nil {
-			return fmt.Errorf("schedule worker: can't create FS: %s", err)
-		}
-		for _, schedule := range sch {
+		for _, schedule := range usercfg.Schedules() {
 			if time.Now().Unix() >= schedule.ScheduleAt {
-				err = moveTaskToToday(schedule.Filename, fsys)
+				err = moveTaskToToday(schedule.Filename, userFS)
 				if err != nil {
 					slog.Error("schedule worker: can't move", "err", err)
 				}
 				slog.Debug("Scheduled task moved to today", schedule.Filename, "filename")
 				if len(schedule.Cron) != 0 {
 					runAt := sched.Next(schedule.Cron)
-					userconf.AddToSchedule(schedule.Filename, runAt, schedule.Cron)
+					usercfg.AddToSchedule(schedule.Filename, runAt, schedule.Cron)
 					slog.Debug("Task was rescheduled", "filename", schedule.Filename, "schedule", schedule.Cron, "runAt", runAt)
 					continue
 				}
 
-				userconf.DelFromSchedule(schedule.Filename)
+				usercfg.DelFromSchedule(schedule.Filename)
 			}
 		}
 	}

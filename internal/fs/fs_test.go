@@ -281,7 +281,7 @@ func TestFS_TouchExisting(t *testing.T) {
 	err := fs.Put("today", "a.md", "A")
 	r.Nil(err)
 
-	path := fs.path("today", "a.md")
+	path := fs.Path("today", "a.md")
 	fi, err := fs.backend.Stat(path)
 	r.Nil(err)
 	orig_ctime := Ctime(fi)
@@ -406,9 +406,9 @@ func TestFS_PathTraversalAttack(t *testing.T) {
 	fs, _ := NewFS(-1, afero.NewMemMapFs())
 	fs.rootPath = ""
 
-	path := fs.path("../root/.ssh/", "authorized_keys")
+	path := fs.Path("../root/.ssh/", "authorized_keys")
 	r.Equal("/..|root|.ssh|/authorized_keys", path)
 
-	path = fs.path("note", "../root/.ssh/authorized_keys")
+	path = fs.Path("note", "../root/.ssh/authorized_keys")
 	r.Equal("/note/..|root|.ssh|authorized_keys", path)
 }
