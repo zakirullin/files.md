@@ -8,14 +8,13 @@ import (
 	"github.com/spf13/afero"
 	"golang.org/x/exp/slog"
 
-	"zakirullin/stuffbot/internal"
 	"zakirullin/stuffbot/internal/fs"
 	"zakirullin/stuffbot/internal/sched"
 	"zakirullin/stuffbot/internal/userconfig"
 )
 
-func MoveDueTasksToToday(conf internal.Config, fsBackend afero.Fs) error {
-	rootFS, _ := fs.NewFS(conf.StoragePath, fsBackend)
+func MoveDueTasksToToday(storagePath, configFilename string, fsBackend afero.Fs) error {
+	rootFS, _ := fs.NewFS(storagePath, fsBackend)
 
 	userDirs, err := rootFS.FilesAndDirs("")
 	if err != nil {
@@ -28,14 +27,14 @@ func MoveDueTasksToToday(conf internal.Config, fsBackend afero.Fs) error {
 		if err != nil {
 			return fmt.Errorf("schedule worker: can't parse user ID: %s", err)
 		}
-		userPath := fs.UserPath(conf.StoragePath, userID)
+		userPath := fs.UserPath(storagePath, userID)
 		userFS, err := fs.NewFS(userPath, fsBackend)
 		if err != nil {
 			return fmt.Errorf("schedule worker: can't create FS: %s", err)
 		}
 
 		userconf := userconfig.NewConfig()
-		userconfPath := userFS.Path("", conf.ConfigFilename)
+		userconfPath := userFS.Path("", configFilename)
 		err = userconf.LoadOrCreate(userconfPath)
 		if err != nil {
 			return fmt.Errorf("schedule worker: can't load user config: %s", err)
