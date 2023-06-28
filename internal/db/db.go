@@ -6,8 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"zakirullin/dumpbot/internal/sched"
-	"zakirullin/dumpbot/pkg/tg"
+	"zakirullin/stuffbot/pkg/tg"
 
 	"github.com/alicebob/miniredis/v2"
 )
@@ -15,7 +14,6 @@ import (
 const (
 	redisLastKeyboardMsgID               = "last_keyboard"
 	redisReplaceWithDefaultKeyboardMsgID = "candidate_message_id"
-	redisSchedule                        = "schedule"
 	redisInputExpectation                = "input_expectation"
 )
 
@@ -47,71 +45,6 @@ func (db *DB) SetLastKeyboardMsgID(userID int64, ID int) error {
 
 func (db *DB) DelLastKeyboardMsgID(userID int64) error {
 	db.redis.Del(db.key(userID, redisLastKeyboardMsgID))
-	//if err {
-	//	return fmt.Errorf("db.DelLastKeyboardMsgID: %w", err)
-	//}
-
-	return nil
-}
-
-// map[filename] => Cron
-func (db *DB) Schedule(userID int64) (map[string]sched.Cron, error) {
-	sc, err := db.redis.Get(db.key(userID, redisSchedule))
-	if errors.Is(err, miniredis.ErrKeyNotFound) {
-		return make(map[string]sched.Cron), nil
-	} else if err != nil {
-		return nil, fmt.Errorf("can't get schedule: %w", err)
-	}
-
-	var schedules map[string]sched.Cron
-	err = json.Unmarshal([]byte(sc), &schedules)
-	if err != nil {
-		return nil, fmt.Errorf("can't get schedule: can't unmarshal: %w", err)
-	}
-
-	return schedules, nil
-}
-
-// AddToSchedule task from _archive_ or later at runAt (Unix timestamp, sec). Tasks appear in today folder.
-// If cron is provided this task will be repeated. Other wise, it will be executed once.
-func (db *DB) AddToSchedule(userID int64, filename string, runAt int64, cron string) error {
-	sc, err := db.Schedule(userID)
-	if err != nil {
-		return fmt.Errorf("add to schedule: can't add to schedule: %w", err)
-	}
-
-	sc[filename] = sched.NewCron(runAt, cron)
-
-	js, err := json.Marshal(sc)
-	if err != nil {
-		return fmt.Errorf("can't marshal to json: %w", err)
-	}
-
-	err = db.redis.Set(db.key(userID, redisSchedule), string(js))
-	if err != nil {
-		return fmt.Errorf("add to schedule: can't save schedule: %w", err)
-	}
-
-	return nil
-}
-
-func (db *DB) DelFromSchedule(userID int64, filename string) error {
-	sc, err := db.Schedule(userID)
-	if err != nil {
-		return fmt.Errorf("del from schedule: can't add to schedule: %w", err)
-	}
-
-	delete(sc, filename)
-
-	js, err := json.Marshal(sc)
-	if err != nil {
-		return fmt.Errorf("del from schedule: can't marshal to json: %w", err)
-	}
-
-	err = db.redis.Set(db.key(userID, redisSchedule), string(js))
-	if err != nil {
-		return fmt.Errorf("del from schedule: can't save schedule: %w", err)
-	}
 
 	return nil
 }

@@ -2,58 +2,72 @@ package worker
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
-	"github.com/alicebob/miniredis/v2"
 	"github.com/spf13/afero"
 	"golang.org/x/exp/slog"
 
-	"zakirullin/dumpbot/internal/db"
-	"zakirullin/dumpbot/internal/fs"
-	"zakirullin/dumpbot/internal/sched"
+	"zakirullin/stuffbot/internal/fs"
+	"zakirullin/stuffbot/internal/sched"
+	"zakirullin/stuffbot/internal/userconfig"
 )
 
-func MoveDueTasksToToday(redis *miniredis.Miniredis, fsBackend afero.Fs) error {
-	ids, err := fs.AllUserIDs()
+func MoveDueTasksToToday(storagePath, configFilename string, fsBackend afero.Fs) error {
+	rootFS, _ := fs.NewFS(storagePath, fsBackend)
+
+	userDirs, err := rootFS.FilesAndDirs("")
 	if err != nil {
-		return fmt.Errorf("moveDueTasksForToday: %s\n", err)
+		return fmt.Errorf("schedule worker: %w", err)
 	}
+	userDirs = fs.OnlyUserDirs(userDirs)
 
-	for _, id := range ids {
-		database := db.NewDB(redis)
-		sch, err := database.Schedule(id)
+	for _, userDir := range userDirs {
+		userID, err := strconv.ParseInt(userDir.Name, 10, 64)
 		if err != nil {
-			return fmt.Errorf("moveDueTasksForToday: can't get sch: %s", err)
+			return fmt.Errorf("schedule worker: can't parse user ID: %s", err)
+		}
+		userPath := fs.UserPath(storagePath, userID)
+		userFS, err := fs.NewFS(userPath, fsBackend)
+		if err != nil {
+			return fmt.Errorf("schedule worker: can't create FS: %s", err)
 		}
 
-		fsys, err := fs.NewFS(id, fsBackend)
+		userconf := userconfig.NewConfig()
+		userconfPath := userFS.Path("", configFilename)
+		err = userconf.LoadOrCreate(userconfPath)
 		if err != nil {
-			return fmt.Errorf("moveDueTasksForToday: can't create FS: %s", err)
+			return fmt.Errorf("schedule worker: can't load user config: %s", err)
 		}
-		for filename, cron := range sch {
-			if time.Now().Unix() >= cron.RunAt {
-				err = moveTaskToToday(filename, fsys)
+
+		for _, schedule := range userconf.Schedules() {
+			if time.Now().Unix() >= schedule.ScheduleAt {
+				err = moveTaskToToday(schedule.Filename, userFS)
 				if err != nil {
-					slog.Error("moveDueTasksForToday: can't move", "err", err)
+					slog.Error("schedule worker: can't move", "err", err)
 				}
-				slog.Debug("Scheduled task moved to today", filename, "filename")
-				if len(cron.Cron) != 0 {
-					runAt := sched.Next(cron.Cron)
-					err = database.AddToSchedule(id, filename, runAt, cron.Cron)
-					if err != nil {
-						slog.Error("can't reschedule task", "filename", filename, "cron", cron.Cron, "err", err)
-					}
-					slog.Debug("Task was rescheduled", "filename", filename, "cron", cron.Cron, "runAt", runAt)
+				slog.Debug("Scheduled task moved to today", schedule.Filename, "filename")
+				if len(schedule.Cron) != 0 {
+					runAt := sched.Next(schedule.Cron)
+					userconf.AddToSchedule(schedule.Filename, runAt, schedule.Cron)
+					slog.Debug("Task was rescheduled", "filename", schedule.Filename, "schedule", schedule.Cron, "runAt", runAt)
 					continue
 				}
 
-				err = database.DelFromSchedule(id, filename)
+				err = userconf.LoadOrCreate(userconfPath)
 				if err != nil {
-					fmt.Printf("err")
+					return fmt.Errorf("schedule worker: can't load user config before save: %s", err)
+				}
+
+				userconf.DelFromSchedule(schedule.Filename)
+				err = userconf.Save(userconfPath)
+				if err != nil {
+					return fmt.Errorf("schedule worker: can't save user config: %s", err)
 				}
 			}
 		}
 	}
+
 	return nil
 }
 

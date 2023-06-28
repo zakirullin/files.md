@@ -18,7 +18,7 @@ func TestSend(t *testing.T) {
 
 		if req.URL.Path == "/sendMessage" {
 			body, err := io.ReadAll(req.Body)
-			r.Nil(err)
+			r.NoError(err)
 			r.Equal("chat_id=-1&entities=null&parse_mode=Html&text=t", string(body))
 		}
 	}))
@@ -38,7 +38,7 @@ func TestEdit(t *testing.T) {
 
 		if req.URL.Path == "/editMessage" {
 			body, err := io.ReadAll(req.Body)
-			r.Nil(err)
+			r.NoError(err)
 			r.Equal("chat_id=-1&entities=null&parse_mode=Html&text=t", string(body))
 		}
 	}))
@@ -58,7 +58,7 @@ func TestDel(t *testing.T) {
 
 		if req.URL.Path == "/deleteMessage" {
 			body, err := io.ReadAll(req.Body)
-			r.Nil(err)
+			r.NoError(err)
 			r.Equal("chat_id=-1&message_id=-2", string(body))
 		}
 	}))

@@ -12,13 +12,13 @@ import (
 	"github.com/spf13/afero"
 	"golang.org/x/exp/slog"
 
-	"zakirullin/dumpbot/i18n"
-	"zakirullin/dumpbot/internal"
-	"zakirullin/dumpbot/internal/db"
-	"zakirullin/dumpbot/internal/fs"
-	"zakirullin/dumpbot/internal/sched/worker"
-	"zakirullin/dumpbot/internal/userconfig"
-	"zakirullin/dumpbot/pkg/tg"
+	"zakirullin/stuffbot/i18n"
+	"zakirullin/stuffbot/internal"
+	"zakirullin/stuffbot/internal/db"
+	"zakirullin/stuffbot/internal/fs"
+	"zakirullin/stuffbot/internal/sched/worker"
+	"zakirullin/stuffbot/internal/userconfig"
+	"zakirullin/stuffbot/pkg/tg"
 )
 
 func main() {
@@ -32,17 +32,23 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("Error loading .env file: %s\n", err))
 	}
+	conf, err := internal.LoadConfig()
+	if err != nil {
+		panic(fmt.Sprintf("Error loading conf: %s\n", err))
+	}
 
+	// TODO move to config
 	err = i18n.LoadLangFile("i18n/ru.json")
 	if err != nil {
 		panic(fmt.Sprintf("Error loading i18n: %s\n", err))
 	}
+	// TODO move to config
 	err = i18n.LoadEmojiFile("i18n/emojis.json")
 	if err != nil {
 		panic(fmt.Sprintf("Error loading emoji: %s\n", err))
 	}
 
-	api, err := tgbotapi.NewBotAPI(os.Getenv("BOT_API_TOKEN"))
+	api, err := tgbotapi.NewBotAPI(conf.BotAPIToken)
 	if err != nil {
 		panic(fmt.Sprintf("Can't create TG api: %s\n", err))
 	}
@@ -66,7 +72,7 @@ func main() {
 		for {
 			select {
 			case <-ticker.C:
-				err := worker.MoveDueTasksToToday(redis, fsBackend)
+				err := worker.MoveDueTasksToToday(conf.StoragePath, conf.ConfigFilename, fsBackend)
 				if err != nil {
 					fmt.Printf("Worker's error: %s\n", err)
 				}
@@ -78,9 +84,9 @@ func main() {
 	}(redis, telegram)
 
 	// Service
-	config := tgbotapi.NewUpdate(0)
-	config.Timeout = 60
-	updates := api.GetUpdatesChan(config)
+	tgConfig := tgbotapi.NewUpdate(0)
+	tgConfig.Timeout = 60
+	updates := api.GetUpdatesChan(tgConfig)
 	for upd := range updates {
 		go func(upd tgbotapi.Update) {
 			defer func() {
@@ -96,23 +102,31 @@ func main() {
 
 			u := tg.NewUpd(upd)
 			userID := u.UserID()
-			fsys, err := fs.NewFS(userID, afero.NewOsFs())
+			userPath := fs.UserPath(conf.StoragePath, userID)
+			userFS, err := fs.NewFS(userPath, afero.NewOsFs())
 			if err != nil {
-				slog.Error("Bot error: can't create FS", "err", err)
+				slog.Error("Bot error: can't create fs", "err", err)
+				return
+			}
+			err = userFS.CreateUserDirs()
+			if err != nil {
+				slog.Error("Bot error: can't create user dirs", "err", err)
 				return
 			}
 
-			conf := userconfig.NewConfig()
-			// TODO paths to envs
-			configPath := "cmd/testdata/config.json"
-			err = conf.LoadOrCreate(configPath)
+			userconf := userconfig.NewConfig()
+			userconfPath := userFS.Path("", conf.ConfigFilename)
+			err = userconf.LoadOrCreate(userconfPath)
 			if err != nil {
-				slog.Error("Bot error: can't get or create config", "err", err)
+				slog.Error("Bot error: can't get or create conf", "err", err)
 				return
 			}
-			defer conf.Save(configPath)
+			defer func() {
+				err = userconf.Save(userconfPath)
+				slog.Error("Bot error: can't save userconfig", "err", err)
+			}()
 
-			bot := internal.NewBot(userID, telegram, fsys, db.NewDB(redis), conf)
+			bot := internal.NewBot(userID, telegram, userFS, db.NewDB(redis), userconf)
 
 			if err := bot.Reply(u); err != nil {
 				slog.Error("Bot error", "err", err)

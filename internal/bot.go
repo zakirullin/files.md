@@ -10,15 +10,15 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"golang.org/x/exp/slog"
 
-	"zakirullin/dumpbot/i18n"
-	"zakirullin/dumpbot/internal/db"
-	"zakirullin/dumpbot/internal/fs"
-	"zakirullin/dumpbot/internal/sched"
-	"zakirullin/dumpbot/internal/stats"
-	"zakirullin/dumpbot/internal/userconfig"
-	"zakirullin/dumpbot/pkg/slice"
-	"zakirullin/dumpbot/pkg/text"
-	"zakirullin/dumpbot/pkg/tg"
+	"zakirullin/stuffbot/i18n"
+	"zakirullin/stuffbot/internal/db"
+	"zakirullin/stuffbot/internal/fs"
+	"zakirullin/stuffbot/internal/sched"
+	"zakirullin/stuffbot/internal/stats"
+	"zakirullin/stuffbot/internal/userconfig"
+	"zakirullin/stuffbot/pkg/slice"
+	"zakirullin/stuffbot/pkg/text"
+	"zakirullin/stuffbot/pkg/tg"
 )
 
 var now = func() time.Time {
@@ -964,10 +964,7 @@ func (b *Bot) complete(params []string) error {
 	}
 
 	if dir == fs.DirToday && filename == fs.FilePomodoro {
-		err = b.db.AddToSchedule(b.userID, filename, time.Now().Unix()+int64(b.conf.PomodoroDuration().Seconds()), "")
-		if err != nil {
-			return fmt.Errorf("complete: can't add pomodoro task to schedule: %w", err)
-		}
+		b.conf.AddToSchedule(filename, time.Now().Unix()+int64(b.conf.PomodoroDuration().Seconds()), "")
 	}
 
 	err = b.showList(nil)
@@ -993,10 +990,7 @@ func (b *Bot) schedule(params []string) error {
 		return fmt.Errorf("schedule: can't unhash filename %s in list: %s", filenameHash, err)
 	}
 
-	err = b.db.AddToSchedule(b.userID, filename, scheduleTime, cron)
-	if err != nil {
-		return fmt.Errorf("schedule: can't save schedule for %s: %w", filename, err)
-	}
+	b.conf.AddToSchedule(filename, scheduleTime, cron)
 
 	err = b.fs.Rename(fs.DirToday, filename, fs.DirLater, filename)
 	if err != nil {
