@@ -19,7 +19,7 @@ package stats
 //		return time.Unix(0, 0)
 //	}
 //
-//	fs, _ := fs2.NewFS("", afero.NewMemMapFs())
+//	fs, _ := fs2.NewFS("/", afero.NewMemMapFs())
 //	err := fs.Put("_archive_", "a.md", "")
 //	r.NoError(err)
 //
@@ -59,7 +59,7 @@ package stats
 //		return time.Unix(0, 0)
 //	}
 //
-//	fs, _ := fs2.NewFS("", afero.NewMemMapFs())
+//	fs, _ := fs2.NewFS("/", afero.NewMemMapFs())
 //	err := fs.Put("_archive_", "a.md", "")
 //	r.NoError(err)
 //
@@ -100,7 +100,7 @@ package stats
 //		return time.Unix(0, 0)
 //	}
 //
-//	fs, _ := fs2.NewFS("", afero.NewMemMapFs())
+//	fs, _ := fs2.NewFS("/", afero.NewMemMapFs())
 //	err := fs.Put("_archive_", "a.md", "")
 //	r.NoError(err)
 //	err = fs.Put("_archive_", "b.md", "")

@@ -27,7 +27,7 @@ func init() {
 func TestAddTaskToToday(t *testing.T) {
 	r := require.New(t)
 
-	fsys, err := fs.NewFS("", afero.NewMemMapFs())
+	fsys, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 
 	redis, err := miniredis.Run()
@@ -50,7 +50,7 @@ func TestAddTaskToToday(t *testing.T) {
 func TestAddMultilineTaskToToday(t *testing.T) {
 	r := require.New(t)
 
-	fsys, err := fs.NewFS("", afero.NewMemMapFs())
+	fsys, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 
 	tgram := fake.NewTG()
@@ -78,7 +78,7 @@ func TestAddMultilineTaskToToday(t *testing.T) {
 func TestAddTaskWithSpecCharsToToday(t *testing.T) {
 	r := require.New(t)
 
-	fsys, err := fs.NewFS("", afero.NewMemMapFs())
+	fsys, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 
 	tgram := fake.NewTG()
@@ -106,7 +106,7 @@ func TestAddTaskWithSpecCharsToToday(t *testing.T) {
 func TestAddTaskToLater(t *testing.T) {
 	r := require.New(t)
 
-	fsys, err := fs.NewFS("", afero.NewMemMapFs())
+	fsys, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 	r.NoError(fsys.CreateUserDirs())
 
@@ -136,7 +136,7 @@ func TestAddTaskToLater(t *testing.T) {
 func TestCompleteTask(t *testing.T) {
 	r := require.New(t)
 
-	fsys, err := fs.NewFS("", afero.NewMemMapFs())
+	fsys, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 
 	err = fsys.Put("today", "First task.md", "")
@@ -165,7 +165,7 @@ func TestCompleteTask(t *testing.T) {
 func TestToday(t *testing.T) {
 	r := require.New(t)
 
-	fsys, err := fs.NewFS("", afero.NewMemMapFs())
+	fsys, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 	err = fsys.Put("today", "First task.md", "")
 	r.NoError(err)
@@ -193,7 +193,7 @@ func TestToday(t *testing.T) {
 func TestLater(t *testing.T) {
 	r := require.New(t)
 
-	fsys, err := fs.NewFS("", afero.NewMemMapFs())
+	fsys, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 	err = fsys.Put("later", "First task.md", "")
 	r.NoError(err)
@@ -222,7 +222,7 @@ func TestLater(t *testing.T) {
 func TestTodayWithMultilineTasks(t *testing.T) {
 	r := require.New(t)
 
-	fsys, err := fs.NewFS("", afero.NewMemMapFs())
+	fsys, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 	err = fsys.Put("today", "First task.md", "content")
 	r.NoError(err)
@@ -251,7 +251,7 @@ func TestTodayWithMultilineTasks(t *testing.T) {
 func TestDocs(t *testing.T) {
 	r := require.New(t)
 
-	fsys, err := fs.NewFS("", afero.NewMemMapFs())
+	fsys, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 	err = fsys.Put("", "Doc1.md", "")
 	r.NoError(err)
@@ -279,7 +279,7 @@ func TestDocs(t *testing.T) {
 func TestChecklists(t *testing.T) {
 	r := require.New(t)
 
-	fsys, err := fs.NewFS("", afero.NewMemMapFs())
+	fsys, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 	err = fsys.MakeDir("-checklist1-")
 	r.NoError(err)
@@ -307,7 +307,7 @@ func TestChecklists(t *testing.T) {
 func TestAddSingleItemToChecklist(t *testing.T) {
 	r := require.New(t)
 
-	fsys, err := fs.NewFS("", afero.NewMemMapFs())
+	fsys, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 	err = fsys.MakeDir("-checklist1-")
 	r.NoError(err)
@@ -336,7 +336,7 @@ func TestAddSingleItemToChecklist(t *testing.T) {
 func TestAddMultipleItemsToChecklist(t *testing.T) {
 	r := require.New(t)
 
-	fsys, err := fs.NewFS("", afero.NewMemMapFs())
+	fsys, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 	err = fsys.MakeDir("-checklist1-")
 	r.NoError(err)
@@ -360,7 +360,7 @@ func TestAddMultipleItemsToChecklist(t *testing.T) {
 
 func TestBot_togglePomodoro(t *testing.T) {
 	r := require.New(t)
-	fsys, err := fs.NewFS("", afero.NewMemMapFs())
+	fsys, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 	tgram := fake.NewTG()
 	redis, err := miniredis.Run()
@@ -475,7 +475,7 @@ func TestBot_pomodoroCompletion2(t *testing.T) {
 func TestBot_todayLabelIcons(t *testing.T) {
 	r := require.New(t)
 	t.Setenv("ADMIN_USER_ID", "-1")
-	fsys, err := fs.NewFS("", afero.NewMemMapFs())
+	fsys, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 	tgram := fake.NewTG()
 	redis, err := miniredis.Run()
