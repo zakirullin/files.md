@@ -1,4 +1,4 @@
-module zakirullin/dumpbot
+module zakirullin/stuffbot
 
 go 1.20
 

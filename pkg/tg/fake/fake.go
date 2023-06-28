@@ -3,7 +3,7 @@ package fake
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
-	"zakirullin/dumpbot/pkg/tg"
+	"zakirullin/stuffbot/pkg/tg"
 )
 
 type Upd struct {

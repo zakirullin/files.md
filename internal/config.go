@@ -5,7 +5,7 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 
-	"zakirullin/dumpbot/internal/fs"
+	"zakirullin/stuffbot/internal/fs"
 )
 
 type Config struct {

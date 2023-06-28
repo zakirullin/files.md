@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"os"
 	"regexp"
 	"sort"
 	"strconv"
@@ -18,7 +17,7 @@ import (
 	"github.com/spf13/afero"
 	"golang.org/x/exp/slices"
 
-	"zakirullin/dumpbot/pkg/text"
+	"zakirullin/stuffbot/pkg/text"
 )
 
 var (
@@ -332,16 +331,6 @@ func (fs FS) RestoreContent(dir, filename string) (string, error) {
 	}
 
 	return msg, nil
-}
-
-// TODO rewrite for tests?
-func AllUserIDs() ([]int64, error) {
-	adminUserID, err := strconv.ParseInt(os.Getenv("ADMIN_USER_ID"), 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("can't get user ids: can't cast ADMIN_USER_ID to int64 %w", err)
-	}
-
-	return []int64{-1, adminUserID}, nil
 }
 
 func IsChecklistItem(filename string) bool {

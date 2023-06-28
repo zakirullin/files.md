@@ -3,7 +3,7 @@ package sched
 import (
 	"testing"
 
-	"zakirullin/dumpbot/pkg/text"
+	"zakirullin/stuffbot/pkg/text"
 
 	"github.com/stretchr/testify/require"
 )

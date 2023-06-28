@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"zakirullin/dumpbot/pkg/tg"
+	"zakirullin/stuffbot/pkg/tg"
 
 	"github.com/alicebob/miniredis/v2"
 )

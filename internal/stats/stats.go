@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"zakirullin/dumpbot/internal/db"
-	"zakirullin/dumpbot/internal/fs"
-	"zakirullin/dumpbot/internal/sched"
+	"zakirullin/stuffbot/internal/db"
+	"zakirullin/stuffbot/internal/fs"
+	"zakirullin/stuffbot/internal/sched"
 )
 
 var now = func() time.Time {

@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/afero"
 	"golang.org/x/exp/slog"
 
-	"zakirullin/dumpbot/i18n"
+	"zakirullin/stuffbot/i18n"
 )
 
 var DefaultConfig = Config{ // TODO apply default config if some fields are missing

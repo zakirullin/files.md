@@ -12,13 +12,13 @@ import (
 	"github.com/spf13/afero"
 	"golang.org/x/exp/slog"
 
-	"zakirullin/dumpbot/i18n"
-	"zakirullin/dumpbot/internal"
-	"zakirullin/dumpbot/internal/db"
-	"zakirullin/dumpbot/internal/fs"
-	"zakirullin/dumpbot/internal/sched/worker"
-	"zakirullin/dumpbot/internal/userconfig"
-	"zakirullin/dumpbot/pkg/tg"
+	"zakirullin/stuffbot/i18n"
+	"zakirullin/stuffbot/internal"
+	"zakirullin/stuffbot/internal/db"
+	"zakirullin/stuffbot/internal/fs"
+	"zakirullin/stuffbot/internal/sched/worker"
+	"zakirullin/stuffbot/internal/userconfig"
+	"zakirullin/stuffbot/pkg/tg"
 )
 
 func main() {
@@ -32,21 +32,23 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("Error loading .env file: %s\n", err))
 	}
-	cfg, err := internal.LoadConfig()
+	conf, err := internal.LoadConfig()
 	if err != nil {
-		panic(fmt.Sprintf("Error loading cfg: %s\n", err))
+		panic(fmt.Sprintf("Error loading conf: %s\n", err))
 	}
 
+	// TODO move to config
 	err = i18n.LoadLangFile("i18n/ru.json")
 	if err != nil {
 		panic(fmt.Sprintf("Error loading i18n: %s\n", err))
 	}
+	// TODO move to config
 	err = i18n.LoadEmojiFile("i18n/emojis.json")
 	if err != nil {
 		panic(fmt.Sprintf("Error loading emoji: %s\n", err))
 	}
 
-	api, err := tgbotapi.NewBotAPI(cfg.BotAPIToken)
+	api, err := tgbotapi.NewBotAPI(conf.BotAPIToken)
 	if err != nil {
 		panic(fmt.Sprintf("Can't create TG api: %s\n", err))
 	}
@@ -70,7 +72,7 @@ func main() {
 		for {
 			select {
 			case <-ticker.C:
-				err := worker.MoveDueTasksToToday(cfg, fsBackend)
+				err := worker.MoveDueTasksToToday(conf, fsBackend)
 				if err != nil {
 					fmt.Printf("Worker's error: %s\n", err)
 				}
@@ -100,7 +102,7 @@ func main() {
 
 			u := tg.NewUpd(upd)
 			userID := u.UserID()
-			userPath := fs.UserPath(cfg.StoragePath, userID)
+			userPath := fs.UserPath(conf.StoragePath, userID)
 			userFS, err := fs.NewFS(userPath, afero.NewOsFs())
 			if err != nil {
 				slog.Error("Bot error: can't create fs", "err", err)
@@ -113,10 +115,10 @@ func main() {
 			}
 
 			userconf := userconfig.NewConfig()
-			userconfPath := userFS.Path("", cfg.ConfigFilename)
+			userconfPath := userFS.Path("", conf.ConfigFilename)
 			err = userconf.LoadOrCreate(userconfPath)
 			if err != nil {
-				slog.Error("Bot error: can't get or create cfg", "err", err)
+				slog.Error("Bot error: can't get or create conf", "err", err)
 				return
 			}
 			defer userconf.Save(userconfPath)

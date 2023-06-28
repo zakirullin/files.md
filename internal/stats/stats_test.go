@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	dbpkg "zakirullin/dumpbot/internal/db"
-	fs2 "zakirullin/dumpbot/internal/fs"
+	dbpkg "zakirullin/stuffbot/internal/db"
+	fs2 "zakirullin/stuffbot/internal/fs"
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/spf13/afero"
@@ -33,7 +33,7 @@ func TestDoneToday(t *testing.T) {
 		return time.Unix(0, 0)
 	}
 
-	fs, _ := fs2.NewFS(-1, afero.NewMemMapFs())
+	fs, _ := fs2.NewFS("", afero.NewMemMapFs())
 	err := fs.Put("_archive_", "a.md", "")
 	r.Nil(err)
 
@@ -73,7 +73,7 @@ func TestDoneTodayExcludeScheduled(t *testing.T) {
 		return time.Unix(0, 0)
 	}
 
-	fs, _ := fs2.NewFS(-1, afero.NewMemMapFs())
+	fs, _ := fs2.NewFS("", afero.NewMemMapFs())
 	err := fs.Put("_archive_", "a.md", "")
 	r.Nil(err)
 
@@ -114,7 +114,7 @@ func TestDoneTodayScheduled(t *testing.T) {
 		return time.Unix(0, 0)
 	}
 
-	fs, _ := fs2.NewFS(-1, afero.NewMemMapFs())
+	fs, _ := fs2.NewFS("", afero.NewMemMapFs())
 	err := fs.Put("_archive_", "a.md", "")
 	r.Nil(err)
 	err = fs.Put("_archive_", "b.md", "")

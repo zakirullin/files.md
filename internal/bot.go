@@ -10,15 +10,15 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"golang.org/x/exp/slog"
 
-	"zakirullin/dumpbot/i18n"
-	"zakirullin/dumpbot/internal/db"
-	"zakirullin/dumpbot/internal/fs"
-	"zakirullin/dumpbot/internal/sched"
-	"zakirullin/dumpbot/internal/stats"
-	"zakirullin/dumpbot/internal/userconfig"
-	"zakirullin/dumpbot/pkg/slice"
-	"zakirullin/dumpbot/pkg/text"
-	"zakirullin/dumpbot/pkg/tg"
+	"zakirullin/stuffbot/i18n"
+	"zakirullin/stuffbot/internal/db"
+	"zakirullin/stuffbot/internal/fs"
+	"zakirullin/stuffbot/internal/sched"
+	"zakirullin/stuffbot/internal/stats"
+	"zakirullin/stuffbot/internal/userconfig"
+	"zakirullin/stuffbot/pkg/slice"
+	"zakirullin/stuffbot/pkg/text"
+	"zakirullin/stuffbot/pkg/tg"
 )
 
 var now = func() time.Time {
