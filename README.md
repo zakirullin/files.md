@@ -7,6 +7,7 @@ A telegram bot for your personal stuff.
 [Notes taking via bot](https://vas3k.club/post/18815/)
 
 ## Spin it up 🚀
+0) Install [Go](https://go.dev/doc/install)
 1) Register new telegram bot via [@BotFather](https://t.me/BotFather)
 2) Copy your bot token to `.env` file (see `.env.example`)
 
