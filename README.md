@@ -6,7 +6,7 @@ A telegram bot for your personal stuff.
 [Tasks management bot showcase in Dorofeev's club](https://club.mnogosdelal.ru/post/180/)  
 [Notes taking via bot](https://vas3k.club/post/18815/)
 
-## Spin it up
+## Spin it up 🚀
 1) Register new telegram bot via [@BotFather](https://t.me/BotFather)
 2) Copy your bot token to `.env` file (see `.env.example`)
 
