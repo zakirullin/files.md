@@ -19,7 +19,7 @@ $ go get ./..
 $ go run ./cmd
 ```
 
-Locally bot's artficats can be seen in `cmd/testdata`
+Bot's artifacts can be seen in `cmd/testdata`
 
 ## How we work
 - No long-lived branches except `main`
