@@ -1,12 +1,13 @@
 package internal
 
 import (
-	"github.com/alicebob/miniredis/v2"
-	"github.com/spf13/afero"
-	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/alicebob/miniredis/v2"
+	"github.com/spf13/afero"
+	"github.com/stretchr/testify/require"
 
 	"zakirullin/stuffbot/internal/sched/worker"
 	"zakirullin/stuffbot/internal/userconfig"
@@ -255,6 +256,8 @@ func TestDocs(t *testing.T) {
 
 	fsys, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
+	err = fsys.CreateUserDirs()
+	r.NoError(err)
 	err = fsys.Put("", "Doc1.md", "")
 	r.NoError(err)
 	err = fsys.Put("", "Doc2.md", "")
@@ -274,7 +277,7 @@ func TestDocs(t *testing.T) {
 	r.Equal(tg.NewKeyboard([]tg.Row{
 		tg.NewBtn("Doc1", tg.NewCmd("doc", []string{"c1253521ac7"})),
 		tg.NewBtn("Doc2", tg.NewCmd("doc", []string{"64572c3093f"})),
-		tg.NewBtn("Back to docs", tg.NewCmd("docs", nil))},
+		tg.NewBtn("🏠 Today", tg.NewCmd("today", nil))},
 	), tgram.SentKeyboard)
 }
 

@@ -9,6 +9,7 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"golang.org/x/exp/slog"
+
 	"zakirullin/stuffbot/internal/journal"
 
 	"zakirullin/stuffbot/i18n"
@@ -511,7 +512,7 @@ func (b *Bot) showDocs(params []string) error {
 		kb.AddRow(btn)
 	}
 
-	kb.AddRow(tg.NewBtn(b.tr("Back to docs"), tg.NewCmd(cmdShowDocs, nil)))
+	kb.AddRow(tg.NewBtn(i18n.StrBtnToday, tg.NewCmd(cmdShowToday, nil)))
 
 	err = b.show(b.tr("📝 Your docs:"), &kb, tg.MarkupHTML)
 	if err != nil {
