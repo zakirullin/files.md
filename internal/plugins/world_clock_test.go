@@ -75,6 +75,26 @@ func TestWorldClock_parseTime_When_InvalidTime(t *testing.T) {
 	r.EqualError(err, "Invalid time")
 }
 
+func TestWorldClock_parseDate(t *testing.T) {
+	r := require.New(t)
+	tg := fake.NewTG()
+	worldClockPlugin := NewWorldClockPlugin(1, tg)
+
+	result, err := worldClockPlugin.parseDate("15.06.2023")
+	expectedResult := time.Date(2023, time.June, 15, 0, 0, 0, 0, time.UTC)
+	r.Nil(err)
+	r.Equal(expectedResult, result)
+}
+
+func TestWorldClock_parseDate_When_InvalidDate(t *testing.T) {
+	r := require.New(t)
+	tg := fake.NewTG()
+	worldClockPlugin := NewWorldClockPlugin(1, tg)
+
+	_, err := worldClockPlugin.parseDate("41.06.2023")
+	r.EqualError(err, "Invalid date")
+}
+
 func TestWorldClock_buildMessage(t *testing.T) {
 	r := require.New(t)
 	tg := fake.NewTG()
@@ -82,6 +102,6 @@ func TestWorldClock_buildMessage(t *testing.T) {
 
 	time := time.Date(2023, time.June, 15, 15, 30, 0, 0, time.UTC)
 	result := worldClockPlugin.buildMessage(time, worldClockPlugin.fmtTime)
-	expectedResult := "🕰 15.06.2023 15:30:00 utc\n🔺 15.06.2023 18:30:00 msk\n🏝 15.06.2023 18:30:00 cyprus\n🏝 15.06.2023 17:30:00 me"
+	expectedResult := "🕰 15.06.2023 15:30:00 UTC\n🔺 15.06.2023 18:30:00 MSK\n🏝 15.06.2023 18:30:00 CY\n🏝 15.06.2023 17:30:00 ME"
 	r.Equal(expectedResult, result)
 }
