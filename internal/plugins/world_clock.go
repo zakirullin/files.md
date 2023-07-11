@@ -13,21 +13,22 @@ import (
 
 const (
 	timeFormat = "02.01.2006 15:04:05"
+	dateFormat = "02.01.2006"
 )
 
 var (
-	locationNames = []string{"utc", "msk", "cyprus", "me"}
+	locationNames = []string{"UTC", "MSK", "CY", "ME"}
 	locations     = map[string]*time.Location{
-		"utc":    loadLocation("UTC"),
-		"msk":    loadLocation("Europe/Moscow"),
-		"cyprus": loadLocation("Asia/Nicosia"),
-		"me":     loadLocation("Europe/Podgorica"),
+		"UTC": loadLocation("UTC"),
+		"MSK": loadLocation("Europe/Moscow"),
+		"CY":  loadLocation("Asia/Nicosia"),
+		"ME":  loadLocation("Europe/Podgorica"),
 	}
 	locationIcons = map[string]string{
-		"utc":    "🕰",
-		"msk":    "🔺",
-		"cyprus": "🏝",
-		"me":     "🏝",
+		"UTC": "🕰",
+		"MSK": "🔺",
+		"CY":  "🏝",
+		"ME":  "🏝",
 	}
 )
 
@@ -53,6 +54,13 @@ func (p *WorldClockPlugin) ExecutePlugin(msgText string) bool {
 	var message string
 	var time time.Time
 	var err error
+
+	time, err = p.parseDate(msgText)
+	if err == nil {
+		message = p.buildMessage(time, p.fmtTimestamp)
+		p.tg.Send(p.userID, message, nil, tg.MarkupHTML)
+		return true
+	}
 
 	time, err = p.parseTime(msgText)
 	if err == nil {
@@ -85,6 +93,14 @@ func (p *WorldClockPlugin) parseTime(message string) (time.Time, error) {
 		return parsedTime.UTC(), nil
 	}
 	return time.Time{}, errors.New("Invalid time")
+}
+
+func (p *WorldClockPlugin) parseDate(message string) (time.Time, error) {
+	parsedDate, err := time.Parse(dateFormat, message)
+	if err == nil {
+		return parsedDate.UTC(), nil
+	}
+	return time.Time{}, errors.New("Invalid date")
 }
 
 func (p *WorldClockPlugin) buildMessage(t time.Time, formatter func(time.Time) string) string {
