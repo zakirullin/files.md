@@ -594,6 +594,76 @@ func TestConfigureQP_Doc_AddCheckList(t *testing.T) {
 	}, t)
 }
 
+func TestConfigureQP_DocChecklists_AddPostpone(t *testing.T) {
+	RunQuickPanelTc(PrefTableTestCase{
+		[]string{"doc", "checklists"},
+		fake.NewUpdCmdFake(-1, tg.NewCmd("panel_add", []string{"postpone"})),
+		[]tg.Row{
+			btn_documents_del,
+			btn_checklists_del,
+			btn_postpone_del,
+			delimiter,
+			backBtn,
+		},
+	}, t)
+}
+
+func TestConfigureQP_DocChecklistsPostpone_Show(t *testing.T) {
+	RunQuickPanelTc(PrefTableTestCase{
+		[]string{"doc", "checklists", "postpone"},
+		fake.NewUpdCmdFake(-1, tg.NewCmd("configure_panel", nil)),
+		[]tg.Row{
+			btn_documents_del,
+			btn_checklists_del,
+			btn_postpone_del,
+			delimiter,
+			backBtn,
+		},
+	}, t)
+}
+
+func TestConfigureQP_DocChecklistsPostpone_DelChecklists(t *testing.T) {
+	RunQuickPanelTc(PrefTableTestCase{
+		[]string{"doc", "checklists", "postpone"},
+		fake.NewUpdCmdFake(-1, tg.NewCmd("panel_del", []string{"checklists"})),
+		[]tg.Row{
+			btn_documents_del,
+			btn_postpone_del,
+			delimiter,
+			btn_checklists_add,
+			backBtn,
+		},
+	}, t)
+}
+
+func TestConfigureQP_DocPostpone_DelDoc(t *testing.T) {
+	RunQuickPanelTc(PrefTableTestCase{
+		[]string{"doc", "postpone"},
+		fake.NewUpdCmdFake(-1, tg.NewCmd("panel_del", []string{"doc"})),
+		[]tg.Row{
+			btn_postpone_del,
+			delimiter,
+			btn_documents_add,
+			btn_checklists_add,
+			backBtn,
+		},
+	}, t)
+}
+
+func TestConfigureQP_Postpone_DelPostpone(t *testing.T) {
+	RunQuickPanelTc(PrefTableTestCase{
+		[]string{"postpone"},
+		fake.NewUpdCmdFake(-1, tg.NewCmd("panel_del", []string{"postpone"})),
+		[]tg.Row{
+			delimiter,
+			btn_documents_add,
+			btn_checklists_add,
+			btn_postpone_add,
+			backBtn,
+		},
+	}, t)
+}
+
 func RunQuickPanelTc(tc PrefTableTestCase, t *testing.T) {
 	var cnf = &userconfig.DefaultConfig
 	for _, opt := range tc.initial_opts {
