@@ -1406,7 +1406,7 @@ func (b *Bot) showConfigureQuickPanel(params []string) error {
 
 func (b *Bot) addToPanel(params []string) error {
 	if len(params) == 0 {
-		return nil
+		return fmt.Errorf("No params suplied to addToPanel")
 	}
 	// Search whether a command is valid
 	var found = false
@@ -1430,7 +1430,7 @@ func (b *Bot) addToPanel(params []string) error {
 
 func (b *Bot) delFromPanel(params []string) error {
 	if len(params) == 0 {
-		return nil
+		return fmt.Errorf("No params suplied to delFromPanel")
 	}
 	if !b.conf.DelPanelButton(params[0]) {
 		return fmt.Errorf("Button doesn't exist in user's prefs: %s", params[0])

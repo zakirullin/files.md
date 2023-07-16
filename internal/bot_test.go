@@ -688,6 +688,21 @@ func TestConfigureQP_Empty_AddUnknown(t *testing.T) {
 	}, "Unknown command: wrong", t)
 }
 
+func TestConfigureQP_Empty_AddEmpty(t *testing.T) {
+	RunQuickPanelTc_Error(PrefTableTestCase{
+		[]string{""},
+		fake.NewUpdCmdFake(-1, tg.NewCmd("panel_add", []string{})),
+		[]tg.Row{},
+	}, "No params suplied to addToPanel", t)
+}
+
+func TestConfigureQP_Empty_DelEmpty(t *testing.T) {
+	RunQuickPanelTc_Error(PrefTableTestCase{
+		[]string{""},
+		fake.NewUpdCmdFake(-1, tg.NewCmd("panel_del", []string{})),
+		[]tg.Row{},
+	}, "No params suplied to delFromPanel", t)
+}
 func RunQuickPanelTc(tc PrefTableTestCase, t *testing.T) {
 	var cnf = &userconfig.DefaultConfig
 	for _, opt := range tc.initial_opts {
