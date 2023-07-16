@@ -32,4 +32,8 @@ const (
 	CmdShowRecurringKB    = "recur_kb"
 	CmdTomorrow           = "tomorrow"
 	CmdLater              = "later"
+	CmdShowSettings       = "settings"
+	CmdConfigurePanel     = "configure_panel"
+	CmdAddToPanel         = "panel_add"
+	CmdDelFromPonel       = "panel_del"
 )

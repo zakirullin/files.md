@@ -82,9 +82,9 @@ type CmdMeta struct {
 }
 
 var panelCmdIconArray = []CmdMeta{
-	{cmdShowDoc, "Documents", i18n.EmDocs},
-	{cmdShowChecklists, "Checklists", i18n.EmCheckList},
-	{cmdShowPostpone, "Postpone", i18n.EmPostpone},
+	{constants.CmdShowDoc, "Documents", i18n.EmDocs},
+	{constants.CmdShowChecklists, "Checklists", i18n.EmCheckList},
+	{constants.CmdShowPostpone, "Postpone", i18n.EmPostpone},
 }
 
 func NewBot(userID int64, tg TGInterface, fs *fs.FS, db *db.DB, conf *userconfig.Config) *Bot {
@@ -177,6 +177,10 @@ func (b *Bot) handlers() map[string]func([]string) error {
 		constants.CmdPostpone:           b.postpone,
 		constants.CmdPomodoro:           b.togglePomodoro,
 		constants.CmdShowRecurringKB:    b.showRecurringKeyBoard,
+		constants.CmdShowSettings:       b.showSettings,
+		constants.CmdConfigurePanel:     b.showConfigureQuickPanel,
+		constants.CmdAddToPanel:         b.addToPanel,
+		constants.CmdDelFromPonel:       b.delFromPanel,
 	}
 }
 
@@ -1340,8 +1344,8 @@ func (b *Bot) togglePomodoro(_ []string) error {
 func (b *Bot) showSettings(params []string) error {
 
 	var kb tg.Keyboard
-	kb.AddRow(tg.NewBtn(i18n.StrBtnQuickPanel, tg.NewCmd(cmdConfigurePanel, nil)))
-	kb.AddRow(tg.NewBtn(i18n.StrBtnToday, tg.NewCmd(cmdShowToday, nil)))
+	kb.AddRow(tg.NewBtn(i18n.StrBtnQuickPanel, tg.NewCmd(constants.CmdConfigurePanel, nil)))
+	kb.AddRow(tg.NewBtn(i18n.StrBtnToday, tg.NewCmd(constants.CmdShowToday, nil)))
 
 	err := b.show("Settings: ", &kb, tg.MarkupHTML)
 	if err != nil {
@@ -1363,7 +1367,7 @@ func (b *Bot) showConfigureQuickPanel(params []string) error {
 	for _, pair := range panelCmdIconArray {
 		var cmd = pair.cmd
 		if b.conf.HasQuickPanelCmd(cmd) {
-			kb.AddRow(tg.NewBtn(pair.emoji+" "+pair.desc+" ➖", tg.NewCmd(cmdDelFromPanel, []string{cmd})))
+			kb.AddRow(tg.NewBtn(pair.emoji+" "+pair.desc+" ➖", tg.NewCmd(constants.CmdDelFromPonel, []string{cmd})))
 			enabled = append(enabled, cmd)
 		}
 	}
@@ -1384,11 +1388,11 @@ func (b *Bot) showConfigureQuickPanel(params []string) error {
 		// Command is not enabled, so add it to disabled list
 		if !cmdEnabled {
 			kb.AddRow(
-				tg.NewBtn(pair.emoji+" "+pair.desc+" ➕", tg.NewCmd(cmdAddToPanel, []string{cmd})))
+				tg.NewBtn(pair.emoji+" "+pair.desc+" ➕", tg.NewCmd(constants.CmdAddToPanel, []string{cmd})))
 		}
 	}
 
-	kb.AddRow(tg.NewBtn(i18n.StrBtnBack, tg.NewCmd(cmdShowSettings, nil)))
+	kb.AddRow(tg.NewBtn(i18n.StrBtnBack, tg.NewCmd(constants.CmdShowSettings, nil)))
 
 	err := b.show("Configure quick panel (➕ = add to panel, ➖ = to remove): ", &kb, tg.MarkupHTML)
 	if err != nil {
