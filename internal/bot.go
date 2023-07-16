@@ -81,7 +81,7 @@ type CmdMeta struct {
 	emoji string
 }
 
-var panelCmdIconArray = []CmdMeta{
+var quickPanelAvailableCmds = []CmdMeta{
 	{constants.CmdShowDoc, "Documents", i18n.EmDocs},
 	{constants.CmdShowChecklists, "Checklists", i18n.EmCheckList},
 	{constants.CmdShowPostpone, "Postpone", i18n.EmPostpone},
@@ -440,7 +440,7 @@ func (b *Bot) showMove(params []string) error {
 func (b *Bot) quickPanelRow() []tg.Btn {
 	var quickPanelRow = tg.NewRow()
 	// We iterate through hardcoded panel to preserve order of buttons in UI
-	for _, pair := range panelCmdIconArray {
+	for _, pair := range quickPanelAvailableCmds {
 		var cmd = pair.cmd
 		if b.conf.HasQuickPanelCmd(cmd) {
 			quickPanelRow = append(quickPanelRow, tg.NewBtn(
@@ -1364,7 +1364,7 @@ func (b *Bot) showConfigureQuickPanel(params []string) error {
 	var enabled []string
 
 	// We iterate through hardcoded panel to preserve order of buttons in UI
-	for _, pair := range panelCmdIconArray {
+	for _, pair := range quickPanelAvailableCmds {
 		var cmd = pair.cmd
 		if b.conf.HasQuickPanelCmd(cmd) {
 			kb.AddRow(tg.NewBtn(pair.emoji+" "+pair.desc+" ➖", tg.NewCmd(constants.CmdDelFromPonel, []string{cmd})))
@@ -1376,7 +1376,7 @@ func (b *Bot) showConfigureQuickPanel(params []string) error {
 	kb.AddRow(tg.NewBtn("---", tg.NewCmd("", nil)))
 
 	// Step 3. Now, let's fill buttons that are not disabled...
-	for _, pair := range panelCmdIconArray {
+	for _, pair := range quickPanelAvailableCmds {
 		var cmd = pair.cmd
 		// Check if command is enabled
 		var cmdEnabled = false
@@ -1408,7 +1408,7 @@ func (b *Bot) addToPanel(params []string) error {
 	}
 	// Search whether a command is valid
 	var found = false
-	for _, cmd := range panelCmdIconArray {
+	for _, cmd := range quickPanelAvailableCmds {
 		if cmd.cmd == params[0] {
 			found = true
 			break
