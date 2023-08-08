@@ -192,6 +192,8 @@ func (fs FS) Rename(oldDir, oldFilename, newDir, newFilename string) error {
 }
 
 func Filename(title string) string {
+	// colon is a reserved character in Windows, so we need to replace it with Modifier Letter Colon (U+A789)
+	title = strings.ReplaceAll(title, ":", "꞉")
 	return text.Ucfirst(title) + ".md"
 }
 
@@ -595,8 +597,6 @@ func (fs FS) Touch(dir, filename string) error {
 func (fs FS) Path(dir, filename string) string {
 	dir = strings.ReplaceAll(dir, "/", "|")
 	filename = strings.ReplaceAll(filename, "/", "|")
-	// colon is a reserved character in Windows, so we need to replace it with Modifier Letter Colon (U+A789)
-	filename = strings.ReplaceAll(filename, ":", "꞉")
 	path := fmt.Sprintf("%s/%s/%s", fs.rootPath, dir, filename)
 	path = strings.ReplaceAll(path, "//", "/")
 	// we need to do it twice for the worst case: fs.rootPath == "/", dir == "", filename == "file" -> path: "///file"
