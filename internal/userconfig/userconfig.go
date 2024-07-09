@@ -120,7 +120,7 @@ func (c *Config) MoveToCmds() []string {
 		"day":       i18n.StrForDay,
 		"note":      i18n.StrToNote,
 		"checklist": i18n.StrToChecklist,
-		"doc":       i18n.StrToDoc,
+		"doc":       i18n.StrToFile,
 		"journal":   i18n.StrToJournal,
 	}
 

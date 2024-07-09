@@ -12,7 +12,7 @@ const (
 	StrForDay         = "📆 For a day"
 	StrToNote         = "📌 To Note"
 	StrToChecklist    = "☑️ To Checklist"
-	StrToDoc          = "📝 To Doc"
+	StrToFile         = "📝 To File"
 	StrToJournal      = "📔 To Journal"
 	StrBtnGoToToday   = "➡️ Today"
 	StrBtnRepeat      = "🔄️ Repeat the task"

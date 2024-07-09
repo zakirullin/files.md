@@ -52,6 +52,7 @@ $ git checkout -b feature/feature_name
 Any file can be uniquely identified by filename and dir. We only support one level of nesting.
 
 ## ADRs (Architecture Decision Records)
+- Note term is way too vague. Let's try to use "file" term, without any high level abstraction (like note) 
 - Gave up on AST parsing/rendering. We had lots of corner cases via AST and the code was way complex. Markdown isn't that hard to parse, we can do it via good old straigforward code. We have 3x times less code now, and it is way mentally taxing to read.
 - Adherence to Tolerant Reader principles. If enconunter gibberish during parsing - we skip it, but if we encounter flags of valid data (let's say `###`) but data itself is invalid - we panic. TODO preserve gibberish during read-write cycle.
 - Usage of https://github.com/rivo/uniseg. In Go, strings are read-only slices of bytes. They can be turned into Unicode code points using the for loop or by casting: []rune(str). However, multiple code points may be combined into one user-perceived character or what the Unicode specification calls "grapheme cluster". For example, white circle "⚪" has two runes, but one grapheme cluster.

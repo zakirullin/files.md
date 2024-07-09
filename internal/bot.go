@@ -162,8 +162,7 @@ func (b *Bot) handlers() map[string]func([]string) error {
 		constants.CmdShowDoc:            b.showDoc,
 		constants.CmdShowChecklist:      b.showChecklist,
 		constants.CmdShowChooseDay:      b.showChooseDay,
-		constants.CmdShowToNote:         b.showToNote,
-		constants.CmdShowToDoc:          b.showToDoc,
+		constants.CmdShowToFile:         b.showToFile,
 		constants.CmdShowToChecklist:    b.showToChecklist,
 		constants.CmdMove:               b.move,
 		constants.CmdMoveToNewDir:       b.moveToNewDir,
@@ -405,9 +404,8 @@ func (b *Bot) showMove(params []string) error {
 		i18n.StrForTomorrow: tg.NewCmd(constants.CmdSchedule, []string{filenameHash, txt.I64(sched.Tomorrow()), ""}),
 		i18n.StrForLater:    tg.NewCmd(constants.CmdMove, []string{fs.DirToday, filenameHash, "later"}),
 		i18n.StrForDay:      tg.NewCmd(constants.CmdShowChooseDay, []string{filenameHash}),
-		i18n.StrToNote:      tg.NewCmd(constants.CmdShowToNote, []string{filenameHash}),
+		i18n.StrToFile:      tg.NewCmd(constants.CmdShowToFile, []string{filenameHash}),
 		i18n.StrToChecklist: tg.NewCmd(constants.CmdShowToChecklist, []string{filenameHash}),
-		i18n.StrToDoc:       tg.NewCmd(constants.CmdShowToDoc, []string{filenameHash}),
 		i18n.StrToJournal:   tg.NewCmd(constants.CmdMoveJournal, []string{fs.DirToday, filenameHash}),
 	}
 
@@ -1128,53 +1126,46 @@ func (b *Bot) forADayKeyboard(filenameHash string) (*tg.Keyboard, error) {
 	return kb, nil
 }
 
-func (b *Bot) showToNote(params []string) error {
+func (b *Bot) showToFile(params []string) error {
 	filenameHash := params[0]
 
 	filename, err := b.fs.Unhash(fs.DirToday, filenameHash)
 	if err != nil {
-		return fmt.Errorf("show to note: %w", err)
+		return fmt.Errorf("to file dialog: %w", err)
 	}
 
-	err = b.fs.Rename(fs.DirToday, filename, fs.DirInbox, filename)
+	err = b.fs.Rename(fs.DirToday, filename, "", filename)
 	if err != nil {
-		return fmt.Errorf("show to note: %w", err)
+		return fmt.Errorf("to file dialog: %w", err)
 	}
 
-	kb, err := b.toNoteKeyboard(filenameHash)
+	kb := tg.NewKeyboard(nil)
+	dirBtns, err := b.toDirKeyboardButtons(filenameHash)
 	if err != nil {
-		return fmt.Errorf("show to note: %w", err)
+		return fmt.Errorf("to file dialog: %w", err)
+	}
+	dirBtnsByRows := slice.Chunk(dirBtns, btnsPerRow)
+	for _, row := range dirBtnsByRows {
+		kb.AddRow(row)
+	}
+
+	fileBtns, err := b.toFileKeyboardButtons(filenameHash)
+	if err != nil {
+		return fmt.Errorf("to file dialog: %w", err)
+	}
+	fileBtnsByRows := slice.Chunk(fileBtns, btnsPerRow)
+	for _, row := range fileBtnsByRows {
+		kb.AddRow(row)
 	}
 
 	err = b.db.SetInputExpectation(b.userID, tg.NewCmd(constants.CmdMoveToNewDir, []string{filenameHash, "%s"}))
 	if err != nil {
-		return fmt.Errorf("show to note: %w", err)
+		return fmt.Errorf("to file dialog: %w", err)
 	}
 
-	err = b.show("choose your destiny", kb, tg.MarkupHTML)
+	err = b.show("🗂 Where to save your text?", kb, tg.MarkupHTML)
 	if err != nil {
-		return fmt.Errorf("show to note: %w", err)
-	}
-
-	return nil
-}
-
-func (b *Bot) showToDoc(params []string) error {
-	filenameHash := params[0]
-
-	kb, err := b.toDocKeyboard(filenameHash)
-	if err != nil {
-		return fmt.Errorf("show to doc: can't get keyboard: %w", err)
-	}
-
-	err = b.db.SetInputExpectation(b.userID, tg.NewCmd(constants.CmdMoveToNewDoc, []string{filenameHash, "%s"}))
-	if err != nil {
-		return fmt.Errorf("show to doc: can't set input expectation: %w", err)
-	}
-
-	err = b.show(b.tr("📝 Choose a doc or name a new one:"), kb, tg.MarkupHTML)
-	if err != nil {
-		return fmt.Errorf("show to doc: %w", err)
+		return fmt.Errorf("to file dialog: %w", err)
 	}
 
 	return nil
@@ -1201,7 +1192,7 @@ func (b *Bot) showToChecklist(params []string) error {
 	return nil
 }
 
-func (b *Bot) toDocKeyboard(filenameHash string) (*tg.Keyboard, error) {
+func (b *Bot) toFileKeyboardButtons(filenameHash string) ([]tg.Btn, error) {
 	files, err := b.fs.FilesAndDirs("")
 	if err != nil {
 		return nil, fmt.Errorf("to doc keyboard: %w", err)
@@ -1211,18 +1202,18 @@ func (b *Bot) toDocKeyboard(filenameHash string) (*tg.Keyboard, error) {
 		return nil, nil
 	}
 
+	var buttons []tg.Btn
 	newBtn := func(title, docHash string) tg.Btn {
 		return tg.NewBtn(title, tg.NewCmd(constants.CmdMoveToDoc, []string{filenameHash, docHash}))
 	}
-	kb := tg.NewKeyboard(nil)
 	for _, file := range files {
-		kb.AddRow(newBtn(file.Title, file.Hash))
+		buttons = append(buttons, newBtn(file.Title, file.Hash))
 	}
 
-	return kb, nil
+	return buttons, nil
 }
 
-func (b *Bot) toNoteKeyboard(filenameHash string) (*tg.Keyboard, error) {
+func (b *Bot) toDirKeyboardButtons(filenameHash string) ([]tg.Btn, error) {
 	newBtn := func(dir string) tg.Btn {
 		return tg.NewBtn(dir, tg.NewCmd(constants.CmdMove, []string{fs.DirInbox, filenameHash, dir}))
 	}
@@ -1233,12 +1224,12 @@ func (b *Bot) toNoteKeyboard(filenameHash string) (*tg.Keyboard, error) {
 	}
 	dirs = fs.OnlyNoteDirs(fs.OnlyDirs(dirs))
 
-	kb := tg.NewKeyboard(nil)
+	var buttons []tg.Btn
 	for _, dir := range dirs {
-		kb.AddRow(newBtn(dir.Name))
+		buttons = append(buttons, newBtn(dir.Name))
 	}
 
-	return kb, nil
+	return buttons, nil
 }
 
 func (b *Bot) toChecklistKeyboard(filenameHash string) (*tg.Keyboard, error) {

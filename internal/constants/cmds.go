@@ -17,7 +17,7 @@ const (
 	CmdShowDoc            = "doc"
 	CmdShowChecklist      = "checklist"
 	CmdShowChooseDay      = "to_day"
-	CmdShowToNote         = "to_note"
+	CmdShowToFile         = "to_file"
 	CmdShowToDoc          = "to_doc"
 	CmdShowToChecklist    = "to_checklist"
 	CmdMove               = "mv"
