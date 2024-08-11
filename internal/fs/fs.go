@@ -84,6 +84,10 @@ func NewFS(absRootPath string, backend afero.Fs) (*FS, error) {
 	return &FS{absRootPath, backend}, nil
 }
 
+func NewFile(name, hash, title string, ctime int64, isMultiline, isDir bool, parentDir string) File {
+	return File{name, hash, title, ctime, isMultiline, isDir, parentDir}
+}
+
 func (fs FS) CreateUserDirs() error {
 	for _, dir := range []string{
 		DirArchive,
@@ -295,7 +299,7 @@ func (fs FS) FilesAndDirs(dir string) ([]File, error) {
 			continue
 		}
 
-		file := File{
+		file := NewFile(
 			entry.Name(),
 			Hash(entry.Name()),
 			Title(entry.Name()),
@@ -303,7 +307,7 @@ func (fs FS) FilesAndDirs(dir string) ([]File, error) {
 			entry.Size() > 0,
 			entry.IsDir(),
 			dir,
-		}
+		)
 		files = append(files, file)
 	}
 
@@ -435,6 +439,7 @@ func (fs FS) SearchNotes(query string) ([]File, error) {
 		return nil, fmt.Errorf("search notes: %w", err)
 	}
 	notesDirs = OnlyNoteDirs(notesDirs)
+	notesDirs = append(notesDirs, NewFile(DirRoot, "", DirRoot, 0, false, true, ""))
 	for _, noteDir := range notesDirs {
 		if strings.HasPrefix(noteDir.Name, supposedDir) {
 			searchInDirs = append(searchInDirs, noteDir.Name)

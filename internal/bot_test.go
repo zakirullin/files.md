@@ -592,7 +592,7 @@ func TestShowChecklist(t *testing.T) {
 	err = bot.Answer(fake.NewUpdCmdFake(-1, tg.NewCmd("checklist", []string{"8d2335b5ff3"})))
 	r.NoError(err)
 
-	r.Equal("Checklist1", tgram.LastSentText)
+	r.Equal("Checklist1"+wideSpacer, tgram.LastSentText)
 	r.Equal(tg.NewKeyboard([]tg.Row{
 		tg.NewBtn("Item", tg.NewCmd("cc", []string{"8d2335b5ff3", "7b72407ca70"})),
 		tg.NewBtn("🏠 Today", tg.NewCmd("today", nil)),
@@ -615,7 +615,7 @@ func TestCompleteItemInChecklist(t *testing.T) {
 	err = bot.Answer(fake.NewUpdCmdFake(-1, tg.NewCmd("cc", []string{"8d2335b5ff3", "7b72407ca70"})))
 	r.NoError(err)
 
-	r.Equal("Checklist1", tgram.LastSentText)
+	r.Equal("Checklist1"+wideSpacer, tgram.LastSentText)
 	r.Equal(tg.NewKeyboard([]tg.Row{
 		tg.NewBtn("🏠 Today", tg.NewCmd("today", nil)),
 	},

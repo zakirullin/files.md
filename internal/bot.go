@@ -698,7 +698,7 @@ func (b *Bot) showFiles(params []string) error {
 
 	kb.AddRow(tg.NewBtn(i18n.StrBtnToday, tg.NewCmd(constants.CmdShowToday, nil)))
 
-	err = b.show(b.tr("📄 Your files:"), &kb, tg.MarkupHTML)
+	err = b.show(b.tr("📄 Your files:")+wideSpacer, &kb, tg.MarkupHTML)
 	if err != nil {
 		return fmt.Errorf("show files: %w", err)
 	}
@@ -966,7 +966,7 @@ func (b *Bot) showChecklist(params []string) error {
 	}
 	kb.AddRow(tg.NewBtn(i18n.StrBtnToday, tg.NewCmd(constants.CmdShowToday, nil)))
 
-	err = b.show(fs.Title(checklist), kb, tg.MarkupHTML)
+	err = b.show(fs.Title(checklist)+wideSpacer, kb, tg.MarkupHTML)
 	if err != nil {
 		return fmt.Errorf("show checklist: %w", err)
 	}
