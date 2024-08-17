@@ -259,14 +259,6 @@ func (fs FS) Unhash(dir, filenameHash string) (string, error) {
 		}
 	}
 
-	// Compatibility, first we check for full Name match,
-	// When do we need it?
-	//for _, file := range filenames {
-	//	if file.Name == filenameHash {
-	//		return file.Name, nil
-	//	}
-	//}
-
 	for _, file := range filenames {
 		if strings.HasPrefix(file.Name, filenameHash) {
 			return file.Name, nil

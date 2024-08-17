@@ -555,7 +555,12 @@ func (b *Bot) showMoveTo(params []string) error {
 		targetFilename := args[0]
 		unhashedTarget, err := b.fs.Unhash(fs.DirRoot, targetFilename)
 		if err == nil {
-			lastRow = append(lastRow, tg.NewBtn(fs.Title(unhashedTarget), tg.NewCmd(quickCmd, args)))
+			icon := i18n.Emojify("file")
+			if quickCmd == consts.CmdMoveToDir {
+				icon = i18n.Emojify("dir")
+			}
+			name := fmt.Sprintf("%s %s", icon, fs.Title(unhashedTarget))
+			lastRow = append(lastRow, tg.NewBtn(name, tg.NewCmd(quickCmd, args)))
 		}
 	}
 	lastRow = append(lastRow, tg.NewBtn(i18n.StrGoToToday, tg.NewCmd(consts.CmdShowToday, nil)))
