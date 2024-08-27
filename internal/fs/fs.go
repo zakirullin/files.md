@@ -68,19 +68,19 @@ type File struct {
 	ParentDir   string
 }
 
-func NewFS(absRootPath string, backend afero.Fs) (*FS, error) {
-	exists, err := afero.Exists(backend, absRootPath)
+func NewFS(absUserRootPath string, backend afero.Fs) (*FS, error) {
+	exists, err := afero.Exists(backend, absUserRootPath)
 	if err != nil {
 		return nil, fmt.Errorf("new fs: %w", err)
 	}
 	if !exists {
-		err = backend.Mkdir(absRootPath, 0o755)
+		err = backend.Mkdir(absUserRootPath, 0o755)
 		if err != nil {
 			return nil, fmt.Errorf("new fs: %w", err)
 		}
 	}
 
-	return &FS{absRootPath, backend}, nil
+	return &FS{absUserRootPath, backend}, nil
 }
 
 func NewFile(name, hash, title string, ctime int64, isMultiline, isDir bool, parentDir string) File {
