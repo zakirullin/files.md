@@ -41,6 +41,7 @@ const (
 	maxInlineResults       = 50
 	maxMsgLength           = 4096 // In UTF-8 characters, skin-tone emojis count as 2
 	maxMsgsToSendAtOnce    = 5    // For lengthy messages
+	imgWidth               = 400  // We insert images into *.md files with this width
 
 	// Buttons shrink to the msg width, so we make the msg wider
 	wideSpacer = "<code>            ⁠</code>"
@@ -312,7 +313,6 @@ func (b *Bot) allowedTextCmds() []string {
 		consts.CmdShowChecklists,
 		consts.CmdShowStats,
 		consts.CmdShowSchedule,
-		consts.CmdAddToJournalShortcut,
 		consts.CmdShowMoveFromToday,
 		//"help" TODO,
 		//"err" TODO,
@@ -363,7 +363,7 @@ func (b *Bot) saveFromPhoto(u UpdInterface) error {
 	}
 
 	imgPath := fmt.Sprintf("../%s/%s", fs.DirImg, imgFilename)
-	content := fmt.Sprintf("![[%s|center|400]]", imgPath)
+	content := fmt.Sprintf("![[%s|center|%d]]", imgPath, imgWidth)
 	if u.Caption() != "" {
 		caption := txt.EntitiesToMarkdown(u.Caption(), u.CaptionEntities())
 		caption = strings.TrimSpace(txt.NormNewLines(caption))
@@ -1348,6 +1348,8 @@ func (b *Bot) addToRecentFileFromShortcut(params []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to move to recent file: can't add note: %w", err)
 	}
+
+	_, _ = b.tg.Send(b.userID, "Added to "+fs.Title(existingFilename), nil, tg.MarkupHTML)
 
 	return b.ShowTodayTasks(nil)
 }
