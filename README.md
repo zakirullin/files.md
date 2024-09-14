@@ -23,14 +23,9 @@ When we are focused and distracting information comes in, we want to get rid of 
 1) Install [Go](https://go.dev/doc/install)
 2) Register new telegram bot via [@BotFather](https://t.me/BotFather)
 3) Copy your bot token to `.env` file (see `.env.example`)
-
+4) Run the bot:
 ```bash
-$ make install && make run
-```
-or
-```bash
-$ go get ./..
-$ go run ./cmd
+$ go mod tidy && go run ./cmd/bot
 ```
 
 Bot's artifacts can be seen in `storage/<USER_ID>` folder
@@ -39,7 +34,7 @@ Bot's artifacts can be seen in `storage/<USER_ID>` folder
 1) Install [Go](https://go.dev/doc/install)
 2) Run the app:
 ```bash
-$ make gui
+$ go mod tidy && go run ./cmd/gui
 ```
 
 ## File structure
@@ -74,7 +69,7 @@ $ git checkout -b feature/feature_name
 - `content` - note's content (body/text)
 - `dir` - a dir that is meant to store notes under some category, like "happiness"
 - `userID` - chatID. For the most part we're only using chatID as userID (PM with the bot)
-- `ctime` for file -  data blocks or metadata change time: file's ownership, location, file type and permission settings changed time.  Parent folder renaming won't affect, moving the file does affect, renaming the file does affect. We need this to track file's location changes, like to understand when it was moved to archive
+- `ctime` for file - data blocks or metadata change time: file's ownership, location, file type and permission settings changed time.  Parent folder renaming won't affect, moving the file does affect, renaming the file does affect. We need this to track file's location changes, like to understand when it was moved to archive
 - `ctime` for dir - adding or removing files or subdirectories (similar to `mtime`)
 
 Any file can be uniquely identified by filename and dir. We only support one level of nesting.

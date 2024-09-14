@@ -1210,6 +1210,7 @@ func (b *Bot) showChecklist(params []string) error {
 	items = fs.SortByCtimeDesc(items)
 	slices.Reverse(items)
 
+	// TODO check that we're showing last buttons
 	maxButtons := maxBtns
 	if checklist == fs.DirRead || checklist == fs.DirWatch {
 		maxButtons = maxBtnsInChecklist
