@@ -1107,6 +1107,8 @@ func TestShowToFileNoDirs(t *testing.T) {
 
 	r.Equal(tg.NewKeyboard([]tg.Row{
 		tg.NewRow(tg.NewBtn("📄 Note", tg.NewCmd("mf", []string{"345fb", "", "345fb"}))),
+		tg.NewBtn("Or choose a dir:", tg.NewCustomCmd("search", nil, "iq")),
+		tg.NewRow(tg.NewBtn("🗂 New Dir", tg.NewCmd("new_dir", []string{"345fbd7ab08"}))),
 	},
 	), tgram.LastSentKeyboard)
 }
@@ -1130,9 +1132,11 @@ func TestShowMoveToFile(t *testing.T) {
 	r.Equal(tg.NewKeyboard([]tg.Row{
 		tg.NewRow(tg.NewBtn("📄 Note", tg.NewCmd("mf", []string{"345fb", "", "345fb"}))),
 		tg.NewBtn("Or choose a dir:", tg.NewCustomCmd("search", nil, "iq")),
-		tg.NewRow(tg.NewBtn("🗂️ dir", tg.NewCmd("mv", []string{"73600", "", "345fbd7ab08"}))),
-	},
-	), tgram.LastSentKeyboard)
+		tg.NewRow(
+			tg.NewBtn("🗂️ dir", tg.NewCmd("mv", []string{"73600", "", "345fbd7ab08"})),
+			tg.NewBtn("🗂 New Dir", tg.NewCmd("new_dir", []string{"345fbd7ab08"})),
+		),
+	}), tgram.LastSentKeyboard)
 }
 
 func TestShow(t *testing.T) {
@@ -2312,6 +2316,7 @@ func TestSaveToExistingFileIntegration(t *testing.T) {
 		tg.NewRow(
 			tg.NewBtn("🗂️ habits", tg.NewCmd("mv", []string{"51fc0", "", "232004794e5"})),
 			tg.NewBtn("🗂️ inbox", tg.NewCmd("mv", []string{"af1cd", "", "232004794e5"})),
+			tg.NewBtn("🗂 New Dir", tg.NewCmd("new_dir", []string{"232004794e5"})),
 		),
 	})
 	r.Equal(selectFileKB, tgram.LastEditedKeyboard)
@@ -2388,6 +2393,7 @@ func TestSaveToNewFileIntegration(t *testing.T) {
 		tg.NewRow(
 			tg.NewBtn("🗂️ habits", tg.NewCmd("mv", []string{"51fc0", "", "232004794e5"})),
 			tg.NewBtn("🗂️ inbox", tg.NewCmd("mv", []string{"af1cd", "", "232004794e5"})),
+			tg.NewBtn("🗂 New Dir", tg.NewCmd("new_dir", []string{"232004794e5"})),
 		),
 	})
 	r.Equal(selectFileKB, tgram.LastEditedKeyboard)
@@ -2464,6 +2470,7 @@ func TestSaveToNewMultilineFileIntegration(t *testing.T) {
 		tg.NewRow(
 			tg.NewBtn("🗂️ habits", tg.NewCmd("mv", []string{"51fc0", "", "232004794e5"})),
 			tg.NewBtn("🗂️ inbox", tg.NewCmd("mv", []string{"af1cd", "", "232004794e5"})),
+			tg.NewBtn("🗂 New Dir", tg.NewCmd("new_dir", []string{"232004794e5"})),
 		),
 	})
 	r.Equal(selectFileKB, tgram.LastEditedKeyboard)
@@ -2540,6 +2547,7 @@ func TestSaveToNewCustomFileIntegration(t *testing.T) {
 		tg.NewRow(
 			tg.NewBtn("🗂️ habits", tg.NewCmd("mv", []string{"51fc0", "", "232004794e5"})),
 			tg.NewBtn("🗂️ inbox", tg.NewCmd("mv", []string{"af1cd", "", "232004794e5"})),
+			tg.NewBtn("🗂 New Dir", tg.NewCmd("new_dir", []string{"232004794e5"})),
 		),
 	})
 	r.Equal(selectFileKB, tgram.LastEditedKeyboard)
@@ -2620,6 +2628,7 @@ func TestSaveToRecentFileIntegration(t *testing.T) {
 		tg.NewBtn("Or choose a dir:", tg.NewCustomCmd("search", nil, "iq")),
 		tg.NewRow(
 			tg.NewBtn("🗂️ inbox", tg.NewCmd("mv", []string{"af1cd", "", "72e564182be"})),
+			tg.NewBtn("🗂 New Dir", tg.NewCmd("new_dir", []string{"72e564182be"})),
 		),
 	})
 	r.Equal(selectFileKeyboard, tgram.LastEditedKeyboard)

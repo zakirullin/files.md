@@ -213,6 +213,7 @@ func (b *Bot) handlers() map[string]func([]string) error {
 		consts.CmdShowMoveToDirOrFile:         b.showMoveToFileOrDir,
 		consts.CmdShowMoveToChecklist:         b.showToChecklist,
 		consts.CmdMoveToDir:                   b.moveToDir,
+		consts.CmdRequestNewDir:               b.requestNewDir,
 		consts.CmdMoveToNewDir:                b.moveToNewDir,
 		consts.CmdMoveToExistingFile:          b.moveToExistingFile,
 		consts.CmdMoveToExistingNote:          b.moveToExistingNote,
@@ -1291,6 +1292,20 @@ func (b *Bot) moveToDir(params []string) error {
 	return b.ShowToday(nil)
 }
 
+// TODO add tests
+func (b *Bot) requestNewDir(params []string) error {
+	filenameHash := params[0]
+
+	err := b.showHTML(i18n.Tr("OK. Send me the name for your new dir"), nil)
+	if err != nil {
+		return fmt.Errorf("request new dir: %w", err)
+	}
+
+	b.db.SetInputExpectation(b.userID, tg.NewCmd(consts.CmdMoveToNewDir, []string{filenameHash, "%s"}))
+
+	return nil
+}
+
 func (b *Bot) moveToNewDir(params []string) error {
 	filenameHash := params[0]
 	dir := params[1]
@@ -1300,7 +1315,7 @@ func (b *Bot) moveToNewDir(params []string) error {
 		return fmt.Errorf("move to new dir: %w", err)
 	}
 
-	return b.moveToDir([]string{dir, fs.DirInbox, filenameHash})
+	return b.moveToDir([]string{dir, fs.DirRoot, filenameHash})
 }
 
 func (b *Bot) moveToExistingFile(params []string) error {
@@ -1830,7 +1845,7 @@ func (b *Bot) showMoveToFileOrDir(params []string) error {
 	kb := tg.NewKeyboard(nil)
 	skippedBtns := false
 
-	fileBtns, err := b.toFileBtns(fs.ShortHash(filename))
+	fileBtns, err := b.moveToFileBtns(fs.ShortHash(filename))
 	if err != nil {
 		return fmt.Errorf("to file dialog: %w", err)
 	}
@@ -1838,6 +1853,7 @@ func (b *Bot) showMoveToFileOrDir(params []string) error {
 		fileBtns = fileBtns[:maxRecentBtns]
 		skippedBtns = true
 	}
+	// Move newly created file to the end of the files list
 	if len(fileBtns) > 0 {
 		fileBtns = append(fileBtns[1:], fileBtns[0])
 	}
@@ -1846,7 +1862,7 @@ func (b *Bot) showMoveToFileOrDir(params []string) error {
 		kb.AddRow(row)
 	}
 
-	dirBtns, err := b.toDirBtns(filenameHash)
+	dirBtns, err := b.moveToDirBtns(filenameHash)
 	if err != nil {
 		return fmt.Errorf("to file dialog: %w", err)
 	}
@@ -1854,6 +1870,13 @@ func (b *Bot) showMoveToFileOrDir(params []string) error {
 		dirBtns = dirBtns[:maxRecentBtns]
 		skippedBtns = true
 	}
+	// Add "New Dir" to the end of the dirs list
+	if len(dirBtns) >= maxRecentBtns {
+		// Free up space for the new dir button
+		fileBtns = fileBtns[:len(fileBtns)-1]
+	}
+	btn := tg.NewBtn("🗂 New Dir", tg.NewCmd(consts.CmdRequestNewDir, []string{filenameHash}))
+	dirBtns = append(dirBtns, btn)
 
 	shouldAddSeparator := len(dirBtns) > 0 && len(fileBtns) > 0
 	if shouldAddSeparator {
@@ -1871,7 +1894,7 @@ func (b *Bot) showMoveToFileOrDir(params []string) error {
 
 	b.db.SetInputExpectation(b.userID, tg.NewCmd(consts.CmdMoveToNewFile, []string{filenameHash, "%s"}))
 
-	err = b.showHTML("📄 Select a file or enter a name for a new one:", kb)
+	err = b.showHTML("📄 Select a file or enter a new name:", kb)
 	if err != nil {
 		return fmt.Errorf("to file dialog: %w", err)
 	}
@@ -1897,7 +1920,7 @@ func (b *Bot) showToChecklist(params []string) error {
 	return nil
 }
 
-func (b *Bot) toFileBtns(newFilenameShortHash string) ([]tg.Btn, error) {
+func (b *Bot) moveToFileBtns(newFilenameShortHash string) ([]tg.Btn, error) {
 	files, err := b.fs.FilesAndDirs(fs.DirRoot)
 	if err != nil {
 		return nil, fmt.Errorf("to doc keyboard: %w", err)
@@ -1921,7 +1944,7 @@ func (b *Bot) toFileBtns(newFilenameShortHash string) ([]tg.Btn, error) {
 	return buttons, nil
 }
 
-func (b *Bot) toDirBtns(filenameHash string) ([]tg.Btn, error) {
+func (b *Bot) moveToDirBtns(filenameHash string) ([]tg.Btn, error) {
 	newBtn := func(dir string) tg.Btn {
 		emojifiedDir := fmt.Sprintf("%s %s", i18n.Emoji("dir"), dir)
 		return tg.NewBtn(emojifiedDir, tg.NewCmd(consts.CmdMoveToDir, []string{fs.ShortHash(dir), fs.DirRoot, filenameHash}))
