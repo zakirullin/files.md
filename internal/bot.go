@@ -162,10 +162,10 @@ func (b *Bot) Answer(u UpdInterface) error {
 		}
 
 		if callbackQueryID, ok := u.CallbackQueryID(); ok {
+			// We can tolerate an error here, that won't affect UX
 			if cmd.Name == consts.CmdComplete {
 				_ = b.tg.AnswerCallbackQuery(callbackQueryID, completedMsg())
 			} else {
-				// We can tolerate an error here, that won't affect UX
 				_ = b.tg.AnswerCallbackQuery(callbackQueryID, "")
 			}
 		}

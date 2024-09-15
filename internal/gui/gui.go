@@ -3,11 +3,14 @@ package gui
 import (
 	"io"
 	"strings"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"zakirullin/stuffbot/internal"
@@ -16,12 +19,13 @@ import (
 )
 
 type ChatGUI struct {
-	userID   int64
-	messages *fyne.Container
-	scroll   *container.Scroll
-	window   fyne.Window
-	entry    *entry
-	updater  func(updInterface internal.UpdInterface) error
+	userID    int64
+	messages  *fyne.Container
+	scroll    *container.Scroll
+	window    fyne.Window
+	entry     *entry
+	updater   func(updInterface internal.UpdInterface) error
+	container *fyne.Container
 }
 
 var Chat *ChatGUI
@@ -52,9 +56,9 @@ func (c *ChatGUI) Run(startupCMD tg.Cmd) {
 	// Make sure the entry field takes all available width
 	inputLine := container.New(layout.NewBorderLayout(nil, nil, nil, sendBtn), c.entry, sendBtn)
 	c.scroll = container.NewVScroll(container.NewVBox(layout.NewSpacer(), c.messages))
-	cont := container.New(layout.NewBorderLayout(nil, inputLine, nil, nil), c.scroll, inputLine)
+	c.container = container.New(layout.NewBorderLayout(nil, inputLine, nil, nil), c.scroll, inputLine)
 
-	c.window.SetContent(cont)
+	c.window.SetContent(c.container)
 	c.window.Resize(fyne.NewSize(width, height))
 	c.window.Show()
 	c.window.Canvas().Focus(c.entry)
@@ -110,7 +114,23 @@ func (c *ChatGUI) Del(_ int64, _ int) error {
 	return nil
 }
 
-func (c *ChatGUI) AnswerCallbackQuery(_ string, _ string) error {
+func (c *ChatGUI) AnswerCallbackQuery(_ string, msg string) error {
+	if len(msg) == 0 {
+		return nil
+	}
+	msg = "🎉"
+
+	toast := canvas.NewText(msg, theme.Color(theme.ColorNamePrimary))
+	toast.Alignment = fyne.TextAlignCenter
+	Chat.container.Add(toast)
+	toast.Refresh()
+
+	Chat.window.Canvas().Content()
+	go func() {
+		time.Sleep(2 * time.Second)
+		toast.Hide()
+	}()
+
 	return nil
 }
 
