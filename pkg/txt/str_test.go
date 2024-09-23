@@ -149,6 +149,12 @@ func TestSplitTextIntoChunks(t *testing.T) {
 			maxLen:   10,
 			expected: []string{""},
 		},
+		{
+			name:     "string with only spaces",
+			input:    "aaa",
+			maxLen:   2,
+			expected: []string{"aa", "a"},
+		},
 	}
 
 	for _, tt := range tests {
