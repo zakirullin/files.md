@@ -94,7 +94,7 @@ func (p *WorldClockPlugin) parseTimestamp(message string) (time.Time, error) {
 	if err == nil && timestamp > 999999 {
 		return time.Unix(timestamp, 0).UTC(), nil
 	}
-	return time.Time{}, errors.New("Invalid timestamp")
+	return time.Time{}, errors.New("invalid timestamp")
 }
 
 func (p *WorldClockPlugin) parseTime(message string) (time.Time, error) {
@@ -102,7 +102,7 @@ func (p *WorldClockPlugin) parseTime(message string) (time.Time, error) {
 	if err == nil {
 		return parsedTime.UTC(), nil
 	}
-	return time.Time{}, errors.New("Invalid time")
+	return time.Time{}, errors.New("invalid time")
 }
 
 func (p *WorldClockPlugin) parseDate(message string) (time.Time, error) {
@@ -110,7 +110,7 @@ func (p *WorldClockPlugin) parseDate(message string) (time.Time, error) {
 	if err == nil {
 		return parsedDate.UTC(), nil
 	}
-	return time.Time{}, errors.New("Invalid date")
+	return time.Time{}, errors.New("invalid date")
 }
 
 func (p *WorldClockPlugin) buildMessage(t time.Time, formatter func(time.Time) string) string {
