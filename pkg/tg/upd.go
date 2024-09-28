@@ -92,3 +92,7 @@ func (u *Upd) PhotoOrImageID() (string, bool) {
 func (u *Upd) Caption() string {
 	return u.PhotoCaption
 }
+
+func (u *Upd) MsgID() (int, bool) {
+	return 0, false
+}

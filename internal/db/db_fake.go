@@ -51,12 +51,12 @@ func (db *FakeDB) SetFilenameByMsgID(userID int64, msgID int, filename string) {
 	db.FilenameByMessageID = filename
 }
 
-func (db *FakeDB) FilenameByMsgID(userID int64, msgID int) string {
-	return db.FilenameByMessageID
+func (db *FakeDB) FilenameByMsgID(userID int64, msgID int) (string, bool) {
+	return db.FilenameByMessageID, db.FilenameByMessageID != ""
 }
 
-func (db *FakeDB) DirByMsgID(userID int64, msgID int) string {
-	return db.DirByMessageID
+func (db *FakeDB) DirByMsgID(userID int64, msgID int) (string, bool) {
+	return db.DirByMessageID, db.DirByMessageID != ""
 }
 
 func (db *FakeDB) SetDirByMsgID(userID int64, msgID int, dir string) {

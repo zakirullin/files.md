@@ -67,26 +67,26 @@ func (db *DB) DelInputExpectation(userID int64) {
 	inputExpectations.Delete(inputExpectationKey(userID))
 }
 
-func (db *DB) FilenameByMsgID(userID int64, msgID int) string {
+func (db *DB) FilenameByMsgID(userID int64, msgID int) (string, bool) {
 	filename, ok := filenameByMsgID.Load(filenameByMsgIDKey(userID, msgID))
 	if !ok {
-		return ""
+		return "", false
 	}
 
-	return filename.(string)
+	return filename.(string), true
+}
+
+func (db *DB) DirByMsgID(userID int64, msgID int) (string, bool) {
+	filename, ok := dirByMsgID.Load(dirByMsgIDKey(userID, msgID))
+	if !ok {
+		return "", false
+	}
+
+	return filename.(string), true
 }
 
 func (db *DB) SetFilenameByMsgID(userID int64, msgID int, filename string) {
 	filenameByMsgID.Store(filenameByMsgIDKey(userID, msgID), filename)
-}
-
-func (db *DB) DirByMsgID(userID int64, msgID int) string {
-	filename, ok := dirByMsgID.Load(dirByMsgIDKey(userID, msgID))
-	if !ok {
-		return ""
-	}
-
-	return filename.(string)
 }
 
 func (db *DB) SetDirByMsgID(userID int64, msgID int, filename string) {

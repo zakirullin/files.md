@@ -68,6 +68,7 @@ type Update interface {
 	ReplyToMsgID() (int, bool)
 	PhotoOrImageID() (string, bool)
 	Caption() string
+	MsgID() (int, bool)
 }
 
 // Chat provides a simple interface to chat API like Telegram
@@ -87,9 +88,9 @@ type Database interface {
 	InputExpectation(userID int64) *tg.Cmd
 	SetInputExpectation(userID int64, cmd tg.Cmd)
 	DelInputExpectation(userID int64)
-	FilenameByMsgID(userID int64, msgID int) string
+	FilenameByMsgID(userID int64, msgID int) (string, bool)
+	DirByMsgID(userID int64, msgID int) (string, bool)
 	SetFilenameByMsgID(userID int64, msgID int, filename string)
-	DirByMsgID(userID int64, msgID int) string
 	SetDirByMsgID(userID int64, msgID int, filename string)
 	RecentCommand(userID int64) (string, bool)
 	SetRecentCommand(userID int64, cmd string)
@@ -340,6 +341,10 @@ func (b *Bot) saveFromRegularMsg(u Update) error {
 		return fmt.Errorf("save: %w", err)
 	}
 
+	msgID, _ := u.MsgID()
+	b.db.SetDirByMsgID(b.userID, msgID, fs.DirToday)
+	b.db.SetFilenameByMsgID(b.userID, msgID, filename)
+
 	return b.showMoveTo([]string{fs.Hash(filename)})
 }
 
@@ -436,8 +441,11 @@ func (b *Bot) saveFromForward(u Update) error {
 }
 
 func (b *Bot) addToRepliedFile(replyToMsgID int, newContent string) error {
-	dir := b.db.DirByMsgID(b.userID, replyToMsgID)
-	existingFilename := b.db.FilenameByMsgID(b.userID, replyToMsgID)
+	dir, _ := b.db.DirByMsgID(b.userID, replyToMsgID)
+	existingFilename, ok := b.db.FilenameByMsgID(b.userID, replyToMsgID)
+	if !ok {
+		return fmt.Errorf("add to replied: can't find filename by msgID %d", replyToMsgID)
+	}
 	existingContent, err := b.fs.Read(dir, existingFilename)
 	if err != nil {
 		return fmt.Errorf("add: can't read: %w", err)
