@@ -29,17 +29,18 @@ var (
 )
 
 const (
-	DirRoot      = ""
-	DirArchive   = "archive"
-	DirToday     = "today"
-	DirLater     = "later"
-	DirImg       = "img"
-	DirJournal   = "journal"
-	DirHabits    = "habits"
-	DirInsights  = "insights"
-	DirRead      = "-read-"
-	DirWatch     = "-watch-"
-	DirShop      = "-shop-"
+	DirRoot     = ""
+	DirArchive  = "archive"
+	DirToday    = "today"
+	DirLater    = "later"
+	DirImg      = "img"
+	DirJournal  = "journal"
+	DirHabits   = "habits"
+	DirInsights = "insights"
+	DirRead     = "-read-"
+	DirWatch    = "-watch-"
+	DirShop     = "-shop-"
+
 	FilePomodoro = "Finished a break.md"
 	FileConfig   = "config.json"
 

@@ -37,7 +37,7 @@ $ make gui
 ## File structure
 We differentiate the following types of files (with `/` denoting your root folder):
 - Tasks: `/today/Pay the bills.md` (`/today/*.md`, `/later/*.md`)
-- Notes: `/brain/Brain is the most complex object.md` (`/*/*.md` also `/inbox/*.md`)
+- Notes: `/brain/Brain is the most complex object.md` (`/*/*.md`)
 - Files: `/My project.md` (`/*.md`)
 - Checklists: `/-read-/How to Take Smart Notes.md` (`/-[read|watch|shop]-/*.md`)
 - Journal: `/Journal/2024.08 August.md` (`/journal/<YEAR>.<MONTH> <MONTH NAME>.md`)

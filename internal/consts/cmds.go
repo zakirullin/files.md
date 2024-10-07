@@ -27,7 +27,7 @@ const (
 	CmdShowMoveToDirOrFile         = "to_file"
 	CmdShowMoveToChecklist         = "to_checklist"
 	CmdRename                      = "ren"
-	CmdMoveToDir                   = "mv"
+	CmdMoveToExistingDir           = "mv"
 	CmdRequestNewDir               = "new_dir"
 	CmdMoveToNewDir                = "mv_to_new_dir"
 	CmdMoveToExistingFile          = "mf"

@@ -99,10 +99,11 @@ func MoveDueTasks(
 					continue
 				}
 				slog.Debug("task was rescheduled", "filename", schedule.Filename, "schedule", schedule.Cron, "scheduledAt", scheduledAt)
+				continue
 			}
 
-			// We must only delete when it's rescheduled already, not to lose the task
-			err = userconf.DelFromSchedule(schedule.Filename, schedule.ScheduledAt)
+			// We must only delete when it's a non-repeated task
+			err = userconf.DelFromSchedule(schedule.Filename)
 			if err != nil {
 				slog.Error("schedule worker: can't delete from schedule", "err", err)
 				continue

@@ -140,6 +140,7 @@ func (c *Config) Schedules() ([]Schedule, error) {
 	return schedules, nil
 }
 
+// AddToSchedule replaces existing schedule with the same filename
 func (c *Config) AddToSchedule(filename string, scheduleAt int64, cron string) error {
 	lock := c.userLock()
 	lock.Lock()
@@ -149,7 +150,19 @@ func (c *Config) AddToSchedule(filename string, scheduleAt int64, cron string) e
 	if err != nil {
 		return fmt.Errorf("can't add to schedule: can't read config: %w", err)
 	}
-	cfg.Schedules = append(cfg.Schedules, Schedule{filename, scheduleAt, cron, ""})
+
+	found := false
+	for _, schedule := range cfg.Schedules {
+		if schedule.Filename == filename {
+			schedule.ScheduledAt = scheduleAt
+			schedule.Cron = cron
+			found = true
+		}
+	}
+	if !found {
+		cfg.Schedules = append(cfg.Schedules, Schedule{filename, scheduleAt, cron, ""})
+	}
+
 	err = c.write(cfg)
 	if err != nil {
 		return fmt.Errorf("can't add to schedule: can't write config: %w", err)
@@ -158,7 +171,7 @@ func (c *Config) AddToSchedule(filename string, scheduleAt int64, cron string) e
 	return nil
 }
 
-func (c *Config) DelFromSchedule(filename string, scheduledAt int64) error {
+func (c *Config) DelFromSchedule(filename string) error {
 	lock := c.userLock()
 	lock.Lock()
 	defer lock.Unlock()
@@ -170,7 +183,7 @@ func (c *Config) DelFromSchedule(filename string, scheduledAt int64) error {
 
 	var newSchedules []Schedule
 	for _, schedule := range cfg.Schedules {
-		if schedule.Filename == filename && schedule.ScheduledAt == scheduledAt {
+		if schedule.Filename == filename {
 			continue
 		}
 		newSchedules = append(newSchedules, schedule)

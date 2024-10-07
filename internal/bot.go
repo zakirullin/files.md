@@ -225,7 +225,7 @@ func (b *Bot) handlers() map[string]func([]string) error {
 		consts.CmdShowScheduleForDay:          b.showToADay,
 		consts.CmdShowMoveToDirOrFile:         b.showMoveToFileOrDir,
 		consts.CmdShowMoveToChecklist:         b.showToChecklist,
-		consts.CmdMoveToDir:                   b.moveToDir,
+		consts.CmdMoveToExistingDir:           b.moveToDir,
 		consts.CmdRequestNewDir:               b.requestNewDirName,
 		consts.CmdMoveToNewDir:                b.moveToNewDir,
 		consts.CmdMoveToExistingFile:          b.moveToExistingFile,
@@ -756,7 +756,7 @@ func (b *Bot) recentCmdBtn(filenameHash string) *tg.Btn {
 			return nil
 		}
 	} else if recentCmd == consts.CmdMoveToExistingNote {
-		icon = i18n.Emoji("dir")
+		icon = i18n.Emoji("file")
 		dir, err := b.fs.Unhash(fs.DirRoot, args[1])
 		if err != nil {
 			return nil
@@ -1193,7 +1193,7 @@ func (b *Bot) showMultilineTask(params []string) error {
 		btnLabel = i18n.StrToToday
 		toDir = fs.DirToday
 	}
-	moveToBtn = tg.NewBtn(btnLabel, tg.NewCmd(consts.CmdMoveToDir, []string{toDir, dir, filenameHash}))
+	moveToBtn = tg.NewBtn(btnLabel, tg.NewCmd(consts.CmdMoveToExistingDir, []string{toDir, dir, filenameHash}))
 
 	kb := tg.NewKeyboard([]tg.Row{
 		tg.NewRow(moveToBtn),
@@ -1340,7 +1340,7 @@ func (b *Bot) moveToDir(params []string) error {
 	}
 
 	if toDir != fs.DirLater {
-		b.db.SetRecentCommand(b.userID, consts.CmdMoveToDir)
+		b.db.SetRecentCommand(b.userID, consts.CmdMoveToExistingDir)
 		// Move from dir is today, because quick command
 		// appears when file is in today dir
 		b.db.SetRecentCommandParams(b.userID, []string{toDirHash, fs.Hash(fs.DirToday)})
@@ -1391,26 +1391,29 @@ func (b *Bot) moveToExistingFile(params []string) error {
 	// TODO Remove input expectations if dir is not today (?)
 	existingFilenameHash := params[0]
 	fromDirHash := params[1]
-	toFilenameHash := params[2]
-
-	// TODO add test for adding to same file, it seems it is broken (after we added short hash)
-	if toFilenameHash == existingFilenameHash {
-		return b.ShowToday(nil)
-	}
+	fromFilenameHash := params[2]
 
 	existingFilename, err := b.fs.Unhash(fs.DirRoot, existingFilenameHash)
 	if err != nil {
-		return fmt.Errorf("move to file: can't unhash existing file '%s': %w", toFilenameHash, err)
+		return fmt.Errorf("move to file: can't unhash existing file '%s': %w", fromFilenameHash, err)
+	}
+
+	// TODO add test for adding to same file, it seems it is broken (after we added short hash)
+	if fromFilenameHash == existingFilenameHash {
+		// Just an informative messages
+		msg := txt.Emoji(i18n.Emoji("file"), fmt.Sprintf(i18n.Tr("Saved to <b>%s</b>"), fs.Title(existingFilename)))
+		_, _ = b.tg.Send(b.userID, msg, nil, tg.MarkupHTML)
+		return b.ShowToday(nil)
 	}
 
 	fromDir, err := b.fs.Unhash(fs.DirRoot, fromDirHash)
 	if err != nil {
-		return fmt.Errorf("move to file: can't unhash from dir '%s': %w", toFilenameHash, err)
+		return fmt.Errorf("move to file: can't unhash from dir '%s': %w", fromFilenameHash, err)
 	}
 
-	toFilename, err := b.fs.Unhash(fromDir, toFilenameHash)
+	toFilename, err := b.fs.Unhash(fromDir, fromFilenameHash)
 	if err != nil {
-		return fmt.Errorf("move to file: can't unhash new filename '%s': %w", toFilenameHash, err)
+		return fmt.Errorf("move to file: can't unhash new filename '%s': %w", fromFilenameHash, err)
 	}
 
 	content, err := b.fs.Read(fromDir, toFilename)
@@ -1434,7 +1437,7 @@ func (b *Bot) moveToExistingFile(params []string) error {
 	b.db.SetRecentCommandParams(b.userID, []string{fs.ShortHash(existingFilename), fs.ShortHash(fs.DirToday)})
 
 	b.delAllKeyboards()
-	msg := txt.Emoji(i18n.Emoji("file"), fmt.Sprintf(i18n.Tr("Saved to <b>%s</b>"), fs.Title(toFilename)))
+	msg := txt.Emoji(i18n.Emoji("file"), fmt.Sprintf(i18n.Tr("Saved to <b>%s</b>"), fs.Title(existingFilename)))
 	// Just an informative messages
 	_, _ = b.tg.Send(b.userID, msg, nil, tg.MarkupHTML)
 
@@ -1714,6 +1717,8 @@ func (b *Bot) complete(params []string) error {
 	if err != nil {
 		return fmt.Errorf("complete: can't complete %s: %w", filename, err)
 	}
+
+	b.cfg.DelFromSchedule(filename)
 
 	if dir == fs.DirToday && filename == fs.FilePomodoro {
 		err = b.cfg.AddToSchedule(filename, time.Now().Unix()+int64(b.cfg.PomodoroDuration().Seconds()), "")
@@ -2032,7 +2037,7 @@ func (b *Bot) moveToFileBtns(newFilenameShortHash string) ([]tg.Btn, error) {
 func (b *Bot) moveToDirBtns(filenameHash string) ([]tg.Btn, error) {
 	newBtn := func(dir string) tg.Btn {
 		emojifiedDir := fmt.Sprintf("%s %s", i18n.Emoji("dir"), txt.Ucfirst(dir))
-		return tg.NewBtn(emojifiedDir, tg.NewCmd(consts.CmdMoveToDir, []string{fs.ShortHash(dir), fs.DirRoot, filenameHash}))
+		return tg.NewBtn(emojifiedDir, tg.NewCmd(consts.CmdMoveToExistingDir, []string{fs.ShortHash(dir), fs.DirRoot, filenameHash}))
 	}
 
 	dirs, err := b.fs.FilesAndDirs(fs.DirRoot)
