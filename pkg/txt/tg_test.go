@@ -171,7 +171,7 @@ func TestExtractTextImgsLinks_WithSingleImage(t *testing.T) {
 	resultText, images, links := ExtractTextImgsLinks(text)
 
 	require.Equal(t, "This text includes an image: 🖼.", resultText)
-	require.Equal(t, []string{"tg_BQACAgIAAxkBAAIs"}, images)
+	require.Equal(t, []string{"BQACAgIAAxkBAAIs"}, images)
 	require.Empty(t, links)
 }
 
@@ -181,7 +181,7 @@ func TestExtractTextImgsLinks_WithMultipleImages(t *testing.T) {
 	resultText, images, links := ExtractTextImgsLinks(text)
 
 	require.Equal(t, "Here are two images: 🖼 and 🖼.", resultText)
-	require.ElementsMatch(t, []string{"tg_image1", "tg_image2"}, images)
+	require.ElementsMatch(t, []string{"image1", "image2"}, images)
 	require.Empty(t, links)
 }
 
@@ -201,7 +201,7 @@ func TestExtractTextImgsLinks_WithImageAndLink(t *testing.T) {
 	resultText, images, links := ExtractTextImgsLinks(text)
 
 	require.Equal(t, "Here is an image: 🖼 and a link: `doc.md`.", resultText)
-	require.Equal(t, []string{"tg_image"}, images)
+	require.Equal(t, []string{"image"}, images)
 	require.Equal(t, map[string]string{"doc.md": "/path/to/doc.md"}, links)
 }
 
@@ -235,7 +235,7 @@ func TestExtractTextImgsLinks_WithNestedLinksAndImages(t *testing.T) {
 	resultText, images, links := ExtractTextImgsLinks(text)
 
 	require.Equal(t, "Complex example with image and links:\n🖼", resultText)
-	require.Equal(t, []string{"tg_image"}, images)
+	require.Equal(t, []string{"image"}, images)
 	require.Equal(t, map[string]string{
 		"doc1.md": "/path/to/doc1.md",
 		"doc2.md": "/path/to/doc2.md",
