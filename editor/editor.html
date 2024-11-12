@@ -55,16 +55,17 @@
     // We use it as links autocopmlete
     function createAutocompleteDict() {
         const emojiDict = {};
+        const ignoredFolders = ["img", "archive", "_read_", "_watch_", "_shop_", "today", "later", "journal", "habits", "triggers", "places", ""];
 
         Object.keys(zettel).forEach(folder => {
+            if (ignoredFolders.includes(folder)) return;
+
             Object.keys(zettel[folder]).forEach(filename => {
-                const emojiKey = `${filename.replace(/\.[^/.]+$/, "")}`;
-                const filePath = `[${filename}](${folder}/${filename})`;
+                const emojiKey = `${filename.replace(/\.md$/, "").replace(/\.[^/.]+$/, "")}`;
+                const filePath = `${filename}](${folder}/${filename})`;
                 emojiDict[emojiKey] = filePath;
             });
         });
-
-        console.log(emojiDict);
 
         return emojiDict;
     }
@@ -120,7 +121,7 @@
     };
     editor.on("inputRead", async function (cm, change) {
         if (change.text.length === 1 && change.text[0] === '[') {
-            editor.showHint()
+            editor.showHint({completeSingle: false})
         }
     })
 

@@ -33,7 +33,6 @@
   exports.createHintFunc = function () {
     var editor = null
     var defaultDict = FoldEmoji.defaultDict
-    console.log(defaultDict);
 
     var previewShown = false
     var previewContainer = document.createElement('div')
@@ -42,21 +41,28 @@
     return function (cm, options) {
       editor = cm
 
-      var cursor = cm.getCursor(), line = cm.getLine(cursor.line)
-      var start = cursor.ch, end = cursor.ch
-      while (start && /[-\w:]/.test(line.charAt(start - 1)))--start
-      while (end < line.length && /[-\w:]/.test(line.charAt(end)))++end
+      let cursor = cm.getCursor(), line = cm.getLine(cursor.line)
+      let start = cursor.ch, end = cursor.ch
+
+      // while (start && /[-\w:]/.test(line.charAt(start - 1)))--start
+      // while (end < line.length && /[-\w:]/.test(line.charAt(end)))++end
+
+      const unicodeWordRegex = /[\p{L}\p{N}_:-]/u; // \p{L} matches any letter, \p{N} matches any number
+
+      while (start && unicodeWordRegex.test(line.charAt(start - 1))) --start;
+      while (end < line.length && unicodeWordRegex.test(line.charAt(end))) ++end;
 
       // if (start === end) {
       //   hidePreview()
       //   return null
       // }
 
-      var word = line.slice(start, cursor.ch).toLowerCase()
-      var wordEmpty = word.length === 0
+      let word = line.slice(start, cursor.ch).toLowerCase()
+      let wordEmpty = word.length === 0
 
       /** @type {Array<Record<string,string>>} */
-      var dicts = [defaultDict]
+      // var dicts = [defaultDict] // for now we only use links autocompletion
+      var dicts = []
       var myEmojiDict = (editor.getOption('hmdFoldEmoji') || {}).myEmoji
       if (myEmojiDict) dicts.push(myEmojiDict())
 
