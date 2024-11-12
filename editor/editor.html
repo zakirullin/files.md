@@ -504,36 +504,54 @@
     }
 
     function filterFiles() {
-        const input = document.getElementById('goToFileInput').value.toLowerCase();
+        const search = document.getElementById('goToFileInput').value.toLowerCase();
         const list = document.getElementById('goToFileResults');
         list.innerHTML = '';
 
         const lowPriorityFolders = ["archive", "_read_", "_watch_", "_shop_", "habits", "triggers", "today", "later"];
 
-        const similarityThreshold = 60;
-        const highPriorityResults = [];
-        const lowPriorityResults = [];
+        let results = [];
 
+        // Lev distance
         searchList.forEach(({ filename, folder }) => {
             const baseFilename = filename.replace(/\.md$/, "");
-            const similarityScore = similarity(input, filename.replace(/\.md$/, "")) * 100;
-            const isSubstringMatch = baseFilename.toLowerCase().includes(input.toLowerCase());
-
-            // Check if the similarity is above the threshold or if it's a substring match
-            if (similarityScore >= similarityThreshold || isSubstringMatch) {
+            let similarityScore = similarity(search, baseFilename) * 100;
+            if (similarityScore >= 70) {
                 if (lowPriorityFolders.includes(folder)) {
-                    lowPriorityResults.push({ folder, filename });
-                } else {
-                    highPriorityResults.push({ folder, filename });
+                    similarityScore -= 30;
                 }
+                results.push({filename: filename, folder: folder, score: similarityScore});
             }
         });
 
-        // Concatenate high-priority results first, then low-priority results
-        const sortedResults = [...highPriorityResults, ...lowPriorityResults];
+        searchList.forEach(({ filename, folder }) => {
+            const baseFilename = filename.replace(/\.md$/, "");
+            const isSubstringMatch = baseFilename.toLowerCase().includes(search.toLowerCase());
+            if (isSubstringMatch) {
+                const unmatchedLength = baseFilename.length - search.length;
+                const maxScore = 100;
 
-        // Display sorted results
-        sortedResults.forEach(({ folder, filename }, index) => {
+                const score = Math.max(0, maxScore - (unmatchedLength / baseFilename.length) * maxScore);
+                results.push({
+                    filename: filename,
+                    folder: folder,
+                    score: Math.round(score)
+                });
+            }
+        });
+
+        const uniqueResultsMap = new Map();
+        for (let i = 0; i < results.length; i++) {
+            const item = results[i];
+            const key = `${item.filename}-${item.folder}`; // Create a unique key based on filename and folder
+
+            if (!uniqueResultsMap.has(key) || uniqueResultsMap.get(key).score < item.score) {
+                uniqueResultsMap.set(key, item);
+            }
+        }
+        results = Array.from(uniqueResultsMap.values()).sort((a, b) => b.score - a.score);
+
+        results.forEach(({ folder, filename }, index) => {
             const listItem = document.createElement('li');
             let title = filename.replace(/\.md$/, "")
             if (folder !== '') {
