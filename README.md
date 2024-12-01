@@ -115,7 +115,7 @@ Read 4K randomly from SSD = 150,000 ns
 - Markdown to HTML conversion. User can have invalid Markdown in his notes, and TG API would fail to send invalid Markdown directly. So, first we escape HTML, then we convert user's Markdown to HTML and finally send it via Telegram API as HTML.
 - File hashing. Everywhere where we have user input - we should use fs.hash, otherwise we get long filenames, and tg returns `INVALID_DATA` error (callbackData max 64 bytes)
 - Introduced `db.go`. We had to abstract away Redis anyway (otherwise it's hard to write tests)
-- Package db.go doesn't store userID (we often use it separately...) Do we?
+- Package db.go doesn't store userID (we often use it separately...) Do we? Maybe we gonna use it without userID (like global bot stats?)
 - We can't ucfist filename in fs.Put - what if that was user-created file (outside the bot), i.e. it comes with lowercase
 
 ## Notes about Dropbox

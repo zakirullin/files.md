@@ -35,33 +35,31 @@ var (
 func Habits(userFS *fs.FS, year int) (map[string]Year, error) {
 	filename := fmt.Sprintf("%d Habits.md", year)
 
-	exists, err := userFS.Exists(fs.DirInsights, filename)
+	existingHabits, err := userFS.FilesAndDirs(fs.DirHabits)
 	if err != nil {
-		return nil, fmt.Errorf("habits: can't check whether the file exists: %w", err)
+		return nil, fmt.Errorf("habits: can't read existing habits: %w", err)
 	}
 
-	if !exists {
-		existingHabits, err := userFS.FilesAndDirs(fs.DirHabits)
-		if err != nil {
-			return nil, fmt.Errorf("habits: can't read existing habits: %w", err)
-		}
+	habits := make(map[string]Year)
+	for _, existingHabit := range existingHabits {
+		habits[existingHabit.Title] = make(Year)
+	}
 
-		habits := make(map[string]Year)
-		for _, existingHabit := range existingHabits {
-			habits[existingHabit.Title] = make(Year)
-		}
-
+	insightsExist, err := userFS.Exists(fs.DirInsights, filename)
+	if err != nil {
+		return nil, fmt.Errorf("habits: can't check whether the file insightsExist: %w", err)
+	}
+	if !insightsExist {
 		return habits, nil
 	}
 
-	habitsStr, err := userFS.Read(fs.DirInsights, filename)
+	habitsForYearLines, err := userFS.Read(fs.DirInsights, filename)
 	if err != nil {
 		return nil, fmt.Errorf("habits:read %s error: %w", filename, err)
 	}
 
-	habits := make(map[string]Year)
 	month := time.January
-	lines := strings.Split(txt.NormNewLines(habitsStr), "\n")
+	lines := strings.Split(txt.NormNewLines(habitsForYearLines), "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if len(line) == 0 {
