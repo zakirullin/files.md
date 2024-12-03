@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime/debug"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -141,7 +142,7 @@ func main() {
 				defer func() {
 					err := recover()
 					if err != nil {
-						slog.Error("Bot panic", "err", err)
+						slog.Error("Bot panic", "err", err, "stacktrace", string(debug.Stack()))
 					}
 				}()
 
