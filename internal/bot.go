@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"golang.org/x/exp/slog"
@@ -36,7 +37,7 @@ var (
 	errUnknownCommand           = errors.New("unknown command")
 	errInvalidRequestFromInline = errors.New("invalid request from inline query")
 	errInvalidInlineQuery       = errors.New("invalid inline query")
-	botPlugins                  []BotPlugin
+	botPlugins                  []BotPlugin{}
 )
 
 const (
@@ -396,7 +397,7 @@ func (b *Bot) saveFromImage(u Update) error {
 	// Creating a new file
 	title := strings.SplitN(strings.TrimSpace(u.Caption()), "\n", 2)[0]
 	title = strings.TrimSpace(title)
-	if len(title) > maxTitleLength {
+	if utf8.RuneCountInString(title) > maxTitleLength {
 		title = txt.Substr(title, 0, maxTitleLength) + "..."
 	}
 	if title == "" {
@@ -615,7 +616,7 @@ func (b *Bot) extractTitleAndContent(msg string) (string, string, error) {
 	parts := strings.SplitN(msg, "\n", 2)
 	title := txt.Ucfirst(strings.TrimSpace(parts[0]))
 
-	if len(title) > maxTitleLength {
+	if utf8.RuneCountInString(title) > maxTitleLength {
 		title = txt.Substr(title, 0, maxTitleLength) + "..."
 	}
 

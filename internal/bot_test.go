@@ -3439,6 +3439,18 @@ func FuzzSaveFromTextMsg(f *testing.F) {
 			return
 		}
 
+		// Telegram trims space
+		input = strings.TrimSpace(input)
+
+		// Ignore input with shortcuts like adding to journal or to recent file.
+		// Because in that case file won't be created in "today" folder
+		shortcuts := []string{"jj", "жж", "++"}
+		for _, shortcut := range shortcuts {
+			if strings.HasPrefix(input, shortcut) || strings.HasSuffix(input, shortcut) {
+				return
+			}
+		}
+
 		// fs.sanitizeName will strip away \0 characters as they're not allowed in filenames
 		if strings.Contains(input, "\x00") {
 			fmt.Println("Skipping string with null character")
@@ -3459,14 +3471,10 @@ func FuzzSaveFromTextMsg(f *testing.F) {
 		bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), fakeConfig())
 		err = bot.Answer(tg.NewUpd(-1, input))
 		if err != nil {
-			trimmedInput := strings.TrimSpace(input)
-			if strings.Contains(err.Error(), "unsafe path") &&
-				(trimmedInput == "." || strings.HasPrefix(trimmedInput, "..")) {
-				t.Logf("Expected error for unsafe path %q: %v", input, err)
-				return
-			}
-
-			t.Errorf("Unexpected error for input %q: %v", input, err)
+			// Check that no entries are created besides our user folder
+			entries, err := afero.ReadDir(memfs, "/")
+			r.NoError(err)
+			r.Len(entries, 1)
 			return
 		}
 
@@ -3477,12 +3485,14 @@ func FuzzSaveFromTextMsg(f *testing.F) {
 			r.Len(tasks, 0)
 			return
 		}
-		r.Len(tasks, 1)
-		if len(input) > 100 {
-			input = txt.Substr(input, 0, 100) + "..."
-		}
+
+		r.Len(tasks, 1, "No tasks created for input %q", input)
 		filename := strings.SplitN(strings.TrimSpace(input), "\n", 2)[0]
 		filename = strings.TrimSpace(filename)
+		if len(filename) > 100 {
+			filename = txt.Substr(filename, 0, 100) + "..."
+		}
+
 		filename = fs.Filename(fs.SanitizeFilename(filename))
 		r.Equal(filename, tasks[0].Name)
 
