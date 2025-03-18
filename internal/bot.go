@@ -144,6 +144,7 @@ func (b *Bot) Answer(u Update) error {
 			}
 			_, _ = b.tg.Send(b.userID, output, nil, tg.MarkupHTML)
 
+			b.delAllKeyboards()
 			err = b.ShowToday(nil)
 			if err != nil {
 				return fmt.Errorf("answer after plugin: %w", err)
