@@ -4,5 +4,5 @@
       d="M28 11v13a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h6c3 0 3 3 5 3h9.003C27.108 9 28 9.895 28 11z"
       />
 <text x="50%" y="55%" font-size="8" font-family="Arial, sans-serif" font-weight="bold"
-      fill="#FAF5E4" text-anchor="middle" alignment-baseline="middle">*.md</text>
+      fill="#FAF5E4" text-anchor="middle" alignment-baseline="middle">.md</text>
 </svg>

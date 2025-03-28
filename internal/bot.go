@@ -1957,6 +1957,12 @@ func (b *Bot) showChecklistItem(params []string) error {
 		return fmt.Errorf("show checklist item: %w", err)
 	}
 
+	msgID, hasLastKeyboard := b.db.LastKeyboardMsgID()
+	if hasLastKeyboard {
+		b.db.SetFilenameByMsgID(msgID, filename)
+		b.db.SetDirByMsgID(msgID, dir)
+	}
+
 	return nil
 }
 
