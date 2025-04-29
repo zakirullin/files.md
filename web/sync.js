@@ -50,7 +50,7 @@ async function syncWithServer() {
     try {
         const response = await fetch('https://habits.files.md/sync', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'your-really-secret-token-2'},
+            headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token')},
             body: JSON.stringify({
                 files: filesToSync,
                 timestamps: filesMetadata['timestamps'] || {},
