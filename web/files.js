@@ -361,7 +361,6 @@ function saveLastModified(path, lastModified) {
     saveMetadata();
 }
 
-
 function setMetadata(path, content, lastModified) {
     const parts = path.split('/');
     const filename = parts.pop();

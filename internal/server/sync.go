@@ -267,6 +267,10 @@ func SyncFile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error writing file", http.StatusInternalServerError)
 		return
 	}
+	info, err = os.Stat(fullPath)
+	if err == nil {
+		serverModTime = info.ModTime().Unix()
+	}
 
 	if !fileWasModifiedOnServer {
 		logSync(fmt.Sprintf("File '%s' is already up to date", file.Path))
