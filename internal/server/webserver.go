@@ -3,7 +3,6 @@
 package server
 
 import (
-	"crypto/tls"
 	_ "embed"
 	"fmt"
 	"log"
@@ -15,7 +14,6 @@ import (
 	"time"
 
 	"github.com/spf13/afero"
-	"golang.org/x/crypto/acme/autocert"
 
 	"zakirullin/stuffbot/config"
 	"zakirullin/stuffbot/internal/fs"
@@ -26,71 +24,25 @@ import (
 )
 
 // TODO release graceful shutdown etc
-func Serve(habitsHost, appHost, certDir, logFilename, token string) {
+func Serve(apiHost, appHost, certDir, logFilename, token string) {
 	// TODO fix
 	AuthToken = token
 
-	autocertManager := autocert.Manager{
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist(habitsHost, appHost),
-		Cache:      autocert.DirCache(certDir),
-	}
+	logger := newLogger(logFilename)
+	srv := ssl(logger, certDir, apiHost, appHost)
+	srv.Handler = newRouter(logger)
 
-	logFile, err := os.OpenFile(logFilename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
-	if err != nil {
-		log.Fatalf("Server: failed to open log file: %v", err)
-	}
-	defer logFile.Close()
-	logger := log.New(logFile, "Server Error: ", log.Ldate|log.Ltime|log.Lshortfile)
-
-	// Listen for HTTP requests on port 80 in a new goroutine. Use
-	// autocertManager.HTTPHandler(nil) as the handler. This will send ACME
-	// "http-01" challenge responses as necessary, and 302 redirect all other
-	// requests to HTTPS.
-	go func() {
-		srv := &http.Server{
-			Addr:         ":80",
-			Handler:      autocertManager.HTTPHandler(nil),
-			IdleTimeout:  time.Minute,
-			ReadTimeout:  5 * time.Second,
-			WriteTimeout: 10 * time.Second,
-			ErrorLog:     logger,
-		}
-
-		err = srv.ListenAndServe()
-		if err != nil {
-			panic(err)
-		}
-	}()
-
-	// Configure the TLS config to use the autocertManager.GetCertificate function.
-	tlsConfig := &tls.Config{
-		GetCertificate:   autocertManager.GetCertificate,
-		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
-	}
-
-	router := http.NewServeMux()
-	setupRouter(router, logger)
-	srv := &http.Server{
-		Addr:         ":443",
-		Handler:      router,
-		TLSConfig:    tlsConfig,
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		ErrorLog:     logger,
-	}
-
-	err = srv.ListenAndServeTLS("", "") // Key and cert provided automatically by autocert
+	err := srv.ListenAndServeTLS("", "") // Key and cert provided automatically by autocert
 	if err != nil {
 		panic(err)
 	}
 }
 
-func setupRouter(router *http.ServeMux, logger *log.Logger) {
+func newRouter(logger *log.Logger) *http.ServeMux {
+	r := http.NewServeMux()
 	// TODO add hashing or secrets
 	// TODO before release habits_v2 => habits
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Serving the PWA app
 		host := r.Host
 		if strings.HasPrefix(host, "app.") {
@@ -106,7 +58,7 @@ func setupRouter(router *http.ServeMux, logger *log.Logger) {
 		http.NotFound(w, r)
 	})
 
-	router.HandleFunc("GET /habits_v2/{userID}", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("GET /habits_v2/{userID}", func(w http.ResponseWriter, r *http.Request) {
 		userID, err := strconv.ParseInt(r.PathValue("userID"), 10, 64)
 		if err != nil {
 			logger.Printf("failed to parse userID for habits: %v", err)
@@ -131,7 +83,7 @@ func setupRouter(router *http.ServeMux, logger *log.Logger) {
 		}
 	})
 
-	router.HandleFunc("POST /habits_v2/{userID}/{habitName}/{yearDay}/{status}", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("POST /habits_v2/{userID}/{habitName}/{yearDay}/{status}", func(w http.ResponseWriter, r *http.Request) {
 		userID, err := strconv.ParseInt(r.PathValue("userID"), 10, 64)
 		if err != nil {
 			logger.Printf("failed to parse userID: %v", err)
@@ -197,8 +149,20 @@ func setupRouter(router *http.ServeMux, logger *log.Logger) {
 		}
 	})
 
-	router.HandleFunc("/syncTexts", corsMiddleware(authMiddleware(SyncAllTextFiles)))
-	router.HandleFunc("/syncText", corsMiddleware(authMiddleware(SyncText)))
-	router.HandleFunc("/syncMedias", corsMiddleware(authMiddleware(SyncAllMedia)))
-	router.HandleFunc("/syncMedia", corsMiddleware(authMiddleware(SyncMedia)))
+	r.HandleFunc("/syncTexts", corsMiddleware(authMiddleware(SyncAllTextFiles)))
+	r.HandleFunc("/syncText", corsMiddleware(authMiddleware(SyncText)))
+	r.HandleFunc("/syncMedias", corsMiddleware(authMiddleware(SyncAllMedia)))
+	r.HandleFunc("/syncMedia", corsMiddleware(authMiddleware(SyncMedia)))
+
+	return r
+}
+
+func newLogger(logFilename string) *log.Logger {
+	logFile, err := os.OpenFile(logFilename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
+	if err != nil {
+		log.Fatalf("Server: failed to open log file: %v", err)
+	}
+	defer logFile.Close()
+
+	return log.New(logFile, "Server Error: ", log.Ldate|log.Ltime|log.Lshortfile)
 }
