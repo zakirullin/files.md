@@ -219,7 +219,6 @@ async function syncFileWithServer(dir, filename) {
 }
 
 async function syncMediaFilesFromServer() {
-    return;
     // TODO skip if already syncing
 
     console.log(`Starting media sync from img folder...`);
@@ -241,7 +240,6 @@ async function syncMediaFilesFromServer() {
 
         if (!response.ok) {
             console.error(`Server responded with ${response.status}`);
-            return;
         }
 
         const serverData = await response.json();
@@ -514,7 +512,6 @@ function saveMetadata() {
 // 2) Sync it with the server
 // TODO add hash of last read file comparison, merge on conflict (in which scenarious in can happen tho?)
 async function syncCurrentFile() {
-    return;
     // Wait until not saving
     while (isSaving) {
         await new Promise(r => setTimeout(r, 50));
