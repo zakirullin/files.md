@@ -3303,9 +3303,8 @@
         for (var lineNum = startLine; lineNum < endLine; lineNum++) {
           var line = getLine(doc, lineNum);
           if (line.text.length > 0) {
-            var lineStart = charCoords(cm, Pos(lineNum, 0), "div");
-            var lineEnd = charCoords(cm, Pos(lineNum, line.text.length), "div");
-            add(lineStart.left, lineStart.top, lineEnd.right - lineStart.left, lineStart.bottom);
+            // Use drawForLine to handle wrapped lines properly
+            drawForLine(lineNum, 0, line.text.length);
           }
         }
       }
