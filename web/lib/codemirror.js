@@ -3208,7 +3208,7 @@
     var rightSide = Math.max(display.sizerWidth, displayWidth(cm) - display.sizer.offsetLeft) - padding.right;
     var docLTR = doc.direction == "ltr";
 
-    function add(left, top, width, bottom) {
+    function drawRect(left, top, width, bottom) {
       if (width === null) {
         console.log(rightSide);
       }
@@ -3233,6 +3233,16 @@
         return coords(ch, prop)[prop]
       }
 
+      function wrapXObj(cm, lineObj, pos, dir, side) {
+        var extent = wrappedLineExtentChar(cm, lineObj, null, pos);
+        var prop = (dir == "ltr") == (side == "after") ? "left" : "right";
+        var ch = side == "after" ? extent.begin : extent.end - (/\s/.test(lineObj.text.charAt(extent.end - 1)) ? 2 : 1);
+
+        // Get character coordinates
+        var coords = charCoords(cm, Pos(lineObj.lineNo(), ch), "div");
+        return coords[prop];
+      }
+
       var order = getOrder(lineObj, doc.direction);
       iterateBidiSections(order, fromArg || 0, toArg == null ? lineLen : toArg, function (from, to, dir, i) {
         var ltr = dir == "ltr";
@@ -3247,7 +3257,7 @@
           var left = openLeft ? leftSide : (ltr ? fromPos : toPos).left;
           // var right = openRight ? rightSide : (ltr ? toPos : fromPos).right;
           var right = openRight ? (ltr ? toPos : fromPos).right : (ltr ? toPos : fromPos).right;
-          add(left, fromPos.top, right - left, fromPos.bottom);
+          drawRect(left, fromPos.top, right - left, fromPos.bottom);
         } else { // Multiple lines
           var topLeft, topRight, botLeft, botRight;
           if (ltr) {
@@ -3261,9 +3271,67 @@
             botLeft = !docLTR && openEnd && last ? leftSide : toPos.left;
             botRight = !docLTR ? rightSide : wrapX(to, dir, "after");
           }
-          add(topLeft, fromPos.top, topRight - topLeft, fromPos.bottom);
-          if (fromPos.bottom < toPos.top) { add(leftSide, fromPos.bottom, null, toPos.top); }
-          add(botLeft, toPos.top, botRight - botLeft, toPos.bottom);
+
+          // A logical line can be wrapped into a few visual lines.
+          function getVisualLines(cm, logicalLineNo) {
+            var lineObj = getLine(cm.doc, logicalLineNo);
+            var segments = [];
+            var pos = 0;
+
+            while (pos < lineObj.text.length) {
+              var extent = wrappedLineExtentChar(cm, lineObj, null, pos);
+              segments.push({
+                logicalLine: logicalLineNo,
+                startChar: extent.begin,
+                endChar: extent.end,
+                visualIndex: segments.length
+              });
+              pos = extent.end;
+              if (pos === extent.begin) break; // Safety check
+            }
+
+            return segments;
+          }
+
+          drawRect(topLeft, fromPos.top, topRight - topLeft, fromPos.bottom);
+          // if (fromPos.bottom < toPos.top) {
+          //   drawRect(leftSide, fromPos.bottom, null, toPos.top);
+          // }
+          if (fromPos.bottom < toPos.top) {
+            // Get the logical line range for the middle section
+            let startLine = cm.lineAtHeight(fromPos.bottom, "page");
+            let endLine = cm.lineAtHeight(toPos.top, "page");
+
+            // Loop through ALL lines in the range, not just endLine
+            for (let lineNo = startLine; lineNo <= endLine; lineNo++) {
+              let lineObj = getLine(cm.doc, lineNo);
+              let visualLines = getVisualLines(cm, lineNo);
+
+              visualLines.forEach(visualLine => {
+                // Get coordinates for this visual line segment
+                let segmentStartCoords = charCoords(cm, Pos(lineNo, visualLine.startChar), "div");
+
+                // Use the new wrapX function with lineObj
+                let segmentRight = wrapXObj(cm, lineObj, visualLine.startChar, dir, "before");
+                let segmentLeft = wrapXObj(cm, lineObj, visualLine.endChar, dir, "after");
+
+                console.log(visualLine, "left:", segmentLeft, "right", segmentRight);
+
+                // console.log()
+                // Only draw segments that are within our vertical selection range
+                if (segmentStartCoords.bottom > fromPos.bottom && segmentStartCoords.top < toPos.top) {
+                  // Use wrapX coordinates for proper width
+                  let segmentWidth = segmentRight - segmentLeft;
+
+                  // Draw rectangle for this visual line segment
+                  console.log(segmentLeft, segmentStartCoords.top, segmentWidth, segmentStartCoords.bottom - segmentStartCoords.top);
+                  drawRect(segmentLeft, segmentStartCoords.top,
+                      segmentWidth, segmentStartCoords.top + + cm.defaultTextHeight());
+                }
+              });
+            }
+          }
+          drawRect(botLeft, toPos.top, botRight - botLeft, toPos.bottom);
         }
 
         if (!start || cmpCoords(fromPos, start) < 0) { start = fromPos; }
@@ -3280,16 +3348,14 @@
     } else {
       var fromLine = getLine(doc, sFrom.line), toLine = getLine(doc, sTo.line);
       var singleVLine = visualLine(fromLine) == visualLine(toLine);
-      var leftEnd = drawForLine(sFrom.line, sFrom.ch, fromLine.text.length).end;
-      var rightStart = drawForLine(sTo.line, 0, sTo.ch).start;
       var leftEnd = drawForLine(sFrom.line, sFrom.ch, singleVLine ? fromLine.text.length + 1 : null).end;
       var rightStart = drawForLine(sTo.line, singleVLine ? 0 : null, sTo.ch).start;
       if (singleVLine) {
         if (leftEnd.top < rightStart.top - 2) {
-          add(leftEnd.right, leftEnd.top, null, leftEnd.bottom);
-          add(leftSide, rightStart.top, rightStart.left, rightStart.bottom);
+          drawRect(leftEnd.right, leftEnd.top, null, leftEnd.bottom);
+          drawRect(leftSide, rightStart.top, rightStart.left, rightStart.bottom);
         } else {
-          add(leftEnd.right, leftEnd.top, rightStart.left - leftEnd.right, leftEnd.bottom);
+          drawRect(leftEnd.right, leftEnd.top, rightStart.left - leftEnd.right, leftEnd.bottom);
         }
       }
       // if (leftEnd.bottom < rightStart.top) {
@@ -8473,7 +8539,7 @@
           lineObj = line;
         }
         return intoCoordSystem(this, lineObj, {top: 0, left: 0}, mode || "page", includeWidgets || end).top +
-          (end ? this.doc.height - heightAtLine(lineObj) : 0)
+            (end ? this.doc.height - heightAtLine(lineObj) : 0)
       },
 
       defaultTextHeight: function() { return textHeight(this.display) },
