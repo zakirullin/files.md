@@ -121,7 +121,6 @@ async function loadLocalFiles(rootDirHandle) {
 }
 
 async function syncAllWithServer() {
-    return;
     if (debug) {
         return;
     }
@@ -601,7 +600,7 @@ async function syncCurrentFile() {
         isSaving = false;
     }
 
-    // await syncFileWithServer(editor.currentDir, editor.currentFile);
+    await syncFileWithServer(editor.currentDir, editor.currentFile);
     isSyncingCurrent = false;
 }
 
