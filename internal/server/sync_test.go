@@ -56,85 +56,97 @@ func TestSyncText_CreateNewFile(t *testing.T) {
 	r.True(response.LastModified > 0)
 }
 
-//func TestSyncText_UpdateExistingFile_NoConflict(t *testing.T) {
-//	r := require.New(t)
-//	setupTestServer(t)
-//
-//	// First, create a file
-//	userFS, err := fs.NewUserFS(123)
-//	r.NoError(err)
-//	err = userFS.Write("", "test.md", "Original content")
-//	r.NoError(err)
-//
-//	serverTime, err := userFS.Ctime("", "test.md")
-//	r.NoError(err)
-//
-//	clientFile := file{
-//		UserID:       123,
-//		Path:         "test.md",
-//		Content:      "Updated content",
-//		LastModified: serverTime, // Same timestamp, no conflict
-//	}
-//
-//	body, err := json.Marshal(clientFile)
-//	r.NoError(err)
-//
-//	req := httptest.NewRequest(http.MethodPost, "/sync-text", bytes.NewBuffer(body))
-//	req.Header.Set("Content-Type", "application/json")
-//	w := httptest.NewRecorder()
-//
-//	SyncText(w, req)
-//
-//	r.Equal(http.StatusOK, w.Code)
-//
-//	var response map[string]interface{}
-//	err = json.Unmarshal(w.Body.Bytes(), &response)
-//	r.NoError(err)
-//	r.Equal(StatusUpdatedOnServer, response["status"])
-//
-//	// Verify content was updated
-//	content, err := userFS.Read("", "test.md")
-//	r.NoError(err)
-//	r.Equal("Updated content", content)
-//}
-//
-//func TestSyncText_FileNotModified(t *testing.T) {
-//	r := require.New(t)
-//	setupTestServer(t)
-//
-//	// Create a file first
-//	userFS, err := fs.NewUserFS(123)
-//	r.NoError(err)
-//	err = userFS.Write("", "test.md", "Same content")
-//	r.NoError(err)
-//
-//	serverTime, err := userFS.Ctime("", "test.md")
-//	r.NoError(err)
-//
-//	clientFile := file{
-//		UserID:       123,
-//		Path:         "test.md",
-//		Content:      "Same content", // Same content
-//		LastModified: serverTime,
-//	}
-//
-//	body, err := json.Marshal(clientFile)
-//	r.NoError(err)
-//
-//	req := httptest.NewRequest(http.MethodPost, "/sync-text", bytes.NewBuffer(body))
-//	req.Header.Set("Content-Type", "application/json")
-//	w := httptest.NewRecorder()
-//
-//	SyncText(w, req)
-//
-//	r.Equal(http.StatusNotModified, w.Code)
-//
-//	var response map[string]interface{}
-//	err = json.Unmarshal(w.Body.Bytes(), &response)
-//	r.NoError(err)
-//	r.Equal(StatusNotModified, response["status"])
-//}
-//
+func TestSyncText_UpdateExistingFile_NoConflict(t *testing.T) {
+	r := require.New(t)
+
+	userFS, err := fs.NewUserFS(-1)
+	r.NoError(err)
+	err = userFS.Write("", "test.md", "Original content")
+	r.NoError(err)
+
+	origFS := fs.NewUserFS
+	fs.NewUserFS = func(userID int64) (*fs.FS, error) {
+		return userFS, nil
+	}
+	defer func() {
+		fs.NewUserFS = origFS
+	}()
+
+	clientFile := file{
+		UserID:       -1,
+		Path:         "test.md",
+		Content:      "Updated content",
+		LastModified: 1,
+	}
+
+	body, err := json.Marshal(clientFile)
+	r.NoError(err)
+
+	req := httptest.NewRequest(http.MethodPost, "/syncText", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	SyncText(w, req)
+
+	r.Equal(http.StatusOK, w.Code)
+
+	var response map[string]interface{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	r.NoError(err)
+	r.Equal(StatusUpdatedOnServer, response["status"])
+
+	// Verify content was updated
+	content, err := userFS.Read("", "test.md")
+	r.NoError(err)
+	r.Equal("Updated content", content)
+}
+
+func TestSyncText_NotModified(t *testing.T) {
+	r := require.New(t)
+
+	userFS, err := fs.NewUserFS(-1)
+	r.NoError(err)
+
+	origFS := fs.NewUserFS
+	fs.NewUserFS = func(userID int64) (*fs.FS, error) {
+		return userFS, nil
+	}
+	defer func() {
+		fs.NewUserFS = origFS
+	}()
+
+	err = userFS.Write("", "test.md", "Original content")
+	r.NoError(err)
+
+	clientFile := file{
+		UserID:       -1,
+		Path:         "test.md",
+		Content:      "Original content",
+		LastModified: 1,
+	}
+
+	body, err := json.Marshal(clientFile)
+	r.NoError(err)
+
+	req := httptest.NewRequest(http.MethodPost, "/syncText", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	SyncText(w, req)
+
+	r.Equal(http.StatusNotModified, w.Code)
+
+	var response map[string]interface{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	r.NoError(err)
+	r.Equal(StatusNotModified, response["status"])
+
+	// Verify content was updated
+	content, err := userFS.Read("", "test.md")
+	r.NoError(err)
+	r.Equal("Original content", content)
+}
+
 //func TestSyncText_ConflictResolution(t *testing.T) {
 //	r := require.New(t)
 //	setupTestServer(t)

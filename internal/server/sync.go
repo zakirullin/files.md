@@ -243,7 +243,7 @@ func SyncText(w http.ResponseWriter, r *http.Request) {
 
 	var content string
 	fileWasModifiedOnServer := false
-	if os.IsNotExist(err) {
+	if errors.Is(err, os.ErrNotExist) {
 		logSync(fmt.Sprintf("Creating one clientFile: '%s'", clientFile.Path))
 		content = clientFile.Content
 	} else {
