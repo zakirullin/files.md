@@ -143,7 +143,7 @@ func newRouter(logger *log.Logger) *http.ServeMux {
 		}
 	})
 
-	r.HandleFunc("/syncTexts", corsMiddleware(authMiddleware(SyncAllTexts)))
+	r.HandleFunc("/syncTexts", corsMiddleware(authMiddleware(SyncTexts)))
 	r.HandleFunc("/syncText", corsMiddleware(authMiddleware(SyncText)))
 	r.HandleFunc("/syncMedias", corsMiddleware(authMiddleware(SyncAllMedia)))
 	r.HandleFunc("/syncMedia", corsMiddleware(authMiddleware(SyncMedia)))

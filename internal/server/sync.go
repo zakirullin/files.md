@@ -46,7 +46,7 @@ type syncResponse struct {
 	Deletions  []string         `json:"deletions"`
 }
 
-func SyncAllTexts(w http.ResponseWriter, r *http.Request) {
+func SyncTexts(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -77,7 +77,7 @@ func SyncAllTexts(w http.ResponseWriter, r *http.Request) {
 
 		serverModifiedTime, err := userFS.Ctime("", path)
 		var clientContent string
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			log.Printf("Error reading file '%s': %v", path, err)
 			logSync(fmt.Sprintf("Error reading file '%s': %v", path, err))
 			// TODO All-or-nothing sync?

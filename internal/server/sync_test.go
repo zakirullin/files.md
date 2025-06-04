@@ -20,7 +20,7 @@ func init() {
 	}
 }
 
-func TestSyncText_CreateNewFile(t *testing.T) {
+func TestSyncText_CreateNewFileOnServer(t *testing.T) {
 	r := require.New(t)
 
 	origFS := fs.NewUserFS
@@ -61,7 +61,6 @@ func TestSyncText_UpdateExistingFile_NoConflict(t *testing.T) {
 
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
-
 	origFS := fs.NewUserFS
 	fs.NewUserFS = func(userID int64) (*fs.FS, error) {
 		return userFS, nil
@@ -107,7 +106,6 @@ func TestSyncText_NotModified(t *testing.T) {
 
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
-
 	origFS := fs.NewUserFS
 	fs.NewUserFS = func(userID int64) (*fs.FS, error) {
 		return userFS, nil
@@ -153,7 +151,6 @@ func TestSyncText_UpdateExistingFile_Conflict(t *testing.T) {
 
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
-
 	origFS := fs.NewUserFS
 	fs.NewUserFS = func(userID int64) (*fs.FS, error) {
 		return userFS, nil
@@ -199,7 +196,6 @@ func TestSyncText_UpdateExistingFile_JournalConflict(t *testing.T) {
 
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
-
 	origFS := fs.NewUserFS
 	fs.NewUserFS = func(userID int64) (*fs.FS, error) {
 		return userFS, nil
@@ -245,7 +241,6 @@ func TestSyncAllTexts_EmptyRequest(t *testing.T) {
 
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
-
 	origFS := fs.NewUserFS
 	fs.NewUserFS = func(userID int64) (*fs.FS, error) {
 		return userFS, nil
@@ -267,7 +262,7 @@ func TestSyncAllTexts_EmptyRequest(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	SyncAllTexts(w, req)
+	SyncTexts(w, req)
 
 	r.Equal(http.StatusOK, w.Code)
 
@@ -279,59 +274,66 @@ func TestSyncAllTexts_EmptyRequest(t *testing.T) {
 	r.Empty(response.Deletions)
 }
 
-//
-//func TestSyncAllTexts_CreateNewFiles(t *testing.T) {
-//	r := require.New(t)
-//	setupTestServer(t)
-//
-//	request := syncRequest{
-//		UserID:     123,
-//		Timestamps: make(map[string]int64),
-//		Files: []file{
-//			{
-//				Path:         "today/task1.md",
-//				Content:      "Task 1 content",
-//				LastModified: 1234567890,
-//			},
-//			{
-//				Path:         "later/task2.md",
-//				Content:      "Task 2 content",
-//				LastModified: 1234567891,
-//			},
-//		},
-//	}
-//
-//	body, err := json.Marshal(request)
-//	r.NoError(err)
-//
-//	req := httptest.NewRequest(http.MethodPost, "/sync-all", bytes.NewBuffer(body))
-//	req.Header.Set("Content-Type", "application/json")
-//	w := httptest.NewRecorder()
-//
-//	SyncAllTexts(w, req)
-//
-//	r.Equal(http.StatusOK, w.Code)
-//
-//	var response syncResponse
-//	err = json.Unmarshal(w.Body.Bytes(), &response)
-//	r.NoError(err)
-//	r.Equal(StatusOK, response.Status)
-//	r.Len(response.Files, 2)
-//	r.Contains(response.Timestamps, "today")
-//	r.Contains(response.Timestamps, "later")
-//
-//	// Verify files were created on server
-//	userFS, err := fs.NewUserFS(123)
-//	r.NoError(err)
-//	content1, err := userFS.Read("", "today/task1.md")
-//	r.NoError(err)
-//	r.Equal("Task 1 content", content1)
-//
-//	content2, err := userFS.Read("", "later/task2.md")
-//	r.NoError(err)
-//	r.Equal("Task 2 content", content2)
-//}
-//
+func TestSyncAllTexts_CreateNewFilesOnServer(t *testing.T) {
+	r := require.New(t)
+
+	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
+	r.NoError(err)
+	origFS := fs.NewUserFS
+	fs.NewUserFS = func(userID int64) (*fs.FS, error) {
+		return userFS, nil
+	}
+	defer func() {
+		fs.NewUserFS = origFS
+	}()
+
+	request := syncRequest{
+		UserID:     -1,
+		Timestamps: make(map[string]int64),
+		Files: []file{
+			{
+				Path:         "today/task1.md",
+				Content:      "Task 1 content",
+				LastModified: 0,
+			},
+			{
+				Path:         "later/task2.md",
+				Content:      "Task 2 content",
+				LastModified: 0,
+			},
+		},
+	}
+
+	body, err := json.Marshal(request)
+	r.NoError(err)
+
+	req := httptest.NewRequest(http.MethodPost, "/syncTexts", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	SyncTexts(w, req)
+
+	r.Equal(http.StatusOK, w.Code)
+
+	var response syncResponse
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	r.NoError(err)
+	r.Equal(StatusOK, response.Status)
+	r.Len(response.Files, 2)
+	r.Contains(response.Timestamps, "today")
+	r.Contains(response.Timestamps, "later")
+
+	// Verify files were created on server
+	r.NoError(err)
+	content1, err := userFS.Read("today", "task1.md")
+	r.NoError(err)
+	r.Equal("Task 1 content", content1)
+
+	content2, err := userFS.Read("later", "task2.md")
+	r.NoError(err)
+	r.Equal("Task 2 content", content2)
+}
+
 //func TestSyncAllTexts_UpdateExistingFiles(t *testing.T) {
 //	r := require.New(t)
 //	setupTestServer(t)
