@@ -59,9 +59,7 @@ func TestSyncText_CreateNewFile(t *testing.T) {
 func TestSyncText_UpdateExistingFile_NoConflict(t *testing.T) {
 	r := require.New(t)
 
-	userFS, err := fs.NewUserFS(-1)
-	r.NoError(err)
-	err = userFS.Write("", "test.md", "Original content")
+	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 
 	origFS := fs.NewUserFS
@@ -71,6 +69,9 @@ func TestSyncText_UpdateExistingFile_NoConflict(t *testing.T) {
 	defer func() {
 		fs.NewUserFS = origFS
 	}()
+
+	err = userFS.Write("", "test.md", "Original content")
+	r.NoError(err)
 
 	clientFile := file{
 		UserID:       -1,
@@ -104,7 +105,7 @@ func TestSyncText_UpdateExistingFile_NoConflict(t *testing.T) {
 func TestSyncText_NotModified(t *testing.T) {
 	r := require.New(t)
 
-	userFS, err := fs.NewUserFS(-1)
+	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 
 	origFS := fs.NewUserFS
@@ -147,100 +148,137 @@ func TestSyncText_NotModified(t *testing.T) {
 	r.Equal("Original content", content)
 }
 
-//func TestSyncText_ConflictResolution(t *testing.T) {
-//	r := require.New(t)
-//	setupTestServer(t)
-//
-//	// Mock the Merge function for predictable results
-//	originalMerge := Merge
-//	defer func() {
-//		Merge = originalMerge
-//	}()
-//	Merge = func(serverContent, clientContent string) string {
-//		return serverContent + "\n" + clientContent
-//	}
-//
-//	// Create a file on server
-//	userFS, err := fs.NewUserFS(123)
-//	r.NoError(err)
-//	err = userFS.Write("", "test.md", "Server content")
-//	r.NoError(err)
-//
-//	clientFile := file{
-//		UserID:       123,
-//		Path:         "test.md",
-//		Content:      "Client content",
-//		LastModified: 1000, // Old timestamp to simulate conflict
-//	}
-//
-//	body, err := json.Marshal(clientFile)
-//	r.NoError(err)
-//
-//	req := httptest.NewRequest(http.MethodPost, "/sync-text", bytes.NewBuffer(body))
-//	req.Header.Set("Content-Type", "application/json")
-//	w := httptest.NewRecorder()
-//
-//	SyncText(w, req)
-//
-//	r.Equal(http.StatusOK, w.Code)
-//
-//	var response file
-//	err = json.Unmarshal(w.Body.Bytes(), &response)
-//	r.NoError(err)
-//	r.Equal(StatusOK, response.Status)
-//	r.Equal("Server content\nClient content", response.Content)
-//}
-//
-//func TestSyncText_InvalidMethod(t *testing.T) {
-//	r := require.New(t)
-//
-//	req := httptest.NewRequest(http.MethodGet, "/sync-text", nil)
-//	w := httptest.NewRecorder()
-//
-//	SyncText(w, req)
-//
-//	r.Equal(http.StatusMethodNotAllowed, w.Code)
-//}
-//
-//func TestSyncText_InvalidJSON(t *testing.T) {
-//	r := require.New(t)
-//
-//	req := httptest.NewRequest(http.MethodPost, "/sync-text", bytes.NewBufferString("invalid json"))
-//	w := httptest.NewRecorder()
-//
-//	SyncText(w, req)
-//
-//	r.Equal(http.StatusBadRequest, w.Code)
-//}
-//
-//func TestSyncAllTexts_EmptyRequest(t *testing.T) {
-//	r := require.New(t)
-//	setupTestServer(t)
-//
-//	request := syncRequest{
-//		UserID:     123,
-//		Timestamps: make(map[string]int64),
-//		Files:      []file{},
-//	}
-//
-//	body, err := json.Marshal(request)
-//	r.NoError(err)
-//
-//	req := httptest.NewRequest(http.MethodPost, "/sync-all", bytes.NewBuffer(body))
-//	req.Header.Set("Content-Type", "application/json")
-//	w := httptest.NewRecorder()
-//
-//	SyncAllTexts(w, req)
-//
-//	r.Equal(http.StatusOK, w.Code)
-//
-//	var response syncResponse
-//	err = json.Unmarshal(w.Body.Bytes(), &response)
-//	r.NoError(err)
-//	r.Equal(StatusOK, response.Status)
-//	r.Empty(response.Files)
-//	r.Empty(response.Deletions)
-//}
+func TestSyncText_UpdateExistingFile_Conflict(t *testing.T) {
+	r := require.New(t)
+
+	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
+	r.NoError(err)
+
+	origFS := fs.NewUserFS
+	fs.NewUserFS = func(userID int64) (*fs.FS, error) {
+		return userFS, nil
+	}
+	defer func() {
+		fs.NewUserFS = origFS
+	}()
+
+	err = userFS.Write("", "test.md", "Server content")
+	r.NoError(err)
+
+	clientFile := file{
+		UserID:       -1,
+		Path:         "test.md",
+		Content:      "Client content",
+		LastModified: 0,
+	}
+
+	body, err := json.Marshal(clientFile)
+	r.NoError(err)
+
+	req := httptest.NewRequest(http.MethodPost, "/syncText", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	SyncText(w, req)
+
+	r.Equal(http.StatusOK, w.Code)
+
+	var response map[string]interface{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	r.NoError(err)
+	r.Equal("ok", response["status"])
+
+	// Verify content was updated
+	content, err := userFS.Read("", "test.md")
+	r.NoError(err)
+	r.Equal("Server content\nClient content", content)
+}
+
+func TestSyncText_UpdateExistingFile_JournalConflict(t *testing.T) {
+	r := require.New(t)
+
+	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
+	r.NoError(err)
+
+	origFS := fs.NewUserFS
+	fs.NewUserFS = func(userID int64) (*fs.FS, error) {
+		return userFS, nil
+	}
+	defer func() {
+		fs.NewUserFS = origFS
+	}()
+
+	err = userFS.Write("", "test.md", "#### 25 May, Friday 🚀\nServer content")
+	r.NoError(err)
+
+	clientFile := file{
+		UserID:       -1,
+		Path:         "test.md",
+		Content:      "#### 25 May, Friday\nServer content",
+		LastModified: 0,
+	}
+
+	body, err := json.Marshal(clientFile)
+	r.NoError(err)
+
+	req := httptest.NewRequest(http.MethodPost, "/syncText", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	SyncText(w, req)
+
+	r.Equal(http.StatusOK, w.Code)
+
+	var response map[string]interface{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	r.NoError(err)
+	r.Equal("ok", response["status"])
+
+	// Verify content was updated
+	content, err := userFS.Read("", "test.md")
+	r.NoError(err)
+	r.Equal("#### 25 May, Friday 🚀\nServer content", content)
+}
+
+func TestSyncAllTexts_EmptyRequest(t *testing.T) {
+	r := require.New(t)
+
+	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
+	r.NoError(err)
+
+	origFS := fs.NewUserFS
+	fs.NewUserFS = func(userID int64) (*fs.FS, error) {
+		return userFS, nil
+	}
+	defer func() {
+		fs.NewUserFS = origFS
+	}()
+
+	request := syncRequest{
+		UserID:     -1,
+		Timestamps: make(map[string]int64),
+		Files:      []file{},
+	}
+
+	body, err := json.Marshal(request)
+	r.NoError(err)
+
+	req := httptest.NewRequest(http.MethodPost, "/syncTexts", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	SyncAllTexts(w, req)
+
+	r.Equal(http.StatusOK, w.Code)
+
+	var response syncResponse
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	r.NoError(err)
+	r.Equal(StatusOK, response.Status)
+	r.Empty(response.Files)
+	r.Empty(response.Deletions)
+}
+
 //
 //func TestSyncAllTexts_CreateNewFiles(t *testing.T) {
 //	r := require.New(t)
