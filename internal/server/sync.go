@@ -35,8 +35,9 @@ type file struct {
 
 type syncRequest struct {
 	UserID     int64            `json:"userId"`
+	Modified   []file           `json:"modified"` // New or modified files from client
+	Deleted    []string         `json:"deleted"`  // Deleted files from client
 	Timestamps map[string]int64 `json:"timestamps"`
-	Files      []file           `json:"files"` // New or modified files from client
 }
 
 type syncResponse struct {
@@ -65,6 +66,11 @@ func SyncTexts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// log deleted
+	for _, path := range request.Deleted {
+		logDelete(fmt.Sprintf("Deleting file: '%s'", path))
+	}
+
 	// TODO using rename log first replace old paths in client request to new so other code will work okay
 	// and maybe include it right away for files to send
 	// TODO what if multiply moves, back and forth? Merge them?
@@ -85,7 +91,7 @@ func SyncTexts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Save client-modified files to the server
-	for _, clientFile := range request.Files {
+	for _, clientFile := range request.Modified {
 		path := clientFile.Path
 
 		serverModifiedTime, err := userFS.Ctime("", path)
@@ -314,7 +320,7 @@ func SyncText(w http.ResponseWriter, r *http.Request) {
 
 //func possibleMoves(serverTimestamps, clientTimestamps map[string]int64) map[string]string {
 //	detectedMoves := map[string]string{} // oldPath -> newPath
-//	for _, clientFile := range request.Files {
+//	for _, clientFile := range request.Modified {
 //		if strings.Contains(clientOnlyFiles, clientFile.Path) {
 //			clientHash := hash(clientFile.Content)
 //			for _, serverPath := range serverOnlyFiles {
@@ -368,6 +374,21 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 func logSync(msg string) {
 	file, err := os.OpenFile("/tmp/sync", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("Error opening log file:", err)
+		return
+	}
+	defer file.Close()
+
+	time := time.Now().Format("2006-01-02 15:04:05")
+	if _, err := file.WriteString(time + ": " + msg + "\n"); err != nil {
+		fmt.Println("Error writing to log file:", err)
+		return
+	}
+}
+
+func logDelete(msg string) {
+	file, err := os.OpenFile("/tmp/del", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Println("Error opening log file:", err)
 		return

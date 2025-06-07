@@ -132,14 +132,15 @@ async function syncTextsWithServer() {
 
     // Send locally modified files and timestamps of last seen dirs from the server
     let server = {};
-    let filesToSend = await collectLocallyModifiedTextFiles();
+    const {modified, deleted} = await collectModifiedAndDeletedFiles();
     try {
         let response = await fetch('https://api.files.md/syncTexts', {
             method: 'POST',
             headers: {'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token')},
             body: JSON.stringify({
                 userId: getUserId(),
-                files: filesToSend,
+                modified: modified,
+                deleted: deleted,
                 timestamps: filesMetadata['timestamps'] || [],
             })
         });
@@ -360,8 +361,8 @@ async function saveMediaFile(path, blob, lastModified) {
     }
 }
 
-async function collectLocallyModifiedTextFiles() {
-    const filesToSend = [];
+async function collectModifiedAndDeletedFiles() {
+    const modifiedFiles = [];
     const existingFiles = {};
     const promises = [];
     for (const dir in files) {
@@ -376,7 +377,7 @@ async function collectLocallyModifiedTextFiles() {
             const promise = getFileStatus(dir, filename)
                 .then(result => {
                     if (result.status === 'modified' || result.status === 'new') {
-                        filesToSend.push(result);
+                        modifiedFiles.push(result);
                     }
 
                     if (result.status !== 'error') {
@@ -390,6 +391,7 @@ async function collectLocallyModifiedTextFiles() {
     await Promise.all(promises);
 
     // Find deleted files that are in files metadata but not in existing files
+    let deleted = [];
     for (const dir in filesMetadata.files) {
         for (const file in filesMetadata.files[dir]) {
             if  (/[<>:"|?*\\/\x00-\x1F\x7F]/.test(file)) {
@@ -398,11 +400,15 @@ async function collectLocallyModifiedTextFiles() {
             if (!existingFiles[toPath(dir, file)]) {
                 console.log(dir, file);
                 console.log("DELETED " + toPath(dir, file));
+                deleted.push(toPath(dir, file));
             }
         }
     }
 
-    return filesToSend;
+    return {
+        modified: modifiedFiles,
+        deleted: deleted,
+    };
 }
 
 function toPath(dir, file) {

@@ -252,7 +252,7 @@ func TestSyncAllTexts_EmptyRequest(t *testing.T) {
 	request := syncRequest{
 		UserID:     -1,
 		Timestamps: make(map[string]int64),
-		Files:      []file{},
+		Modified:   []file{},
 	}
 
 	body, err := json.Marshal(request)
@@ -290,7 +290,7 @@ func TestSyncAllTexts_CreateNewFilesOnServer(t *testing.T) {
 	request := syncRequest{
 		UserID:     -1,
 		Timestamps: make(map[string]int64),
-		Files: []file{
+		Modified: []file{
 			{
 				Path:         "today/task1.md",
 				Content:      "Task 1 content",
@@ -355,7 +355,7 @@ func TestSyncAllTexts_UpdateExistingFilesOnServer(t *testing.T) {
 		Timestamps: map[string]int64{
 			"today": 0, // Old timestamp
 		},
-		Files: []file{
+		Modified: []file{
 			{
 				Path:         "today/existing.md",
 				Content:      "Updated content",
@@ -410,7 +410,7 @@ func TestSyncAllTexts_SendUpdatedFilesToClient(t *testing.T) {
 		Timestamps: map[string]int64{
 			"today": 0,
 		},
-		Files: []file{},
+		Modified: []file{},
 	}
 
 	body, err := json.Marshal(request)
@@ -463,7 +463,7 @@ func TestSyncAllTexts_SendUpdatedFilesToClient(t *testing.T) {
 //		Timestamps: map[string]int64{
 //			"": 0,
 //		},
-//		Files: []file{},
+//		Modified: []file{},
 //	}
 //
 //	body, err := json.Marshal(request)
@@ -481,10 +481,10 @@ func TestSyncAllTexts_SendUpdatedFilesToClient(t *testing.T) {
 //	err = json.Unmarshal(w.Body.Bytes(), &response)
 //	r.NoError(err)
 //	r.Equal(StatusOK, response.Status)
-//	r.Len(response.Files, 2) // Both files should be sent
+//	r.Len(response.Modified, 2) // Both files should be sent
 //
 //	// Check that files contain content
-//	for _, file := range response.Files {
+//	for _, file := range response.Modified {
 //		r.NotEmpty(file.Content)
 //		r.True(file.LastModified > 0)
 //	}

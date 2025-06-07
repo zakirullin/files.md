@@ -10,7 +10,7 @@ import (
 var AvailableQuickBtns = []tg.Btn{
 	tg.NewBtn("Later", tg.NewCmd(consts.CmdLater, nil)),
 	tg.NewBtn("Search", tg.NewCustomCmd(consts.CmdInlineQuerySearchEveryWhere, nil, tg.CmdTypeInlineQueryCurrentChat)),
-	tg.NewBtn("Files", tg.NewCmd(consts.CmdShowFiles, nil)),
+	tg.NewBtn("Modified", tg.NewCmd(consts.CmdShowFiles, nil)),
 	tg.NewBtn("Checklists", tg.NewCmd(consts.CmdShowChecklists, nil)),
 	tg.NewBtn("Postpone", tg.NewCmd(consts.CmdShowPostpone, nil)),
 	tg.NewBtn("Read", tg.NewCmd(consts.CmdShowReadChecklist, nil)),
