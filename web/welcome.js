@@ -77,7 +77,7 @@ let defaultFiles = {
         },
         "Hotkeys.md": {
             "content": "# Hotkeys\n" +
-                "## File Navigation\n" +
+                "#### File Navigation\n" +
                 "\n" +
                 "| Hotkey | Action |\n" +
                 "| -------- |-------- |\n" +
@@ -87,7 +87,7 @@ let defaultFiles = {
                 "| `Cmd+[` / `Ctrl+[`  | Go to previous file   |\n" +
                 "| `Cmd+]` / `Ctrl+]`  | Go to next file  |\n" +
                 "\n" +
-                "## Text Formatting\n" +
+                "#### Text Formatting\n" +
                 "\n" +
                 "| Hotkey | Action |\n" +
                 "| -------- | -------- |\n" +
@@ -95,7 +95,7 @@ let defaultFiles = {
                 "| `Cmd+I` / `Ctrl+I` | Toggle *italic* formatting |\n" +
                 "| `Cmd+Y` / `Ctrl+Y`| Insert ✅ checkbox at line start |\n" +
                 "\n" +
-                "## Editor Functions\n" +
+                "#### Editor Functions\n" +
                 "\n" +
                 "| Hotkey | Action |\n" +
                 "| -------- | -------- |\n" +
