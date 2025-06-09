@@ -288,48 +288,42 @@ async function openFile(dir, filename, saveToHistory = true) {
 
     editor.currentDir = dir;
     editor.currentFile = filename;
+    // TODO disable when syncing?
     if (saveToHistory) {
         const state = {dir: dir, file: filename};
         history.pushState(state, '');
     }
 
-    try {
-        editor.getDoc().setValue(content);
-    } catch (error) {
-        console.warn("Errors during content change:", error);
+    editor.off();
+    const wrapper = editor.getWrapperElement();
+    if (wrapper && wrapper.parentNode) {
+        wrapper.parentNode.removeChild(wrapper);
     }
+
+    initEditor(document.getElementById('editor'));
+    editor.currentDir = dir;
+    editor.currentFile = filename;
+
+    editor.getDoc().setValue(content);
     editor.clearHistory();
     editor.markClean();
     editor.focus();
 
     if (cursorPos !== null) {
         console.log('cursor not null');
-        setTimeout(() => {
-            editor.setCursor(cursorPos);
-            editor.scrollIntoView(cursorPos, 500);
-            // TODO only focus if there's no quick dialogue
-            editor.focus();
-        }, 300);
+        editor.setCursor(cursorPos);
+        editor.scrollIntoView(cursorPos, 500);
+        // TODO only focus if there's no quick dialogue
+        editor.focus();
     } else {
         // Focus last line if we have short content
         const cmScroller = document.querySelector('.CodeMirror-scroll')
         const hasVerticalScroll = cmScroller.scrollHeight > cmScroller.clientHeight
         if (hasVerticalScroll) {
-            console.log('has vertical line');
-            setTimeout(() => {
             focusLastLine();
-            }, 300);
             return;
         }
-        console.log('trying to focus last line');
-
-        // Set cursor at the end of the page.
-        // We need to execute this code after some rendering loop. If we don't do that,
-        // Images and other heavy stuff won't be loaded
-        // P.S. Is it try after we set infinite loading?
-        // setTimeout(() => {
-            focusLastLine();
-        // }, 300);
+        focusLastLine();
     }
 }
 
