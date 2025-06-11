@@ -166,7 +166,8 @@
     color: #555;
 }
 .cm-s-hypermd-light span.cm-builtin {
-    color: #30a;
+    /*PATCHED, it broke 10:30-14:45, 19:00-21:00*/
+    /*color: #30a;*/
 }
 .cm-s-hypermd-light span.cm-bracket {
     color: #cc7;
