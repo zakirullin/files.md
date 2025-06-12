@@ -100,6 +100,7 @@ Read 4K randomly from SSD = 150,000 ns
 ```
 
 ## ADRs (Architecture Decision Records)
+- We use Telegram bot as distract-free write-only entrance to our knowledge base. The only issue is, it is not as wildly popular in EU/USA. I've come to the idea that we can transform app.files.md to a chat once we decrease the window size! Would be default behaviour on mobiles.
 - Introduced append-only log for syncing. Stateless sync is tricky to implement - we would have to send all files in every request. Since we're only renaming on server - we'll only track renames.
 - For content-only sync (no renames/deletes) we don't store any state on server, we compare hashes & last ctimes 
 - Removed Wikilinks support. Only plain Markdown links, our knowledge base must be interoperable.
