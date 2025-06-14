@@ -37,9 +37,13 @@ body {
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
-    gap: 10px;
     color: black;
+    gap: 10px;
+}
+
+#messages::before {
+    content: '';
+    flex-grow: 1;
 }
 
 .message {

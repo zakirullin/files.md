@@ -18,6 +18,7 @@ const (
 // 2) Uses dynamic programming to find the longest common subsequence (LCS) between every two lines
 // 3) Constructs a merged result that preserves all unique content from both strings
 // 4) Maintains the original order of content from both strings
+// TODO add support for json merging
 func Merge(s1, s2 string) string {
 	if len(s1) == 0 {
 		return s2
