@@ -291,46 +291,71 @@ function createAutocompleteDict() {
 
     return dict;
 }
+
 function updateSidebar(focusDir = '') {
     let expandedDirs = new Set();
-    let selectedDirs = new Set();
+    let selectedNodes = new Set();
 
     if (tree) {
+        // Save state for all nodes (both directories and files)
+        function saveNodeState(node) {
+            if (node.isExpanded()) {
+                expandedDirs.add(node.toString());
+            }
+            if (node.isSelected()) {
+                selectedNodes.add(node.toString());
+            }
+
+            // Recursively save state for child nodes
+            if (node.getChildren) {
+                node.getChildren().forEach(child => {
+                    saveNodeState(child);
+                });
+            }
+        }
+
         tree.getRoot().getChildren().forEach(child => {
-            if (child.isExpanded()) {
-                expandedDirs.add(child.toString());
-            }
-            if (child.isSelected()) {
-                selectedDirs.add(child.toString());
-            }
+            saveNodeState(child);
         });
     }
 
     root = new TreeNode('');
+
+    // Process directories
     for (const dir in files) {
         if (dir === '' || dir === 'media') {
             continue;
         }
 
         let dirNode = new TreeNode(dir, {expanded: false, dir: true});
+
+        // Process files in directory
         for (let file in files[dir]) {
             let fileNode = new TreeNode(file.replace(/\.md$/, ''), {expanded: false});
             fileNode.on('click', async function (n, node) {
                 await openFile(node.parent.toString(), node.toString() + ".md");
             });
             dirNode.addChild(fileNode);
+
+            // Restore selected state for file nodes
+            if (selectedNodes.has(file.replace(/\.md$/, ''))) {
+                fileNode.setSelected(true);
+            }
         }
+
         root.addChild(dirNode);
 
+        // Handle focus directory or restore previous state
         if (dir === focusDir) {
             dirNode.setExpanded(true);
             dirNode.setSelected(true);
         } else {
             if (expandedDirs.has(dir)) dirNode.setExpanded(true);
-            if (selectedDirs.has(dir)) dirNode.setSelected(true);
+            if (selectedNodes.has(dir)) dirNode.setSelected(true);
         }
     }
 
+    // Process root-level files
     if (files['']) {
         for (let file in files['']) {
             if (file === CONFIG_FILENAME) {
@@ -341,7 +366,12 @@ function updateSidebar(focusDir = '') {
             fileNode.on('click', async function (n, node) {
                 await openFile("", file);
             });
-            root.addChild(fileNode)
+            root.addChild(fileNode);
+
+            // Restore selected state for root-level file nodes
+            if (selectedNodes.has(file.replace(/\.md$/, ''))) {
+                fileNode.setSelected(true);
+            }
         }
     }
 
@@ -349,6 +379,7 @@ function updateSidebar(focusDir = '') {
         show_root: false,
     });
 }
+
 async function showRandomFile() {
     if (debug) {
         await openFile(debug.dir, debug.file);
