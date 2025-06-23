@@ -1161,11 +1161,12 @@ window.addEventListener('focus', async () => {
 
     editor.focus();
 
+    const savedDirectoryHandle = await getRootDirHandle();
+    // check if granted
+
     // Sync media first, so that new images for current file would be loaded
     await syncMedia();
     await syncCurrentFile();
-
-    const savedDirectoryHandle = await getRootDirHandle();
 
     // Benchmark time took
     const start = performance.now();

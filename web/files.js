@@ -115,9 +115,9 @@ async function loadLocalFiles(rootDirHandle) {
     try {
         await loadDir(rootDirHandle);
     } catch (error) {
-        console.log(error);
+        console.log('Load Local files: ', error);
         isLoadingLocalFiles = false;
-        return;
+        throw error;
     }
 
     // Remove empty dirs
