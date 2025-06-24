@@ -525,10 +525,6 @@ body.dragging * {
     background-image: none;
 }
 
-.cm-s-hypermd-light span.cm-attribute {
-    color: var(--color-link) !important;
-}
-
-.cm-s-hypermd-light span.cm-string {
+.cm-s-hypermd-light span.cm-attribute, .cm-s-hypermd-light span.cm-def, .cm-s-hypermd-light span.cm-string {
     color: var(--color-link) !important;
 }
