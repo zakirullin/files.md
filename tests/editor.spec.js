@@ -47,7 +47,7 @@ test.describe('Files.md Text Editor Sync Tests', () => {
         await page.waitForSelector('.CodeMirror', {timeout: 5000});
 
         await page.click('.CodeMirror');
-        await page.keyboard.press('Control+a');
+        await page.keyboard.press('Meta+a');
         await page.keyboard.press('Delete');
         await page.keyboard.type('[markdown');
         await page.keyboard.press('Enter');
@@ -85,7 +85,7 @@ test.describe('Files.md Text Editor Sync Tests', () => {
         expect(count).toEqual(4);
 
         const expectedSelections = [
-            { left: 2, width: 143, right: 145 },
+            { left: 2, width: 177, right: 179 },
             { left: 2, width: 97, right: 99 },
             { left: 2, width: 196, right: 198 },
             { left: 2, width: 229, right: 231 },
@@ -119,7 +119,7 @@ test.describe('Files.md Text Editor Sync Tests', () => {
         await page.keyboard.press('Control+a');
         await page.keyboard.press('Delete');
 
-        const testContent = `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`;
+        const testContent = `Lorem ipsum dolor\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`;
 
         await page.keyboard.type(testContent);
         await page.waitForTimeout(500);
@@ -131,9 +131,10 @@ test.describe('Files.md Text Editor Sync Tests', () => {
         // Check if selection div is created with proper positioning
         const allSelections = page.locator('.CodeMirror-selected');
         let count = await allSelections.count();
-        expect(count).toEqual(9);
+        expect(count).toEqual(10);
 
         const expectedSelections = [
+            { left: 2, width: 315, right: 317 },
             { left: 2, width: 741, right: 743 },
             { left: 2, width: 728, right: 730 },
             { left: 2, width: 752, right: 754 },

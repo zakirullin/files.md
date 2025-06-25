@@ -136,10 +136,88 @@ test('create new in root', async ({ page }) => {
         return cm.getValue();
     });
     expect(codeMirrorContent).toBe("# New file\ncontent\n");
+});
+
+test('rename file via meta+a', async ({ page }) => {
+    await page.evaluate(() => {
+        window.getRootDirHandle = async function() {
+            const root = await navigator.storage.getDirectory();
+            const subDir = await root.getDirectoryHandle('dir', { create: true });
+
+            const testFiles = [
+                { name: 'README.md', content: 'Hello world' },
+                { name: 'Notes.md', content: 'Some text' }
+            ];
+
+            for (const fileData of testFiles) {
+                try {
+                    await root.getFileHandle(fileData.name);
+                } catch (error) {
+                    const fileHandle = await root.getFileHandle(fileData.name, { create: true });
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(fileData.content);
+                    await writable.close();
+                }
+            }
+
+            return root;
+        };
+    });
+
+    await page.evaluate(() => {
+        init(document.getElementById("editor"));
+    });
+
+    await clickAndExpectContent(page, 'README', '# README\nHello world');
+    // click on cm-header cm-header-1
+
+    await page.evaluate(() => {
+        const cm = document.querySelector('.CodeMirror').CodeMirror;
+        cm.setCursor(0, cm.getLine(0).length);
+    });
+    await page.waitForTimeout(500);
+    await page.keyboard.press('Meta+a');
+    await page.waitForTimeout(100);
+    await page.keyboard.type('Newname');
+    await page.waitForTimeout(1000);
+
+    await clickAndExpectContent(page, 'Notes', '# Notes\nSome text');
+    await clickAndExpectContent(page, 'Newname', '# Newname\n');
+
+    // Rename with existing content
+    await page.waitForTimeout(100);
+    await page.keyboard.type('My text');
+    await page.evaluate(() => {
+        const cm = document.querySelector('.CodeMirror').CodeMirror;
+        cm.setCursor(0, cm.getLine(0).length);
+    });
+    await page.keyboard.type('2')
+    await page.waitForTimeout(1000);
+    await clickAndExpectContent(page, 'Newname2', '# Newname2\nMy text');
+});
+
+test('rename file via header removal', async ({ page }) => {
+    await setup(page);
+
+    await clickAndExpectContent(page, 'README', '# README\nHello world');
+    // click on cm-header cm-header-1
+
+    await page.evaluate(() => {
+        const cm = document.querySelector('.CodeMirror').CodeMirror;
+        cm.setCursor(0, cm.getLine(0).length);
+    });
+    await page.keyboard.press('Meta+Backspace');
+    await page.waitForTimeout(500);
+    await page.keyboard.type('Newname');
+    await page.waitForTimeout(1000);
+
+    await clickAndExpectContent(page, 'Notes', '# Notes\nSome text');
+    await clickAndExpectContent(page, 'Newname', '# Newname\nHello world');
+
     await page.pause();
 });
 
-test('create and move', async ({ page }) => {
+test('create file and move', async ({ page }) => {
     await page.evaluate(() => {
         window.getRootDirHandle = async function() {
             const root = await navigator.storage.getDirectory();
@@ -608,3 +686,69 @@ test('create file in selected folder', async ({ page }) => {
     const projectFiles = await page.locator('#sidebar >> text=projects').locator('..').locator('text=Project file');
     expect(await projectFiles.count()).toBe(1);
 });
+
+async function clickAndExpectContent(page, filePath, expectedContent) {
+    const parts = filePath.split('/');
+    const dirs = parts.slice(0, -1);
+    const file = parts[parts.length - 1];
+
+    for (const dir of dirs) {
+        const isSelected = await page.locator(`#sidebar-tree .tj_description:has-text('${dir}')`).evaluate(el => el.classList.contains('expanded'));
+        if (!isSelected) {
+            await page.click(`#sidebar-tree .tj_description:has-text('${dir}')`);
+            await page.waitForTimeout(100);
+        }
+    }
+
+    await page.click(`#sidebar-tree .tj_description:has-text('${file}')`);
+    await page.waitForTimeout(200);
+
+    const codeMirrorContent = await page.evaluate(() => {
+        const cm = document.querySelector('.CodeMirror').CodeMirror;
+        return cm.getValue();
+    });
+    expect(codeMirrorContent).toBe(expectedContent);
+}
+
+async function expectCurrentContent(page, content) {
+    const codeMirrorContent = await page.evaluate(() => {
+        const cm = document.querySelector('.CodeMirror').CodeMirror;
+        return cm.getValue();
+    });
+    expect(codeMirrorContent).toBe(content);
+}
+
+async function setup(page) {
+    await page.goto('/app.html');
+
+    await page.evaluate(()=> {
+        window.getRootDirHandle = async function() {
+            const root = await navigator.storage.getDirectory();
+
+            const files = [
+                { name: 'README.md', content: 'Hello world' },
+                { name: 'Notes.md', content: 'Some text' }
+            ];
+
+            for (const file of files) {
+                try {
+                    await root.getFileHandle(file.name);
+                } catch (error) {
+                    const fileHandle = await root.getFileHandle(file.name, { create: true });
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(file.content);
+                    await writable.close();
+                }
+            }
+
+            return root;
+        };
+    })
+
+    await page.evaluate(() => {
+        init(document.getElementById('editor'));
+    });
+
+    await page.waitForSelector('.CodeMirror', {timeout: 10000});
+    await page.waitForSelector('#sidebar-tree', {timeout: 5000});
+}

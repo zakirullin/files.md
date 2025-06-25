@@ -51,6 +51,7 @@ async function setup(page) {
             return root;
         };
     })
+
     await page.evaluate(() => {
         init(document.getElementById('editor'));
     });

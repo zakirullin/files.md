@@ -915,7 +915,7 @@ async function syncCurrentFile(syncWithServer = true) {
     }
     isSyncingCurrent = true;
 
-    // Track renaming.
+    // Track in-editor renaming.
     try {
         // TODO track if no first line?
         const firstLine = editor.getValue().split('\n')[0];
