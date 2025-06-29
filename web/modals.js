@@ -198,6 +198,7 @@ class SearchModal {
             modal.style.right = '20px';
             modal.style.left = '';
             modal.style.transform = '';
+            modal.style.width = '320px';
             // modal.style.transform = 'translateX(-50%)';
         } else {
             // Default center position
@@ -206,6 +207,7 @@ class SearchModal {
             modal.style.left = '50%';
             modal.style.right = '';
             modal.style.transform = 'translate(-50%, 0)';
+            modal.style.width = '';
         }
     }
 
