@@ -91,9 +91,9 @@ async function init(el) {
     updateSidebar();
     console.log(`Sidebar built in: ${(performance.now() - perf).toFixed(3)} milliseconds`);
 
-    perf = performance.now();
-    await showRandomFile();
-    console.log(`Random file opened in: ${(performance.now() - perf).toFixed(3)} milliseconds`);
+    // perf = performance.now();
+    openChat();
+    // console.log(`Random file opened in: ${(performance.now() - perf).toFixed(3)} milliseconds`);
 
     perf = performance.now();
     await syncTextsWithServer();
@@ -716,7 +716,7 @@ window.addEventListener('keydown', async (event) => {
         await removeFile(path);
         // Remove from files object
         delete files[dir][filename];
-        await showRandomFile();
+        openChat();
         await updateSidebar();
     }
 
@@ -954,7 +954,7 @@ async function openDir() {
 
     isWelcome = false;
     updateSidebar();
-    await showRandomFile();
+    await openChat();
 }
 
 function getCurrentContent() {
