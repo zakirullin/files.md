@@ -3341,68 +3341,67 @@ func TestCollapseToMsg(t *testing.T) {
 	clean()
 }
 
-// TODO fix collapsed
-//func TestCollapseForwardedMessages(t *testing.T) {
-//	r := require.New(t)
-//
-//	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
-//	r.NoError(err)
-//
-//	mode := userconfig.DefaultConfig.Mode
-//	userconfig.DefaultConfig.Mode = userconfig.ModeTasks
-//	defer func() {
-//		userconfig.DefaultConfig.Mode = mode
-//	}()
-//
-//	tgram := tg.NewFakeTG()
-//
-//	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), fakeConfig())
-//	upd := tg.NewUpd(-1, "First msg")
-//	upd.TimeVal = 0
-//	upd.HasTimeVal = true
-//	err = bot.Reply(upd)
-//	r.NoError(err)
-//
-//	upd = tg.NewUpd(-1, "Second msg")
-//	upd.TimeVal = 0
-//	upd.HasTimeVal = true
-//	err = bot.Reply(upd)
-//	r.NoError(err)
-//
-//	upd = tg.NewUpd(-1, "Third msg")
-//	upd.TimeVal = 1
-//	upd.HasTimeVal = true
-//	err = bot.Reply(upd)
-//	r.NoError(err)
-//
-//	upd = tg.NewUpd(-1, "Fourth msg")
-//	upd.TimeVal = 3
-//	upd.HasTimeVal = true
-//	err = bot.Reply(upd)
-//	r.NoError(err)
-//
-//	files, err := bot.fs.FilesAndDirs("today")
-//	r.NoError(err)
-//	r.Len(files, 2)
-//
-//	content, err := bot.fs.Read("today", "First msg.md")
-//	r.NoError(err)
-//	r.Equal("Second msg\nThird msg", content)
-//
-//	content, err = bot.fs.Read("today", "Fourth msg.md")
-//	r.NoError(err)
-//	r.Empty(content)
-//
-//	// Clean
-//	firstMsgIndicies.Range(func(key, value interface{}) bool {
-//		firstMsgTimes.Delete(key)
-//		return true
-//	})
-//	firstMsgTimes.Range(func(key, value interface{}) bool {
-//		firstMsgTimes.Delete(key)
-//		return true
-//	})
-//}
+func TestCollapseForwardedMessages(t *testing.T) {
+	r := require.New(t)
+
+	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
+	r.NoError(err)
+
+	mode := userconfig.DefaultConfig.Mode
+	userconfig.DefaultConfig.Mode = userconfig.ModeTasks
+	defer func() {
+		userconfig.DefaultConfig.Mode = mode
+	}()
+
+	savedNow := now
+	defer func() {
+		now = savedNow
+	}()
+	now = func() time.Time {
+		return time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
+	}
+
+	tgram := tg.NewFakeTG()
+
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), fakeConfig())
+	upd := tg.NewUpd(-1, "First msg")
+	upd.TimeVal = 0
+	upd.HasTimeVal = true
+	err = bot.Reply(upd)
+	r.NoError(err)
+
+	upd = tg.NewUpd(-1, "Second msg")
+	upd.TimeVal = 0
+	upd.HasTimeVal = true
+	err = bot.Reply(upd)
+	r.NoError(err)
+
+	upd = tg.NewUpd(-1, "Third msg")
+	upd.TimeVal = 1
+	upd.HasTimeVal = true
+	err = bot.Reply(upd)
+	r.NoError(err)
+
+	upd = tg.NewUpd(-1, "Fourth msg")
+	upd.TimeVal = 3
+	upd.HasTimeVal = true
+	err = bot.Reply(upd)
+	r.NoError(err)
+
+	content, err := userFS.Read("/", "Chat.txt")
+	r.NoError(err)
+	r.Equal("#### 1 January, Thursday\n`00:00` First msg\nSecond msg\nThird msg\n`00:00` Fourth msg\n", content)
+
+	// Clean
+	firstMsgIndicies.Range(func(key, value interface{}) bool {
+		firstMsgTimes.Delete(key)
+		return true
+	})
+	firstMsgTimes.Range(func(key, value interface{}) bool {
+		firstMsgTimes.Delete(key)
+		return true
+	})
+}
 
 func TestTitleChecklist(t *testing.T) {
 	r := require.New(t)
