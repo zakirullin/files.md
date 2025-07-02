@@ -687,7 +687,7 @@ function TreeView(root, container, options) {
         if (node.isLeaf() && !TreeUtil.getProperty(node.getOptions(), "forceParent", false)) {
             var ret = '';
             var icon = TreeUtil.getProperty(node.getOptions(), "icon", "");
-            if (node.toString() === 'Chat') {
+            if (node.toString() === 'chat') {
                 ret += '<span class="tj_mod_icon" style="padding-right: 2px">' + TreeConfig.chat_icon + '</span>';
             } else if (icon != "") {
                 ret += '<span class="tj_mod_icon">' + icon + '</span>';

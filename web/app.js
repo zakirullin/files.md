@@ -465,7 +465,7 @@ function renderSidebar(focusDir = '') {
     if (files[''] && files[''][CHAT_FILENAME]) {
         delete files[''][CHAT_FILENAME];
     }
-    let chatNode = new TreeNode('Chat', {expanded: false});
+    let chatNode = new TreeNode('chat', {expanded: false});
     chatNode.on('click', async function (n, node) {
         await openFile('', CHAT_FILENAME);
     });
