@@ -20,7 +20,9 @@
     bottom: 20px;
     right: 20px;
     width: 700px !important;
-    height: 500px !important;
+    max-height: 500px !important;
+    height: auto;
+    min-height: 210px;
     border: 1px solid var(--color-border);
     padding-top: 35px;
     border-radius: 15px;
