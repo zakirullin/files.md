@@ -128,7 +128,7 @@
 
 .tj_group_title {
 	font-size: 1.1em;
-	text-transform: uppercase;
+	/*text-transform: uppercase;*/
 	letter-spacing: 0.5px;
 	padding: 5px 5px;
 	display: block;
