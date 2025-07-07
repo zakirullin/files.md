@@ -83,25 +83,23 @@ self.addEventListener("fetch", (event) => {
     console.log('intercepting fetch:', event.request.url);
 
     event.respondWith(
-        fetch(event.request)
-            .catch(() => {
-                // Network failed, try cache
-                return caches.open(cacheName)
-                    .then((cache) => {
-                        return cache.match(event.request)
-                            .then(response => {
-                                if (response) {
-                                    console.log('✓ Serving from cache:', event.request.url);
-                                    return response;
-                                } else {
-                                    console.log('❌ Not found in cache:', event.request.url);
-                                    return new Response('Network error and not in cache', {
-                                        status: 503,
-                                        statusText: 'Service Unavailable'
-                                    });
-                                }
-                            });
-                    });
+        caches.match(event.request)
+            .then(response => {
+                if (response) {
+                    console.log('✓ Serving from cache:', event.request.url);
+                    return response;
+                }
+
+                // Not in cache, try network
+                console.log('Not in cache, trying network:', event.request.url);
+                return fetch(event.request);
+            })
+            .catch(err => {
+                console.error('Both cache and network failed:', event.request.url, err);
+                return new Response('Offline and not cached', {
+                    status: 503,
+                    statusText: 'Service Unavailable'
+                });
             })
     );
 });
