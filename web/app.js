@@ -475,7 +475,7 @@ function createAutocompleteDict() {
     });
 
     let lowPriorityEntries = [];
-    ['_read_', '_watch_', '_shop_', 'today', 'later'].forEach(dir => {
+    ['_read_', '_watch_', '_shop_', 'today', 'later', 'journal'].forEach(dir => {
         Object.keys(files[dir]).forEach(filename => {
             if (filename === CONFIG_FILENAME || filename === CHAT_FILENAME) {
                 return;
