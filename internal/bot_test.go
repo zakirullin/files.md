@@ -4316,3 +4316,40 @@ func TestShowToday_TodayCommandModeJournal(t *testing.T) {
 //
 //	r.Contains(tgram.LastSentText, "What's on your mind?")
 //}
+
+func TestScheduleForTmrw(t *testing.T) {
+	r := require.New(t)
+	savedNow := now
+	defer func() {
+		now = savedNow
+	}()
+	now = func() time.Time {
+		return time.Date(2024, 8, 11, 9, 54, 0, 0, time.UTC)
+	}
+
+	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
+	r.NoError(err)
+	err = userFS.CreateDirsIfNotExist()
+	r.NoError(err)
+
+	tgram := tg.NewFakeTG()
+	cfg := fakeConfig()
+
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), cfg)
+	err = bot.Reply(tg.NewUpd(-1, "Task for tomorrow"))
+	r.NoError(err)
+
+	err = bot.Reply(tg.NewUpdCmd(-1, tg.NewCmd("sc_tmrw", []string{"0"})))
+	r.NoError(err)
+
+	exists, err := userFS.Exists("later", "Task for tomorrow.md")
+	r.NoError(err)
+	r.True(exists)
+
+	sc, err := cfg.Schedules()
+	r.NoError(err)
+	r.Len(sc, 1)
+	r.Equal("Task for tomorrow.md", sc[0].Filename)
+	r.Equal(int64(1752019200), sc[0].ScheduledAt)
+	r.Equal("", sc[0].Cron)
+}
