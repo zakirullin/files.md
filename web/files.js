@@ -51,9 +51,8 @@ async function loadLocalFiles(rootDirHandle) {
         await new Promise(r => setTimeout(r, 50));
     }
 
-    isLoadingLocalFiles = true;
     let newFiles = {};
-
+    isLoadingLocalFiles = true;
     // Loads files recursively
     async function loadDir(dirHandle, path = '/', depth = 3) {
         const entries = [];
@@ -68,24 +67,25 @@ async function loadLocalFiles(rootDirHandle) {
 
             let isSupportedExtension = SUPPORTED_EXTENSIONS.includes(filename.split('.').pop());
             let isConfig = filename === CONFIG_PATH;
+
+            let dirs = path.split('/');
+            dirs = dirs.filter(d => d !== '');
+            let currentDir = newFiles;
+            for (let dir of dirs) {
+                dir += '/';
+                if (!currentDir[dir]) {
+                    currentDir[dir] = {};
+                }
+                currentDir = currentDir[dir]; // Move reference deeper
+            }
             if (entry.kind === 'directory') {
                 if (filename.startsWith('.') || depth >= 5) continue;
 
+                currentDir[filename + '/'] = {};
                 const dir = `${path}${filename}/`;
-                newFiles[filename + '/'] = {};
-                dirPromises.push({handle: entry, dir, depth: depth + 1});
+                dirPromises.push({handle: entry, path: dir, depth: depth + 1});
             } else if (entry.kind === 'file' && (isSupportedExtension || isConfig)) {
-                let dirs = path.split('/');
-                dirs = dirs.filter(d => d !== '');
 
-                let currentDir = newFiles;
-                for (let dir of dirs) {
-                    dir += '/';
-                    if (!currentDir[dir]) {
-                        currentDir[dir] = {};
-                    }
-                    currentDir = currentDir[dir]; // Move reference deeper
-                }
 
                 // Reuse existing file handle if it exists
                 let existingDir = files;
@@ -126,8 +126,8 @@ async function loadLocalFiles(rootDirHandle) {
             return;
         }
 
-        await Promise.all(dirPromises.map(({handle, dir, depth}) =>
-            loadDir(handle, dir, depth)
+        await Promise.all(dirPromises.map(({handle, path, depth}) =>
+            loadDir(handle, path, depth)
         ));
     }
 

@@ -1,6 +1,5 @@
-// Global variables
-let messages = [];
 const CHAT_PATH = '/Chat.txt';
+let messages = [];
 let chatIsClean = true; // Are there any unsaved changes?
 
 const chat = document.getElementById('chat');
