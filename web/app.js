@@ -152,7 +152,7 @@ function initEditor(el) {
         currentEditor = newEditor;
         currentEditor.refresh(); // Cursor & hide tokens conflict if we don't call it
         closeChatModal();
-        console.log('Focused to:', newEditor.currentFile);
+        console.log('Focused to:', newEditor.path);
     });
 
     newEditor.hmdResolveURL = function (path) {
@@ -871,7 +871,6 @@ window.addEventListener('keydown', async (event) => {
         console.log('cmd+d');
         event.preventDefault();
         event.stopPropagation();
-
 
         const path = currentEditor.path;
         if (path === CHAT_PATH) {

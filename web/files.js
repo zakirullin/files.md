@@ -209,8 +209,10 @@ async function syncTextsWithServer() {
             try {
                 await saveTextFile(path, content)
                 addMemFile(path, {
+                    isFile: true,
                     content: content,
                     lastModified: lastModified,
+                    path: path,
                     handle: await getFileHandle(path),
                 });
 
@@ -765,12 +767,13 @@ async function removeFile(path) {
     await fileHandle.remove()
     console.log(`File ${path} removed successfully.`);
 
-    const parts = path.split('/');
-    const filename = parts.pop();
-    const dir = parts.join('/');
-    if (files[dir] && files[dir][filename]) {
-        delete files[dir][filename];
-    }
+    // TODO multidir
+    // const parts = path.split('/');
+    // const filename = parts.pop();
+    // const dir = parts.join('/');
+    // if (files[dir] && files[dir][filename]) {
+    //     delete files[dir][filename];
+    // }
 }
 
 // TODO can we reuse moveFile?
@@ -790,6 +793,7 @@ async function moveCurrentFile(toDir) {
         console.log('MOVING to DIR:', toDir);
 
         addMemFile(path, {
+            isFile: true,
             content: content,
             lastModified: 0,
             handle: await getFileHandle(newPath),
@@ -846,23 +850,25 @@ async function moveFile(oldPath, newPath) {
         return;
     }
 
-    const oldParts = oldPath.split('/');
-    const oldFilename = oldParts.pop();
-    const oldDir = oldParts.join('/');
-
-    const newParts = newPath.split('/');
-    const newFilename = newParts.pop();
-    const newDir = newParts.join('/');
+    // const oldParts = oldPath.split('/');
+    // const oldFilename = oldParts.pop();
+    // const oldDir = oldParts.join('/');
+    //
+    // const newParts = newPath.split('/');
+    // const newFilename = newParts.pop();
+    // const newDir = newParts.join('/');
 
     try {
         let file = await (await getFileHandle(oldPath)).getFile();
         let content = await file.text();
         await saveTextFile(newPath, content);
 
-        console.log('saving ' + newDir + '/' + newFilename);
-        addMemFile(newDir, newFilename, {
+        console.log('saving ' + newPath);
+        addMemFile(newPath, {
+            isFile: true,
             content: content,
             lastModified: 0,
+            path: newPath,
             handle: await getFileHandle(newPath),
         });
         addServerFile(newPath, content, 0);
@@ -1001,7 +1007,6 @@ async function openFile(path, saveToHistory = true, el = 'editor-textarea') {
 
 
     let filename = toFilename(path);
-    console.log(path, filename);
     const header = filename.replace(/\.md$/, '').replace(/^\w/, (c) => c.toUpperCase());
     let content = '';
     if (memFile.handle !== undefined) {
@@ -1132,16 +1137,19 @@ async function syncCurrentFile(syncWithServer = true) {
                 // if (isCurrentEditorSame()) {
                 //     content = getCurrentContent();
                 // }
-                addMemFile(path, {
-                    content: content,
-                    lastModified: 0,
-                    handle: await getFileHandle(path, true),
-                });
+
                 // if (isCurrentEditorSame()) {
                 //     content = getCurrentContent();
                 //     // Change current file if the editor is unchanged.
                 // }
                 const newPath = toDir(path) + '/' + newFilename;
+                addMemFile(newPath, {
+                    isFile: true,
+                    content: content,
+                    lastModified: 0,
+                    path: newPath,
+                    handle: await getFileHandle(path, true),
+                });
                 await saveTextFile(newPath, getCurrentContent());
                 addServerFile(newPath, content, 0);
                 saveServerFiles();
@@ -1241,6 +1249,7 @@ async function syncCurrentFile(syncWithServer = true) {
         isSaving = true;
         try {
             // const file = files[dir][filename];
+            console.log('Getting', path);
             const file = getMemFile(path);
             if (file && file.handle) {
                 const freshContent = getCurrentContent();
@@ -1349,6 +1358,8 @@ async function post(endpoint, data) {
     }
 }
 
+// If there are files without isFile flag - we would have recursion.
+// Because walk would try to iterate over js object keys.
 function walk(obj, callback, path = '/') {
     if (obj.isFile) {
         callback(path, obj, true);
