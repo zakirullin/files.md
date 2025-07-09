@@ -89,7 +89,8 @@ async function loadLocalFiles(rootDirHandle) {
 
                 // Reuse existing file handle if it exists
                 let existingDir = files;
-                for (const dir of dirs) {
+                for (let dir of dirs) {
+                    dir += '/';
                     if (existingDir === undefined || existingDir[dir] === undefined) {
                         existingDir = undefined;
                         break;
@@ -162,9 +163,10 @@ async function syncTextsWithServer() {
     if (files === undefined || Object.keys(files).length === 0) {
         return;
     }
-    if (localStorage.getItem('token') === null) {
-        return;
-    }
+    // TODO multidir rem
+    // if (localStorage.getItem('token') === null) {
+    //     return;
+    // }
     if (debug) {
         return;
     }
@@ -493,37 +495,67 @@ async function saveMediaFile(path, blob, lastModified) {
     }
 }
 
+// TODO rename textFiles?
 async function collectModifiedAndDeletedFiles() {
     const modifiedFiles = [];
     const existingFiles = {};
     const promises = [];
     // TODO multidir walk
-    for (const dir in files) {
-        if (dir === 'media') continue; // Skip image directory
-
-        // TODO multidir walk
-        for (const filename in files[dir]) {
-            // TODO write tests for that?
-            if ((dir === editor.currentDir && filename === editor.currentFile)
-                || (dir === editor2.currentDir && filename === editor2.currentFile)) {
-                console.log('Skip sending current file: ' + dir + '/' + filename);
-                continue;
-            }
-
-            // TODO multidir path
-            const promise = getFileStatus(path)
-                .then(result => {
-                    if (result.status === 'modified' || result.status === 'new') {
-                        modifiedFiles.push(result);
-                    }
-
-                    if (result.status !== 'error') {
-                        existingFiles[result.path] = true;
-                    }
-                });
-            promises.push(promise);
+    // for (const dir in files) {
+    //     if (dir === 'media') continue; // Skip image directory
+    //
+    //     // TODO multidir walk
+    //     for (const filename in files[dir]) {
+    //         // TODO write tests for that?
+    //         if ((dir === editor.currentDir && filename === editor.currentFile)
+    //             || (dir === editor2.currentDir && filename === editor2.currentFile)) {
+    //             console.log('Skip sending current file: ' + dir + '/' + filename);
+    //             continue;
+    //         }
+    //
+    //         // TODO multidir path
+    //         const promise = getFileStatus(path)
+    //             .then(result => {
+    //                 if (result.status === 'modified' || result.status === 'new') {
+    //                     modifiedFiles.push(result);
+    //                 }
+    //
+    //                 if (result.status !== 'error') {
+    //                     existingFiles[result.path] = true;
+    //                 }
+    //             });
+    //         promises.push(promise);
+    //     }
+    // }
+    //
+    walk(files, (path, entry, isFile) => {
+        if (!isFile) {
+            return;
         }
-    }
+
+        if (path.startsWith('/media/')) {
+            return;
+        }
+
+        // TODO write tests for that?
+        if (path === editor.path || path === editor2.path) {
+            console.log('Skip sending current file: ' + path);
+            return;
+        }
+
+        console.log('walked to', path);
+        const promise = getFileStatus(path)
+            .then(result => {
+                if (result.status === 'modified' || result.status === 'new') {
+                    modifiedFiles.push(result);
+                }
+
+                if (result.status !== 'error') {
+                    existingFiles[result.path] = true;
+                }
+            });
+        promises.push(promise);
+    });
 
     await Promise.all(promises);
 
@@ -582,6 +614,7 @@ function toPath(dir, file) {
 
 async function getFileStatus(path) {
     let content;
+    console.log('checking' , path);
     try {
         const memFile = getMemFile(path);
         if (!memFile?.handle) {
@@ -602,6 +635,7 @@ async function getFileStatus(path) {
     // TODO why path is stored at all?
     // const path = serverFiles?.files?.[dir]?.[filename]?.path;
     let serverFile = getServerFile(path);
+    console.log('STATUS', path, serverFile);
     if (serverFile === null) {
         console.log('NEW FILE ' + path);
         return {
@@ -823,7 +857,8 @@ function addMemFile(path, memFile) {
     const filename = dirs.pop();
 
     let currentDir = files;
-    for (const dir of dirs) {
+    for (let dir of dirs) {
+        dir += '/';
         if (!currentDir[dir]) {
             currentDir[dir] = {};
         }
@@ -893,7 +928,8 @@ function getServerFile(path) {
     const filename = dirs.pop();
 
     let currentDir = serverFiles['files'];
-    for (const dir of dirs) {
+    for (let dir of dirs) {
+        dir += '/';
         if (!currentDir[dir]) {
             return null;
         }
@@ -921,7 +957,8 @@ function addServerFile(path, content, lastModifiedAt, clientLastSynced = null) {
     const filename = dirs.pop();
 
     let currentDir = serverFiles['files'];
-    for (const dir of dirs) {
+    for (let dir of dirs) {
+        dir += '/';
         if (!currentDir[dir]) {
             return null;
         }
@@ -929,6 +966,7 @@ function addServerFile(path, content, lastModifiedAt, clientLastSynced = null) {
     }
 
     currentDir[filename] = {
+        isFile: true,
         hash: hash(content),
         lastModified: lastModifiedAt,
         lastSynced: clientLastSynced,
@@ -950,7 +988,8 @@ function removeServerFile(path) {
     const filename = dirs.pop();
 
     let currentDir = serverFiles['files'];
-    for (const dir of dirs) {
+    for (let dir of dirs) {
+        dir += '/';
         if (!currentDir[dir]) {
             return null;
         }
@@ -1374,7 +1413,7 @@ function walk(obj, callback, path = '/') {
             callback(fullPath, item, true);
         } else {
             callback(fullPath, item, false);
-            walk(item, callback, fullPath + '/');
+            walk(item, callback, fullPath);
         }
     }
 }
@@ -1421,7 +1460,8 @@ function getMemFile(path) {
     const filename = dirs.pop();
 
     let currentDir = files;
-    for (const dir of dirs) {
+    for (let dir of dirs) {
+        dir += '/';
         if (!currentDir[dir]) {
             return null;
         }
@@ -1445,7 +1485,8 @@ function removeMemFile(path) {
     const filename = dirs.pop();
 
     let currentDir = files;
-    for (const dir of dirs) {
+    for (let dir of dirs) {
+        dir += '/';
         if (!currentDir[dir]) {
             return;
         }
