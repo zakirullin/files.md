@@ -235,6 +235,29 @@ test("sync one new file from client doesn't conflict with syncTexts", async ({ p
     await expectFileOnServer(page, 'New file.md', 'abcdefabcdef\ndef\nContent');
 });
 
+test('delete files on client will propogate to server as well', async ({ page }) => {
+    await createFileOnServer('file.md', 'test content');
+    await createFileOnServer('another.md', '*italic*');
+
+    await setup(page);
+
+    await clickAndExpectContent(page, 'Notes', '# Notes\nSome Text');
+    await clickAndExpectContent(page, 'README', '# README\nHello world');
+
+    await clickAndExpectContent(page, 'file', '# File\ntest content');
+    await clickAndExpectContent(page, 'another', '# Another\n*italic*');
+
+    await clickAndExpectContent(page, 'another', '# Another\n*italic*');
+    await page.keyboard.press('Meta+d');
+
+    // SyncTexts should propogate deletion to server
+    await page.waitForTimeout(4000);
+
+    expectFileOnServer(page, 'file.md', 'test content');
+    expectNoFileOnServer(page, 'another.md');
+
+});
+
 async function createFileOnServer(filepath, content) {
     const p = path.join(getServerDir(), filepath);
     await fs.writeFile(p, content, 'utf8');
@@ -242,10 +265,16 @@ async function createFileOnServer(filepath, content) {
 
 async function expectFileOnServer(page, filepath, expectedContent) {
     const p = path.join(getServerDir(), filepath);
-    console.log(p);
     const actualContent = await fs.readFile(p, 'utf8');
 
     expect(actualContent).toBe(expectedContent);
+}
+
+async function expectNoFileOnServer(page, filepath) {
+    const p = path.join(getServerDir(), filepath);
+
+    const exists = await fs.access(p).then(() => true).catch(() => false);
+    expect(exists).toBe(false);
 }
 
 function saltToken(token, salt = '') {
