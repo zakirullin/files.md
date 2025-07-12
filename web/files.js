@@ -231,7 +231,7 @@ async function syncTextsWithServer() {
                 const shouldRemoveOldFile = relPath in response.renames;
                 // TODO write e2e for renames
                 if (shouldRemoveOldFile) {
-                    const oldPath = joinPath('/', resposne.renames[relPath]);
+                    const oldPath = joinPath('/', response.renames[relPath]);
                     try {
                         console.log('REMOVING due to renaming', oldPath);
                         await removeFile(oldPath);
