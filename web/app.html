@@ -144,6 +144,12 @@
 <script src="wasm.js?v="></script>
 <script src="chat.js?v="></script>
 <script src="modals.js?v="></script>
+<script type="module">
+    import { getOriginPrivateDirectory } from './lib/fs/es6.js'
+    const dirHandle2 = await getOriginPrivateDirectory(import('./lib/fs/adapters/indexeddb.js'))
+    console.log(dirHandle2);
+
+</script>
 <script>
     window.COMMIT_HASH = '?v=';
     console.log('Current version:', window.COMMIT_HASH);
