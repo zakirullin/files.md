@@ -25,7 +25,10 @@ async function openChat() {
     chatInput.style.display = 'block';
     hideEditor2();
 
-    chatInput.focus();
+    const searchModal = document.getElementById('search');
+    if (searchModal.style.display === 'none') {
+        chatInput.focus();
+    }
     isChat = true;
     await loadMessages();
     renderMessages();

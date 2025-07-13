@@ -63,12 +63,12 @@ func ReplyCmd(_ js.Value, args []js.Value) any {
 func main() {
 	js.Global().Set("wasmReply", js.FuncOf(Reply))
 	js.Global().Set("wasmReplyCmd", js.FuncOf(ReplyCmd))
-	js.Global().Call("dispatchEvent", js.Global().Get("CustomEvent").New("wasmReady"))
 	fs.Exists = exists
 	fs.ReadFile = readFile
 	fs.WriteFile = writeFile
 	fs.ReadDir = readDir
 	initBot()
+	js.Global().Call("dispatchEvent", js.Global().Get("CustomEvent").New("wasmReady"))
 
 	select {}
 }
