@@ -641,3 +641,40 @@ body.dragging * {
 .cm-s-hypermd-light .cm-header {
     font-weight: 550 !important;
 }
+
+.cm-s-hypermd-light span.cm-inline-code:not(.cm-formatting):not(.cm-hmd-indented-code) {
+    background: rgba(135, 131, 120, .15) !important;
+    border-radius: 4px;
+    vertical-align: baseline;
+    padding: 2px 3px !important;
+    font-size: 100% !important;
+}
+
+.cm-s-hypermd-light div.HyperMD-codeblock-bg {
+    border-left: 1px solid var(--col-border);
+    border-right: 1px solid var(--col-border);
+}
+
+.cm-s-hypermd-light div.HyperMD-codeblock-begin-bg {
+    /*border-top: 1px solid var(--col-border);*/
+    border-top: none;
+}
+
+.cm-s-hypermd-light div.HyperMD-codeblock-end-bg {
+    /*border-bottom: 1px solid var(--col-border);*/
+    border-bottom: none;
+}
+
+.cm-s-hypermd-light div.HyperMD-codeblock-bg {
+    border-left: none;
+    border-right: none;
+}
+
+.cm-s-hypermd-light div.HyperMD-codeblock-begin-bg {
+    border-top-left-radius: 10px !important;
+    border-top-right-radius: 10px !important;
+}
+.cm-s-hypermd-light div.HyperMD-codeblock-end-bg {
+    border-bottom-left-radius: 10px !important;
+    border-bottom-right-radius: 10px !important;
+}

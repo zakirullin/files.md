@@ -122,15 +122,6 @@
     font-weight: 400;
 }
 
-.cm-s-hypermd-light span.cm-inline-code:not(.cm-formatting):not(.cm-hmd-indented-code) {
-    background: color-mix(in srgb, var(--col-inline-code-bg), transparent 40%) !important;
-    /*border: var(--color-border) !important;*/
-    border-radius: 4px;
-    vertical-align: baseline;
-    padding: 1px 3px !important;
-    font-size: 100% !important;
-}
-
 .cm-s-hypermd-light span.cm-formatting-list-ol {
     color: var(--col-tx-alt) !important;
 }

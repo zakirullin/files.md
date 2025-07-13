@@ -90,6 +90,10 @@ func (p *WorldClockPlugin) Handle(msgText string) (string, error) {
 func (p *WorldClockPlugin) parseTimestamp(message string) (time.Time, error) {
 	timestamp, err := strconv.ParseInt(message, 10, 64)
 	if err == nil && timestamp > 999999 {
+		// Check if it's milliseconds (13 digits) or seconds (10 digits)
+		if timestamp > 9999999999 {
+			return time.Unix(timestamp/1000, (timestamp%1000)*1000000).UTC(), nil
+		}
 		return time.Unix(timestamp, 0).UTC(), nil
 	}
 	return time.Time{}, errors.New("invalid timestamp")

@@ -559,16 +559,12 @@
     left: 0px;
     right: 0px;
     background-color: #FAFAFA;
-    border-left: 1px solid var(--col-border);
-    border-right: 1px solid var(--col-border);
 }
 .cm-s-hypermd-light div.HyperMD-codeblock-begin-bg {
-    border-top: 1px solid var(--col-border);
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
 }
 .cm-s-hypermd-light div.HyperMD-codeblock-end-bg {
-    border-bottom: 1px solid var(--col-border);
     border-bottom-left-radius: 4px;
     border-bottom-right-radius: 4px;
 }
@@ -657,10 +653,8 @@
 }
 .cm-s-hypermd-light span.cm-inline-code:not(.cm-formatting):not(.cm-hmd-indented-code) {
     background-color: rgba(238, 238, 238, 0.5);
-    border-radius: 4px;
+    border-radius: 5px;
     vertical-align: baseline;
-    /*PATCHED*/
-    border: var(--col-border) solid 1px;
     padding: 1px 0.4em;
 }
 .cm-s-hypermd-light span.cm-inline-code.hmd-hidden-token {
