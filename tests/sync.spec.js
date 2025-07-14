@@ -57,7 +57,7 @@ async function setup(page) {
     });
 
     await page.waitForSelector('#chat', {timeout: 10000});
-    await page.waitForSelector('#sidebar-tree', {timeout: 5000});
+    await page.waitForSelector('#tree', {timeout: 5000});
 }
 
 test('sync new files from server', async ({ page }) => {
@@ -558,14 +558,14 @@ async function clickAndExpectContent(page, filePath, expectedContent) {
     const dirs = parts;
 
     for (const dir of dirs) {
-        const isSelected = await page.locator(`#sidebar-tree .tj_description:text-is('${dir}')`).evaluate(el => el.classList.contains('expanded'));
+        const isSelected = await page.locator(`#tree .tj_description:text-is('${dir}')`).evaluate(el => el.classList.contains('expanded'));
         if (!isSelected) {
-            await page.click(`#sidebar-tree .tj_description:text-is('${dir}')`);
+            await page.click(`#tree .tj_description:text-is('${dir}')`);
             await page.waitForTimeout(100);
         }
     }
 
-    await page.click(`#sidebar-tree .tj_description:has-text('${file}')`);
+    await page.click(`#tree .tj_description:has-text('${file}')`);
     await page.waitForTimeout(200);
 
     const codeMirrorContent = await page.evaluate(() => {

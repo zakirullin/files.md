@@ -4,7 +4,7 @@ test.beforeEach(async ({page}) => {
     await page.goto('/app.html');
 
     // await page.waitForSelector('.CodeMirror', {timeout: 10000});
-    await page.waitForSelector('#sidebar-tree', {timeout: 1000});
+    await page.waitForSelector('#tree', {timeout: 1000});
 });
 
 test('should load files', async ({ page }) => {
@@ -394,9 +394,9 @@ test('create new file, move to new dir, create new file is subdir, move to root'
     await page.click('#move-results >> text=/');
     await page.waitForTimeout(500);
 
-    // await page.click('#sidebar-tree li:has-text("dir1")');
-    await page.click('#sidebar-tree li:has-text("dir1") ul li:has-text("File1")')
-    await page.click('#sidebar-tree li:has-text("File2")');
+    // await page.click('#tree li:has-text("dir1")');
+    await page.click('#tree li:has-text("dir1") ul li:has-text("File1")')
+    await page.click('#tree li:has-text("File2")');
 
 });
 
@@ -774,14 +774,14 @@ async function clickAndExpectContent(page, filePath, expectedContent) {
     const dirs = parts;
 
     for (const dir of dirs) {
-        const isSelected = await page.locator(`#sidebar-tree .tj_description:has-text('${dir}')`).evaluate(el => el.classList.contains('expanded'));
+        const isSelected = await page.locator(`#tree .tj_description:has-text('${dir}')`).evaluate(el => el.classList.contains('expanded'));
         if (!isSelected) {
-            await page.click(`#sidebar-tree .tj_description:has-text('${dir}')`);
+            await page.click(`#tree .tj_description:has-text('${dir}')`);
             await page.waitForTimeout(100);
         }
     }
 
-    await page.click(`#sidebar-tree .tj_description:has-text('${file}')`);
+    await page.click(`#tree .tj_description:has-text('${file}')`);
     await page.waitForTimeout(200);
 
     const codeMirrorContent = await page.evaluate(() => {
@@ -831,5 +831,5 @@ async function setup(page) {
     });
 
     await page.waitForSelector('#chat', {timeout: 10000});
-    await page.waitForSelector('#sidebar-tree', {timeout: 5000});
+    await page.waitForSelector('#tree', {timeout: 5000});
 }

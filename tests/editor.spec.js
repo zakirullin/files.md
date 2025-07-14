@@ -4,7 +4,7 @@ test.beforeEach(async ({page}) => {
     await page.goto('/app.html');
 
     // await page.waitForSelector('.CodeMirror', {timeout: 10000});
-    await page.waitForSelector('#sidebar-tree', {timeout: 5000});
+    await page.waitForSelector('#tree', {timeout: 5000});
 });
 
 test('should load the Files.md editor', async ({page}) => {

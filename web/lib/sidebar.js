@@ -237,7 +237,7 @@ function renderSidebar(focusDir = '') {
     sortTreeNode(root);
 
 
-    tree = new TreeView(root, '#sidebar-tree', {
+    tree = new TreeView(root, '#tree', {
         show_root: false,
     });
 }

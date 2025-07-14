@@ -67,10 +67,12 @@ body {
 }
 
 #sidebar {
+    flex-shrink: 0; /* Prevent flexbox from shrinking */
+    box-sizing: content-box !important;
     display: block;
-    width: 280px;
-    min-width: 220px;
-    max-width: 800px;
+    width: 280px !important;
+    /*min-width: 220px;*/
+    /*max-width: 800px;*/
     position: relative;
     overflow: auto;
     height: 100%;
@@ -416,7 +418,7 @@ a:hover {
     color: transparent;
 }
 
- #sidebar-toolbar {
+ #toolbar {
      z-index: 5;
      position: fixed;
      left: 240px;
@@ -425,7 +427,7 @@ a:hover {
      text-align: center;
  }
 
-#sidebar-toolbar button {
+#toolbar button {
     background: none;
     border: none;
     cursor: pointer;
@@ -442,12 +444,12 @@ button svg circle {
     fill: #3A9AE5 !important;
 }
 
-#sidebar-toolbar button:hover svg {
+#toolbar button:hover svg {
     border-radius: 4px;
     stroke:  var(--col-tx) !important;
 }
 
-#sidebar-toolbar {
+#toolbar {
     position: sticky;       /* stays at the top while scrolling */
     top: 0;
     padding-top: 8px;
@@ -467,7 +469,7 @@ button svg circle {
     position: relative;
 }
 
-.resize-handle {
+.resize {
     position: absolute;
     right: 0;
     top: 0;
@@ -478,11 +480,11 @@ button svg circle {
     background: transparent;
 }
 
-.resize-handle:hover {
+.resize:hover {
     background: color-mix(in srgb, var(--col-bg-active) 50%, transparent);
 }
 
-.resize-handle::after {
+.resize::after {
     content: '';
     position: absolute;
     right: 0;
@@ -492,7 +494,7 @@ button svg circle {
     background: transparent;
 }
 
-.resize-handle:hover::after {
+.resize:hover::after {
     background: var(--col-border);
 }
 
@@ -624,7 +626,7 @@ body.dragging * {
     position: fixed;
     left: 0;
     top: 0;
-    width: 21px;
+    width: 18px;
     height: 100vh;
     opacity: 0;
     cursor: pointer;

@@ -33,11 +33,11 @@
         stroke: var(--col-link) !important;
     }
 
-    #sidebar-toolbar svg {
+    #toolbar svg {
         stroke: var(--col-tx-alt) !important;
     }
 
-    #sidebar-toolbar button:hover svg {
+    #toolbar button:hover svg {
         border-radius: 4px;
         stroke:  var(--col-link) !important;
         background: var(--col-bg-active);

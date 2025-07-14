@@ -991,7 +991,7 @@ window.addEventListener('blur', async function () {
 });
 
 
-const resizeHandle = document.querySelector('.resize-handle');
+const resizeHandle = document.querySelector('.resize');
 let isResizing = false;
 resizeHandle.addEventListener('mousedown', initResize);
 document.addEventListener('mousemove', doResize);
@@ -1006,12 +1006,14 @@ function initResize(e) {
 function doResize(e) {
     if (!isResizing) return;
 
+    console.log(e);
     const width = e.clientX;
     const minWidth = 200;
     const maxWidth = 600;
 
     const constrainedWidth = Math.min(Math.max(width, minWidth), maxWidth);
-    sidebar.style.width = constrainedWidth + 'px';
+    sidebar.style.setProperty('width', constrainedWidth + 'px', 'important');
+    // sidebar.style.width = constrainedWidth + 'px';
 }
 
 function stopResize() {
@@ -1034,14 +1036,14 @@ document.addEventListener('keydown', (e) => {
 
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
-    const openZone = document.getElementById('open-sidebar');
+    const openSidebar = document.getElementById('open-sidebar');
 
     if (sidebar.style.display === 'none') {
         sidebar.style.display = 'block';
-        openZone.style.display = 'none';
+        openSidebar.style.display = 'none';
     } else {
         sidebar.style.display = 'none';
-        openZone.style.display = 'block';
+        openSidebar.style.display = 'block';
         if (isChat) {
             chatInput.focus();
         } else {

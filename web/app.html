@@ -44,10 +44,9 @@
 <body>
 
 <!--TODO rename to just sidebar-->
-<div id="sidebar-container">
-    <div id="open-sidebar" onclick="toggleSidebar()" style="display: none"></div>
-    <div id="sidebar">
-        <div id="sidebar-toolbar">
+<div id="open-sidebar" onclick="toggleSidebar()" style="display: none"></div>
+<div id="sidebar">
+        <div id="toolbar">
             <button id="new-file" title="New File (⌘N)" onclick="newFile()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 32 32">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -95,10 +94,9 @@
 <!--            </button>-->
             <button id="close-sidebar" onclick="toggleSidebar()">×</button>
         </div>
-        <div id="sidebar-tree">
+        <div id="tree">
         </div>
-    </div>
-    <div class="resize-handle"
+    <div class="resize"
          role="separator"
          tabindex="0"
          aria-label="Resize sidebar with mouse"
