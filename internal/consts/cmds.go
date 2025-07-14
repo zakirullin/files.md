@@ -66,6 +66,7 @@ const (
 	CmdNotesOnlyMode               = "notes_only"
 	CmdJournalOnlyMode             = "journal_only"
 	CmdFullMode                    = "full"
+	CmdChatMode                    = "chat"
 	CmdInlineQuerySearchEveryWhere = "search"
 	CmdInlineQuerySearchInDir      = "search_dir"
 	CmdWebAppHabits                = "habits"

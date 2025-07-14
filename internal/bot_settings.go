@@ -19,6 +19,7 @@ const (
 
 func (b *Bot) showSettings(params []string) error {
 	var kb tg.Keyboard
+	kb.AddRow(tg.NewBtn(txt.Emoji(i18n.Emoji("chat"), b.tr("Saved messages mode")), tg.NewCmd(consts.CmdChatMode, nil)))
 	kb.AddRow(tg.NewBtn(txt.Emoji(i18n.Emoji("brain"), b.tr("Full mode")), tg.NewCmd(consts.CmdFullMode, nil)))
 	kb.AddRow(tg.NewBtn(txt.Emoji(i18n.Emoji("notes"), b.tr("Notes mode")), tg.NewCmd(consts.CmdNotesOnlyMode, nil)))
 	kb.AddRow(tg.NewBtn(txt.Emoji(i18n.Emoji("tasks"), b.tr("Tasks mode")), tg.NewCmd(consts.CmdTasksOnlyMode, nil)))

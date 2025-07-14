@@ -276,6 +276,7 @@ func (b *Bot) handlers() map[string]func([]string) error {
 		consts.CmdNotesOnlyMode:               b.setNotesOnlyMode,
 		consts.CmdJournalOnlyMode:             b.setJournalOnlyMode,
 		consts.CmdFullMode:                    b.fullMode,
+		consts.CmdChatMode:                    b.chatMode,
 		consts.CmdCompleteHabit:               b.completeHabit,
 		consts.CmdShare:                       b.shareNote,
 		// Used for button-like separators
@@ -478,6 +479,14 @@ func (b *Bot) saveFromImage(u Update) error {
 	//	return fmt.Errorf("save from image: %w", err)
 	//}
 
+	if b.cfg.ChatOnlyMode() {
+		msgID, _ := u.MsgID()
+		// We can tolerate missing reaction.
+		_ = b.tg.SendReaction(b.userID, msgID, "👌")
+		return nil
+	}
+
+	// Track forwards.
 	if updateHasTime {
 		setFirstMsgIndex(b.userID, msgIndex, msgTime)
 		setFirstMsgTime(b.userID, msgTime)
@@ -2712,6 +2721,10 @@ func (b *Bot) fullMode(_ []string) error {
 	}
 
 	return b.ShowToday(nil)
+}
+
+func (b *Bot) chatMode(_ []string) error {
+	return b.cfg.SetMode(userconfig.ModeChat)
 }
 
 func (b *Bot) completeHabit(params []string) error {
