@@ -706,7 +706,7 @@ body.dragging * {
     border-radius: 10px;
     display: flex;
     position: absolute;
-    padding: 2px;
+    padding: 0;
     top: 2px;
     right: 2px;
 }
