@@ -40,7 +40,7 @@ function renderSidebar(focusDir = '', modifiedPaths) {
 
     let inbox = new TreeNode("inbox");
     inbox.path = CHAT_PATH;
-    inbox.setSelected(currentEditor.path === CHAT_PATH || currentEditor.path === undefined);
+    inbox.setSelected(currentEditor.path === undefined);
     inbox.on('click', async function (n, node) {
         await openChat();
     });
