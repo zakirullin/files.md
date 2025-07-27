@@ -110,20 +110,56 @@ func MoveDueTasks(
 	return nil
 }
 
-func moveTaskToToday(filename string, userFS *fs.FS) (bool, error) {
-	dirsToLookFor := []string{fs.DirLater, fs.DirArchive}
-	for _, dir := range dirsToLookFor {
-		exists, err := userFS.Exists(dir, filename)
+func moveTaskToToday(item string, userFS *fs.FS) (bool, error) {
+	// Try to move task from Done.txt
+	doneMD, err := userFS.Read(fs.DirArchive, fs.DoneFilename)
+	if err != nil {
+		return false, fmt.Errorf("moveTaskToToday: can't read done file: %w", err)
+	}
+
+	reducedDoneMD := txt.RemoveChecklistItem(doneMD, item)
+	itemWasRemoved := doneMD != reducedDoneMD
+	if itemWasRemoved {
+		todayMD, err := userFS.Read(fs.DirToday, fs.TodayFilename)
 		if err != nil {
-			return false, fmt.Errorf("moveTaskForToday: can't check for existence: %w", err)
-		}
-		if !exists {
-			continue
+			return false, fmt.Errorf("moveTaskToToday: can't read today file: %w", err)
 		}
 
-		err = userFS.Rename(dir, filename, fs.DirToday, filename)
+		err = userFS.Write(fs.DirRoot, fs.TodayFilename, txt.AddChecklistItem(todayMD, item, false))
 		if err != nil {
-			return false, fmt.Errorf("moveTaskForToday: can't rename: %w", err)
+			return false, fmt.Errorf("moveTaskToToday: can't write to today file: %w", err)
+		}
+
+		err = userFS.Write(fs.DirArchive, fs.DoneFilename, reducedDoneMD)
+		if err != nil {
+			return false, fmt.Errorf("moveTaskToToday: can't write to done file: %w", err)
+		}
+
+		return true, nil
+	}
+
+	// Try to move task from Later.txt
+	laterMD, err := userFS.Read(fs.DirRoot, fs.LaterFilename)
+	if err != nil {
+		return false, fmt.Errorf("moveTaskToToday: can't read later file: %w", err)
+	}
+
+	reducedLaterMD := txt.RemoveChecklistItem(laterMD, item)
+	itemWasRemoved = laterMD != reducedLaterMD
+	if itemWasRemoved {
+		todayMD, err := userFS.Read(fs.DirToday, fs.TodayFilename)
+		if err != nil {
+			return false, fmt.Errorf("moveTaskToToday: can't read today file: %w", err)
+		}
+
+		err = userFS.Write(fs.DirRoot, fs.TodayFilename, txt.AddChecklistItem(todayMD, item, false))
+		if err != nil {
+			return false, fmt.Errorf("moveTaskToToday: can't write to today file: %w", err)
+		}
+
+		err = userFS.Write(fs.DirRoot, fs.LaterFilename, reducedLaterMD)
+		if err != nil {
+			return false, fmt.Errorf("moveTaskToToday: can't write to done file: %w", err)
 		}
 
 		return true, nil
