@@ -5,6 +5,7 @@ package server
 import (
 	_ "embed"
 	"fmt"
+	"io"
 	"log"
 	"log/slog"
 	"net/http"
@@ -190,7 +191,30 @@ func newLogger(logFilename string) *log.Logger {
 		log.Fatalf("Server: failed to open log file: %v", err)
 	}
 
-	return log.New(logFile, "Server Error: ", log.Ldate|log.Ltime|log.Lshortfile)
+	filteredWriter := &FilteredWriter{
+		writer: logFile,
+		ignorePatterns: []string{
+			"TLS handshake error",
+		},
+	}
+
+	return log.New(filteredWriter, "Server Error: ", log.Ldate|log.Ltime|log.Lshortfile)
+}
+
+type FilteredWriter struct {
+	writer         io.Writer
+	ignorePatterns []string
+}
+
+func (fw *FilteredWriter) Write(p []byte) (n int, err error) {
+	message := string(p)
+	for _, pattern := range fw.ignorePatterns {
+		if strings.Contains(message, pattern) {
+			return len(p), nil
+		}
+	}
+
+	return fw.writer.Write(p)
 }
 
 func panicMiddleware(next http.HandlerFunc) http.HandlerFunc {
