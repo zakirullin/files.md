@@ -112,6 +112,7 @@ async function handleRequest(request) {
 
         } catch (error) {
             if (i === 2) {
+                console.log(`Using cache`, error);
                 return await caches.match(request);
             }
 
