@@ -825,6 +825,7 @@ autoResize();
 
 
 function sendCmd(cmd, params) {
+    console.log('Sending CMD to wasm', cmd, params)
     let cmdObj = {
         n: cmd,
         t: "cmd",
