@@ -784,57 +784,6 @@ function goForward() {
     history.forward();
 }
 
-const originalLog = console.log;
-
-console.log = function(...args) {
-    // Call the original
-    originalLog.apply(console, args);
-
-    // Your custom logic here
-    const date = new Date();
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-
-    const now = `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
-
-    const msg = args.map(arg =>
-        typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-    ).join(' ');
-    const logMsg = `\`${now}\` ${msg}\n`;
-    try {
-        writeAtEnd(LOG_PATH, logMsg);
-    } catch (error) {
-    }
-};
-
-function log2(...args) {
-    console.log(...args);
-
-    // Log to a log file
-    const date = new Date();
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-
-    const now = `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
-
-    const msg = args.map(arg =>
-        typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-    ).join(' ');
-    const logMsg = `\`${now}\` ${msg}\n`;
-    try {
-        writeAtEnd(LOG_PATH, logMsg);
-    } catch (error) {
-    }
-}
-
 // Custom global log() function that display immediate values and writes to a file.
 // Logging a JavaScript object to the console isn't logging that object's state, it is logging an object reference.
 // We make a deep copy of the object at the moment of calling so to display its true value.
