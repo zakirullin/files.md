@@ -438,7 +438,9 @@ async function openDir() {
     await saveDirectoryHandle(dirHandle);
 
 
-    await migrateFromOPFSToLocal();
+    // Media files got corrupted because they got copied from OPFS to local fs storage.
+    // It breaks binary files via .text()
+    // await migrateFromOPFSToLocal();
     files = await loadLocalFiles(dirHandle)
 
     isWelcome = false;
