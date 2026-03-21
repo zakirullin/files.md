@@ -8,8 +8,8 @@ import (
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 
-	"zakirullin/stuffbot/internal/fs"
-	"zakirullin/stuffbot/internal/userconfig"
+	"zakirullin/stuffbot/bot/fs"
+	"zakirullin/stuffbot/bot/userconfig"
 	"zakirullin/stuffbot/pkg/tg"
 	"zakirullin/stuffbot/pkg/txt"
 )

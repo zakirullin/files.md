@@ -14,14 +14,14 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/spf13/afero"
 
+	bot "zakirullin/stuffbot/bot"
 	"zakirullin/stuffbot/config"
 	"zakirullin/stuffbot/i18n"
-	"zakirullin/stuffbot/internal"
-	"zakirullin/stuffbot/internal/db"
-	"zakirullin/stuffbot/internal/fs"
-	"zakirullin/stuffbot/internal/sched/worker"
-	"zakirullin/stuffbot/internal/server"
-	"zakirullin/stuffbot/internal/userconfig"
+	"zakirullin/stuffbot/bot/db"
+	"zakirullin/stuffbot/bot/fs"
+	"zakirullin/stuffbot/bot/sched/worker"
+	"zakirullin/stuffbot/bot/server"
+	"zakirullin/stuffbot/bot/userconfig"
 	"zakirullin/stuffbot/pkg/tg"
 	"zakirullin/stuffbot/pkg/txt"
 )
@@ -168,7 +168,7 @@ func processUserUpdates(userID int64, updates <-chan tgbotapi.Update, telegram *
 	}
 }
 
-func newBot(telegram *tg.TG, userID int64) (*internal.Bot, error) {
+func newBot(telegram *tg.TG, userID int64) (*bot.Bot, error) {
 	storagePath := config.BotCfg.StorageDir
 	storagePath, err := filepath.Abs(storagePath)
 	userPath := path.Join(storagePath, txt.I64(userID))
@@ -188,9 +188,9 @@ func newBot(telegram *tg.TG, userID int64) (*internal.Bot, error) {
 		return nil, fmt.Errorf("can't create default user config: %w", err)
 	}
 
-	bot := internal.NewBot(userID, telegram, userFS, db.NewDB(userID), userconf)
+	b := bot.NewBot(userID, telegram, userFS, db.NewDB(userID), userconf)
 
-	return bot, nil
+	return b, nil
 }
 
 func updateToday(telegram *tg.TG, userID int64) {

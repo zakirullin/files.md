@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"zakirullin/stuffbot/internal/fs"
+	"zakirullin/stuffbot/bot/fs"
 	"zakirullin/stuffbot/pkg/txt"
 )
 

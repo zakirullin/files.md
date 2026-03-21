@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"zakirullin/stuffbot/config"
-	"zakirullin/stuffbot/internal/fs"
+	"zakirullin/stuffbot/bot/fs"
 )
 
 const (

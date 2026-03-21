@@ -11,12 +11,12 @@ import (
 	"github.com/spf13/afero"
 	"golang.org/x/exp/slog"
 
-	"zakirullin/stuffbot/internal"
-	"zakirullin/stuffbot/internal/db"
-	"zakirullin/stuffbot/internal/fs"
-	"zakirullin/stuffbot/internal/journal"
-	"zakirullin/stuffbot/internal/sched"
-	"zakirullin/stuffbot/internal/userconfig"
+	"zakirullin/stuffbot/bot"
+	"zakirullin/stuffbot/bot/db"
+	"zakirullin/stuffbot/bot/fs"
+	"zakirullin/stuffbot/bot/journal"
+	"zakirullin/stuffbot/bot/sched"
+	"zakirullin/stuffbot/bot/userconfig"
 	"zakirullin/stuffbot/pkg/txt"
 )
 

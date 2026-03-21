@@ -3,7 +3,7 @@ package userconfig
 import (
 	"fmt"
 
-	"zakirullin/stuffbot/internal/consts"
+	"zakirullin/stuffbot/bot/consts"
 	"zakirullin/stuffbot/pkg/tg"
 )
 

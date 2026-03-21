@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"zakirullin/stuffbot/internal/fs"
-	"zakirullin/stuffbot/internal/habits"
+	"zakirullin/stuffbot/bot/fs"
+	"zakirullin/stuffbot/bot/habits"
 	"zakirullin/stuffbot/pkg/txt"
 )
 

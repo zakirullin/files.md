@@ -6,8 +6,8 @@ import (
 
 	"zakirullin/stuffbot/config"
 	"zakirullin/stuffbot/i18n"
-	"zakirullin/stuffbot/internal/consts"
-	"zakirullin/stuffbot/internal/userconfig"
+	"zakirullin/stuffbot/bot/consts"
+	"zakirullin/stuffbot/bot/userconfig"
 	"zakirullin/stuffbot/pkg/tg"
 	"zakirullin/stuffbot/pkg/txt"
 )

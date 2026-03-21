@@ -12,12 +12,12 @@ import (
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 
-	"zakirullin/stuffbot/internal/consts"
-	"zakirullin/stuffbot/internal/db"
-	"zakirullin/stuffbot/internal/fs"
-	"zakirullin/stuffbot/internal/journal"
-	"zakirullin/stuffbot/internal/sched"
-	"zakirullin/stuffbot/internal/userconfig"
+	"zakirullin/stuffbot/bot/consts"
+	"zakirullin/stuffbot/bot/db"
+	"zakirullin/stuffbot/bot/fs"
+	"zakirullin/stuffbot/bot/journal"
+	"zakirullin/stuffbot/bot/sched"
+	"zakirullin/stuffbot/bot/userconfig"
 	"zakirullin/stuffbot/pkg/tg"
 	"zakirullin/stuffbot/pkg/txt"
 )

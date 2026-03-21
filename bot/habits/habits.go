@@ -11,7 +11,7 @@ import (
 	"github.com/rivo/uniseg"
 
 	"zakirullin/stuffbot/i18n"
-	"zakirullin/stuffbot/internal/fs"
+	"zakirullin/stuffbot/bot/fs"
 	"zakirullin/stuffbot/pkg/txt"
 )
 

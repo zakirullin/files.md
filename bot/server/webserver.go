@@ -17,10 +17,10 @@ import (
 	"time"
 
 	"zakirullin/stuffbot/config"
-	"zakirullin/stuffbot/internal/fs"
-	"zakirullin/stuffbot/internal/habits"
-	"zakirullin/stuffbot/internal/journal"
-	"zakirullin/stuffbot/internal/userconfig"
+	"zakirullin/stuffbot/bot/fs"
+	"zakirullin/stuffbot/bot/habits"
+	"zakirullin/stuffbot/bot/journal"
+	"zakirullin/stuffbot/bot/userconfig"
 )
 
 // Serve TODO release graceful shutdown etc

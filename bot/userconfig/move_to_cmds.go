@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"zakirullin/stuffbot/i18n"
-	"zakirullin/stuffbot/internal/consts"
+	"zakirullin/stuffbot/bot/consts"
 	"zakirullin/stuffbot/pkg/tg"
 )
 

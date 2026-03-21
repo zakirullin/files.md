@@ -9,8 +9,8 @@ import (
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 
-	"zakirullin/stuffbot/internal/db"
-	"zakirullin/stuffbot/internal/fs"
+	"zakirullin/stuffbot/bot/db"
+	"zakirullin/stuffbot/bot/fs"
 	"zakirullin/stuffbot/pkg/tg"
 )
 

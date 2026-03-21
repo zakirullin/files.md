@@ -8,7 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"zakirullin/stuffbot/internal/fs"
+	"zakirullin/stuffbot/bot/fs"
 )
 
 var syncMediasRequest struct {

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"zakirullin/stuffbot/config"
-	"zakirullin/stuffbot/internal/fs"
-	"zakirullin/stuffbot/internal/userconfig"
+	"zakirullin/stuffbot/bot/fs"
+	"zakirullin/stuffbot/bot/userconfig"
 )
 
 //go:embed templates/habits.html
