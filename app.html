@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#F8F8F7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#262624" media="(prefers-color-scheme: dark)">
+    <title>Files.md (Beta version)</title>
+    <link rel="canonical" href="https://app.files.md/">
+    <link rel="icon" href="web/favicon.ico" sizes="32x32">
+    <link rel="manifest" href="web/manifest.json">
+    <link href="web/app.css?v=" rel="stylesheet">
+    <link href="lib/normalize.css?v=" rel="stylesheet">
+    <link href="lib/sidebar.css?v=" rel="stylesheet">
+    <link href="lib/codemirror.css?v=" rel="stylesheet">
+    <link href="lib/hypermd.css?v=" rel="stylesheet">
+    <link href="lib/theme-light.css?v=" rel="stylesheet">
+    <link href="lib/theme-dark.css?v=" rel="stylesheet">
+    <link href="web/chat.css?v=" rel="stylesheet">
+    <script src="lib/sidebar.js?v="></script>
+    <script src="lib/codemirror.js?v="></script>
+    <script src="lib/core.js?v="></script>
+    <script src="lib/markdown.js?v="></script>
+    <script src="lib/hypermd.js?v="></script>
+    <script src="lib/keymap.js?v="></script>
+    <script src="lib/click.js?v="></script>
+    <script src="lib/hide-token.js?v="></script>
+    <script src="lib/fold.js?v="></script>
+    <script src="lib/fold-image.js?v="></script>
+    <script src="lib/fold-link.js?v="></script>
+    <script src="lib/table-align.js?v="></script>
+    <script src="lib/autocomplete-link.js?v="></script>
+    <script src="lib/show-hint.js?v="></script>
+    <script src="lib/autoscroll.js?v="></script>
+    <script src="lib/codemirror-go.js?v="></script>
+    <script src="lib/codemirror-php.js?v="></script>
+    <script src="lib/codemirror-shell.js?v="></script>
+    <script src="lib/similarity.js?v="></script>
+    <script src="lib/emoji.js?v="></script>
+    <script src="lib/fs.js?v="></script>
+    <script src="lib/md.js?v="></script>
+    <script src="welcome.js?v="></script>
+    <script src="files.js?v="></script>
+</head>
+<body>
+
+<!--TODO rename to just sidebar-->
+<div id="open-sidebar" onclick="toggleSidebar()" style="display: none"></div>
+<div id="sidebar">
+    <div class="resize"
+         role="separator"
+         tabindex="0"
+         aria-label="Resize sidebar with mouse"
+         aria-orientation="vertical">
+        <button id="close-sidebar" title="Close sidebar (⌘\)"  onclick="toggleSidebar()">×</button>
+    </div>
+    <div id="toolbar">
+        <button id="new-file" title="New File (⌘N)" onclick="newFile()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 32 32">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M16 25V7M7 16h18"/>
+            </svg>
+        </button>
+        <button id="new-folder" title="New Folder (⌘⇧N)" onclick="newFolder()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 32 32">
+                <path stroke-linecap="round" stroke-width="2" d="M28 11v13a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h6c3 0 3 3 5 3h9.003C27.108 9 28 9.895 28 11z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-8M12 17h8"/>
+            </svg>
+        </button>
+        <button id="remove-file" title="Delete Current File (⌘D)" onclick="removeCurrentFile()">
+            <?xml version="1.0" encoding="utf-8"?>
+            <svg width="22px" height="22px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="transform: translateY(-1px)">
+                <path d="M20.5001 7H3.5" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+                <path d="M18.8332 8.5L18.3732 15.3991C18.1962 18.054 18.1077 19.3815 17.2427 20.1907C16.3777 21 15.0473 21 12.3865 21H11.6132C8.95235 21 7.62195 21 6.75694 20.1907C5.89194 19.3815 5.80344 18.054 5.62644 15.3991L5.1665 8.5" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+                <path d="M6.5 6C6.55588 6 6.58382 6 6.60915 5.99936C7.43259 5.97849 8.15902 5.45491 8.43922 4.68032C8.44784 4.65649 8.45667 4.62999 8.47434 4.57697L8.57143 4.28571C8.65431 4.03708 8.69575 3.91276 8.75071 3.8072C8.97001 3.38607 9.37574 3.09364 9.84461 3.01877C9.96213 3 10.0932 3 10.3553 3H13.6447C13.9068 3 14.0379 3 14.1554 3.01877C14.6243 3.09364 15.03 3.38607 15.2493 3.8072C15.3043 3.91276 15.3457 4.03708 15.4286 4.28571L15.5257 4.57697C15.5433 4.62992 15.5522 4.65651 15.5608 4.68032C15.841 5.45491 16.5674 5.97849 17.3909 5.99936C17.4162 6 17.4441 6 17.5 6" stroke-width="1.5" fill="none"/>
+            </svg>
+            <!--                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 32 32" style="transform: translateY(-1px)">-->
+            <!--                            <ellipse cx="16" cy="8" stroke-linejoin="round" stroke-width="2" rx="11" ry="3"/>-->
+            <!--                            <path  stroke-linejoin="round" stroke-width="2" d="M5 8l3 18s1 2 8 2 8-2 8-2l3-18"/>-->
+            <!--                            <path  stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 16.5l-5 5M13.5 16.5l5 5"/>-->
+            <!--                        </svg>-->
+        </button>
+        <button id="open-folder" title="Select local folder" onClick="openDir()" style="display: none">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 32 32">
+                <path stroke-linecap="round" stroke-width="2" d="M28 11v13a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h6c3 0 3 3 5 3h9.003C27.108 9 28 9.895 28 11z"/>
+            </svg>
+        </button>
+        <!--        <button id="move-file" title="Move file" onclick="openMoveModal()">-->
+        <!--            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 32 32">-->
+        <!--                <path stroke="#535358" stroke-linecap="round" stroke-width="2" d="M5 16h21"/>-->
+        <!--                <path stroke="#535358" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 8l8 8-8 8"/>-->
+        <!--            </svg>-->
+        <!--        </button>-->
+    </div>
+    <div id="tree">
+    </div>
+</div>
+
+<div id="content">
+    <div id="editor-container">
+        <textarea id="editor-textarea" style="display: none"></textarea>
+    </div>
+    <div id="editor2-container" style="display: none">
+        <textarea id="editor2-textarea" style="display: none"></textarea>
+        <div id="nav-buttons">
+        <button id="go-backward" class="nav-button" onclick="goBack()" title="Go Back (⌘[)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" fill="none" viewBox="0 0 32 32">
+                <path  stroke-linecap="round" stroke-width="2.5" d="M6 16h21"/>
+                <path  stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 8l-8 8 8 8"/>
+            </svg>
+        </button>
+        <button id="go-forward" class="nav-button" onclick="goForward()" title="Go Forward (⌘])">
+            <svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" fill="none" viewBox="0 0 32 32">
+                <path  stroke-linecap="round" stroke-width="2.5" d="M5 16h21"/>
+                <path  stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 8l8 8-8 8"/>
+            </svg>
+        </button>
+            <button id="close-editor2" onclick="hideEditor2()">×</button>
+        </div>
+    </div>
+    <div id="chat-container" style="display: none">
+        <div id="chat" style="display: none;"></div>
+        <textarea id="chat-input" style="display: none;" class="input-field" placeholder="Dump your thoughts..." rows="1"></textarea>
+        <button id="close-chat" onclick="closeInboxModal()" title="Close inbox" style="display: none">×</button>
+        <button id="fullscreen-chat" onclick="openInbox()" title="Toggle fullscreen" style="display: none">⛶</button>
+    </div>
+
+<!--    <button class="hidden" id="open-chat-modal" style="display: none" title="Open Inbox (⌘↵)" onclick="toggleInboxModal()">-->
+<!--        <svg style="display: none" xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 34 32">-->
+<!--            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M 25 7 H 11 a 4 4 0 0 0 -4 4 v 10 a 4 4 0 0 0 4 4 h 7 l 6 4 v -4 h 1 a 4 4 0 0 0 4 -4 V 11 a 4 4 0 0 0 -4 -4 z"/>-->
+<!--        </svg>-->
+<!--    </button>-->
+</div>
+
+<div id="search" style="display: none;">
+    <form autocomplete="off">
+        <input type="text" id="search-input" placeholder="Go to file..." oninput="searchModal.search()">
+    </form>
+    <ul id="search-results"></ul>
+</div>
+<div id="move" style="display: none;">
+    <form autocomplete="off">
+        <input type="text" id="move-input" placeholder="Move to folder..." oninput="moveModal.suggestMove()">
+    </form>
+    <ul id="move-results"></ul>
+</div>
+<script src="editor.js?v="></script>
+<script src="app.js?v="></script>
+<script src="inbox.js?v="></script>
+<script src="modals.js?v="></script>
+<script>
+    window.COMMIT_HASH = '?v=';
+    log('Current version:', window.COMMIT_HASH);
+
+    // // Allow offline mode.
+    // if ('serviceWorker' in navigator) {
+    //     navigator.serviceWorker.register('offline.js?v=')
+    //         .then(reg => log('Service Worker registered'))
+    //         .catch(err => logError('Service Worker registration failed'));
+    // }
+
+    window.currentEditor = null;
+    editor = initEditor(document.getElementById("editor-textarea"));
+    init();
+    currentEditor = editor;
+
+    editor2 = initEditor(document.getElementById("editor2-textarea"));
+</script>
+</body>
+</html>
