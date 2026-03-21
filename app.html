@@ -152,12 +152,12 @@
     window.COMMIT_HASH = '?v=';
     log('Current version:', window.COMMIT_HASH);
 
-    // // Allow offline mode.
-    // if ('serviceWorker' in navigator) {
-    //     navigator.serviceWorker.register('offline.js?v=')
-    //         .then(reg => log('Service Worker registered'))
-    //         .catch(err => logError('Service Worker registration failed'));
-    // }
+    // Allow offline mode.
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('offline.js?v=')
+            .then(reg => log('Service Worker registered'))
+            .catch(err => logError('Service Worker registration failed'));
+    }
 
     window.currentEditor = null;
     editor = initEditor(document.getElementById("editor-textarea"));
