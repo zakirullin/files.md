@@ -1,4 +1,4 @@
-module zakirullin/stuffbot
+module github.com/zakirullin/files.md
 
 go 1.24
 
