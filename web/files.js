@@ -9,6 +9,8 @@ let isSaving = false;
 let isSyncingTexts = false;
 let isSyncingMedia = false;
 let isMessingWithCurrentEditor = false;
+let isSyncingFileWithServer = {}; // path -> bool, prevents concurrent server syncs for the same file
+let needsResyncWithServer = {}; // path -> bool, flags that another sync was requested while one was in flight
 let isLoadingLocalFiles = false;
 
 // The types of files we have:
@@ -291,73 +293,83 @@ async function syncLocalFileWithServer(path) {
     if (localStorage.getItem('token') === null) {
         return;
     }
-
-    let file = await (await getFileHandle(path)).getFile();
-    // TODO we might only need to send content when modifying
-    let content = await file.text();
-    let serverTimestamp = getServerFile(path)?.lastModified || 0;
-
-    let serverFile = {};
-    try {
-        const clientLastModified = file.lastModified;
-        let response = await fetch(`${API_HOST}/syncText`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': localStorage.getItem('token'),
-                'Version': getCurrentVersion()
-            },
-            body: JSON.stringify({
-                path: path,
-                lastModified: serverTimestamp,
-                clientLastModified: clientLastModified,
-                // We take the last client timestamp known to the server. Server can
-                // decide whether the file was modified on client or not.
-                clientLastSynced: getServerFile(path)?.lastClientModified || 0,
-                content: content,
-            })
-        });
-        if (!response.ok) {
-            log(`Server responded with ${response.status}`);
-            return;
-        }
-        let json = await response.json();
-
-        // For the cases when server was updated only on server, we move lastSyncedAt pointer,
-        // meaning that there are no "dirty" changes on client.
-        if (json.status === 'notModified') {
-            setServerFileLastClientModified(path, clientLastModified);
-            return;
-        }
-        if (json.status === 'updatedOnServer') {
-            // TODO maybe RC here? When file was updated, but during this time we already changed it
-            setServerFile(path, content, json.lastModified, clientLastModified);
-            log(`Moved lastModified for ${path} with timestamp ${json.lastModified}`, json);
-            saveServerFiles();
-            return;
-        }
-        // if status is "merged" or "ok", it means it means we have changes to write.
-        serverFile = json
-    } catch (error) {
-        console.error('Network error occurred:', error.message);
+    if (isSyncingFileWithServer[path]) {
+        needsResyncWithServer[path] = true;
         return;
     }
+    isSyncingFileWithServer[path] = true;
+    try {
+        let file = await (await getFileHandle(path)).getFile();
+        // TODO we might only need to send content when modifying
+        let content = await file.text();
+        let serverTimestamp = getServerFile(path)?.lastModified || 0;
 
-    // We have either of these:
-    // 1) New file from server
-    // 2) Modified only on server
-    // 3) Merged on server
-    const lastClientModified = await writeIfContentIsDifferent(path, serverFile.content);
-    setServerFile(path, serverFile.content, serverFile.lastModified, lastClientModified);
-    log(`Saved server file for ${path} with timestamp ${serverFile.lastModified}`);
-    saveServerFiles();
-    if (path === editor.path) {
-        // If we don't reset flag, we get deadlock from the calling function
-        isMessingWithCurrentEditor = false
-        log('Opening file after sync');
-        await openFile(path);
+        let serverFile = {};
+        try {
+            const clientLastModified = file.lastModified;
+            let response = await fetch(`${API_HOST}/syncText`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': localStorage.getItem('token'),
+                    'Version': getCurrentVersion()
+                },
+                body: JSON.stringify({
+                    path: path,
+                    lastModified: serverTimestamp,
+                    clientLastModified: clientLastModified,
+                    // We take the last client timestamp known to the server. Server can
+                    // decide whether the file was modified on client or not.
+                    clientLastSynced: getServerFile(path)?.lastClientModified || 0,
+                    content: content,
+                })
+            });
+            if (!response.ok) {
+                log(`Server responded with ${response.status}`);
+                return;
+            }
+            let json = await response.json();
+
+            // For the cases when server was updated only on server, we move lastSyncedAt pointer,
+            // meaning that there are no "dirty" changes on client.
+            if (json.status === 'notModified') {
+                setServerFileLastClientModified(path, clientLastModified);
+                return;
+            }
+            if (json.status === 'updatedOnServer') {
+                // TODO maybe RC here? When file was updated, but during this time we already changed it
+                setServerFile(path, content, json.lastModified, clientLastModified);
+                log(`Moved lastModified for ${path} with timestamp ${json.lastModified}`, json);
+                saveServerFiles();
+                return;
+            }
+            // if status is "merged" or "ok", it means it means we have changes to write.
+            serverFile = json
+        } catch (error) {
+            console.error('Network error occurred:', error.message);
+            return;
+        }
+
+        // We have either of these:
+        // 1) New file from server
+        // 2) Modified only on server
+        // 3) Merged on server
+        const lastClientModified = await writeIfContentIsDifferent(path, serverFile.content);
+        setServerFile(path, serverFile.content, serverFile.lastModified, lastClientModified);
+        log(`Saved server file for ${path} with timestamp ${serverFile.lastModified}`);
+        saveServerFiles();
+        if (path === editor.path) {
+            log('Opening file after sync');
+            await openFile(path);
+        }
+        log('File synced with server');
+    } finally {
+        isSyncingFileWithServer[path] = false;
+        if (needsResyncWithServer[path]) {
+            needsResyncWithServer[path] = false;
+            await syncLocalFileWithServer(path);
+        }
     }
-    log('File synced with server');
 }
 
 async function syncMedia() {
@@ -1127,6 +1139,8 @@ async function syncCurrentEditor(syncWithServer = true) {
             }
         }
 
+        isMessingWithCurrentEditor = false;
+
         if (syncWithServer) {
             try {
                 await syncLocalFileWithServer(INBOX_PATH);
@@ -1134,11 +1148,6 @@ async function syncCurrentEditor(syncWithServer = true) {
                 console.error('Error during sync with server:', error);
             }
         }
-
-        // We had a bug when this was released before syncLocalFileWithServer.
-        // Sync local file with server produced concurent requests and race coditions with writing timestamps.
-        // The concurent request is not because we have RC in syncLocalFileWithServer, rather, we have unfinished network routine, and next current function call can cause another network routine
-        isMessingWithCurrentEditor = false;
 
         return;
     }
@@ -1291,6 +1300,8 @@ async function syncCurrentEditor(syncWithServer = true) {
         isSaving = false;
     }
 
+    isMessingWithCurrentEditor = false;
+
     if (syncWithServer) {
         try {
             await syncLocalFileWithServer(path);
@@ -1298,11 +1309,6 @@ async function syncCurrentEditor(syncWithServer = true) {
             console.error('Error during sync with server:', error);
         }
     }
-
-    // We had a bug when this was released before syncLocalFileWithServer.
-    // Sync local file with server produced concurent requests and race coditions with writing timestamps.
-    // The concurent request is not because we have RC in syncLocalFileWithServer, rather, we have unfinished network routine, and next current function call can cause another network routine
-    isMessingWithCurrentEditor = false;
 }
 
 function hash(str) {
