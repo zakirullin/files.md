@@ -34,8 +34,8 @@ Enough to do the real work.
 2) I added new notes to either `brain` or `dev` folders. One idea per note
 3) I made connections between the notes. Everything is connected, just as in our brain
 4) I spend time travelling through the notes and thinking it through
-5) At some point, brain-related and software development notes suddenly appeared very related
-6) **I got the insight**
+5) At some point, `brain` and `dev` notes appeared very related
+6) I interconnected the knowledge, **I got the insight**
 7) I wrote an article about [Cognitive Load in Software Development](https://github.com/zakirullin/cognitive-load)
 
 Many considered it a great write-up.  
@@ -75,7 +75,6 @@ You don't have to think about the structure, it is predefined.
 
 - Notes: `/brain/Note.md` (`/<category>/*.md`)
 - Projects: `/My project.md` (`/*.md`) - project, important or index notes
-- Inbox: `/Inbox.md` - incoming messages, append-only chat log
 - Tasks: `/Today.md`, `/Later.md` - checklist-based task lists
 - Checklists: `/Read.md`, `/Watch.md`, `/Shop.md` - built-in checklists
 - Journal: `/journal/2024.08 August.md` (`/journal/<YYYY>.<MM> <Month>.md`)
@@ -83,9 +82,10 @@ You don't have to think about the structure, it is predefined.
 - Insights: `/insights/2024 Habits.md` (`/insights/<YYYY> Habits.md`)
 - Media: `/media/*` - images (png, jpg, webp, gif)
 - Archive: `/archive/*`, `/archive/Done.md` - completed items
+- Inbox: `/Inbox.md` - incoming messages, append-only chat log
 - Config: `/config.json` - per-user settings
 
-Scheme is also available at [files.md](files.md/llms.txt).
+Scheme is also available at [files.md/llms.txt](files.md/llms.txt).
 
 ## Telegram Bot 🤖
 <img src="https://github.com/zakirullin/files.md/raw/main/web/bot.png" alt="Telegram Bot screenshot" title="Telegram Bot"/>
@@ -98,6 +98,11 @@ We're used to sending messages to friends, now we're going to send stuff to the 
 
 ## Useful scripts for your files
 All scripts are in `cmd/` and can be run **inside your files directory**. Install [Go](https://go.dev/doc/install) first.
+
+Parse `Whoop` CSV export and print a 10-day journal summary. Put your whoop csv files into a `whoop/` folder:
+```
+go run /abs/path/to/files.md/cmd/whoop/whoop.go
+```
 
 Convert `[[wikilinks]]` to standard markdown links `[Name](/path.md)` (`--dry-run` available):
 ```
@@ -112,11 +117,6 @@ go run /abs/path/to/files.md/cmd/backlink/backlink.go
 Shift timestamps in journal files by N hours (useful after timezone change):
 ```
 go run /abs/path/to/files.md/cmd/shifttime/shifttime.go
-```
-
-Parse Whoop CSV export and print a 10-day journal summary. Put your whoop csv files into a `whoop/` folder:
-```
-go run /abs/path/to/files.md/cmd/whoop/whoop.go
 ```
 
 ## Hotkeys
@@ -249,7 +249,6 @@ We don't need to transfer fslog (renames), if we're certain that all clients rea
 4) Execute `localStorage.setItem('ApiHost', 'YOUR_NEW_API_HOST');` in your PWA applications
 5) Make sure that all files are available
 6) Shutdown an old server
-TBD
 
 ## Repository structure
 `/cmd/server` - entrypoint for telegram bot (stable release)  
@@ -258,19 +257,16 @@ TBD
 `/pkg` - various packages   
 `/web` - standalone web application for viewing/editing files (alpha version, Chrome only)
 
-## Overarching design principles
-- `Clarity`: The code’s purpose and rationale is clear to the reader.
-- `Simplicity`: The code accomplishes its goal in the simplest way possible.
-- `Concision`: The code is easy to discern the relevant details, and the naming and structure guide the reader through these details.  
-- `Maintainability`: The code is easy for a future programmer to modify correctly.  
-- `Consistency`: The code is consistent across the codebase  
+## How to contribute
+- **Junior developers should be able to understand the code**
+- **Ideally, every PR should remove or simplify code, not add it**
+- **Do we really need this feature? Will it help us to do the real job, or does it just give dopamine?**
+- Code should be self-contained, so `vendor` and `web/lib` folders are included in repository
 
-Refer to [the following document](https://github.com/zakirullin/cognitive-load) for more comprehensive guiding rules.
+Refer to [this guide](https://github.com/zakirullin/cognitive-load) for more comprehensive rules.
 
-## Guidelines
+## Backend guidelines
 - We write **tests**
-- eXtreme Programming and TDD are highly encouraged
-- With portability in mind, everything is stored in **plain text files**
 - We don't use get* prefix for methods
 - No panics, errors are part of business logic
 - If we are ignoring an error - we leave a WHY comment
@@ -278,6 +274,10 @@ Refer to [the following document](https://github.com/zakirullin/cognitive-load) 
 - No iterators for client code
 - We prefer real implementations or at least fakes over mocks and stubs
 - Imports should only be renamed to avoid a name collision with other imports
+- **With portability in mind, everything is stored in plain `.md` files**
+- Avoid dependencies if possible
 
-## Frontend
+## Frontend guildlines
 - Use PATCHED keyword if you modify assets in-place
+- **It would be fantastic if, one day, we replaced `CodeMirror` with our own tiny implementation** 
+- Avoid dependencies if possible
