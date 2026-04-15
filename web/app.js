@@ -25,7 +25,7 @@ async function init() {
     if (oneTimeToken) {
         try {
             // Exchange one-time token for permanent token
-            const response = await fetch(`${API_HOST}/token`, {
+            const response = await fetch(`${API_URL}/token`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {

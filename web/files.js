@@ -1,6 +1,6 @@
 // TODO Do sync not as often
 // TODO migrate to unversal file id = filepath, instead of two components
-const API_HOST = localStorage.getItem('apiHost') || 'https://api.files.md';
+const API_URL = localStorage.getItem('apiUrl') || 'https://api.files.md';
 // TODO that's quite often. Maybe on edit + focus?
 const CURRENT_FILE_SYNC_INTERVAL = 1000; // ms, how often to save currently open file
 
@@ -306,7 +306,7 @@ async function syncLocalFileWithServer(path) {
         let serverFile = {};
         try {
             const clientLastModified = file.lastModified;
-            let response = await fetch(`${API_HOST}/syncText`, {
+            let response = await fetch(`${API_URL}/syncText`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -407,7 +407,7 @@ async function syncMedia() {
                 }
                 const base64String = btoa(binaryString);
 
-                const response = await fetch(`${API_HOST}/syncMedia`, {
+                const response = await fetch(`${API_URL}/syncMedia`, {
                     method: 'POST',
                     credentials: 'include',
                     headers: {
@@ -437,7 +437,7 @@ async function syncMedia() {
         }
     }
     try {
-        const response = await fetch(`${API_HOST}/syncMedias`, {
+        const response = await fetch(`${API_URL}/syncMedias`, {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -462,7 +462,7 @@ async function syncMedia() {
 
             try {
                 // Fetch binary file
-                const response = await fetch(`${API_HOST}/syncMedia`, {
+                const response = await fetch(`${API_URL}/syncMedia`, {
                     method: 'POST',
                     credentials: 'include',
                     headers: {
@@ -1340,7 +1340,7 @@ function getDirs() {
 // Returns json response or null on error.
 async function post(endpoint, data) {
     try {
-        let response = await fetch(`${API_HOST}/${endpoint}`, {
+        let response = await fetch(`${API_URL}/${endpoint}`, {
             method: 'POST',
             credentials: 'include',
             headers: {
