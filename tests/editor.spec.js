@@ -194,7 +194,7 @@ test('opening link in editor2 should not clobber main editor when stale editor2 
 
     await page.waitForTimeout(500);
 
-    const nodeSel = (name) => `#tree .tree-description:text-is('${name}')`;
+    const nodeSel = (name) => `#tree .tree-item:text-is('${name}')`;
     const expand = async (dir) => {
         const locator = page.locator(nodeSel(dir));
         const isExpanded = await locator.evaluate(el => el.classList.contains('expanded'));

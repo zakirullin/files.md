@@ -25,7 +25,7 @@ async function setupSidebar(page) {
     await page.waitForTimeout(300);
 }
 
-// Right-click somewhere inside #sidebar that's NOT a tree-description node, so
+// Right-click somewhere inside #sidebar that's NOT a tree-item node, so
 // the node's own contextmenu handler doesn't fire and the root handler
 // (attached in sidebar.js's DOMContentLoaded listener) shows its menu.
 async function rightClickSidebarEmpty(page) {
@@ -39,7 +39,7 @@ async function rightClickSidebarEmpty(page) {
 }
 
 async function rightClickNode(page, name) {
-    await page.locator(`#tree .tree-description:text-is("${name}")`).click({button: 'right'});
+    await page.locator(`#tree .tree-item:text-is("${name}")`).click({button: 'right'});
     await expect(page.locator('.sidebar-ctx-menu')).toBeVisible();
 }
 
@@ -56,7 +56,7 @@ test('root ctx menu: new file creates a root-level file', async ({page}) => {
     await rightClickSidebarEmpty(page);
     await clickMenuItem(page, 'New file');
 
-    await expect(page.locator('#tree .tree-description:text-is("MyRootFile")')).toBeVisible();
+    await expect(page.locator('#tree .tree-item:text-is("MyRootFile")')).toBeVisible();
 });
 
 test('root ctx menu: new dir creates a root-level directory', async ({page}) => {
@@ -66,7 +66,7 @@ test('root ctx menu: new dir creates a root-level directory', async ({page}) => 
     await rightClickSidebarEmpty(page);
     await clickMenuItem(page, 'New dir');
 
-    await expect(page.locator('#tree .tree-description:text-is("MyRootDir")')).toBeVisible();
+    await expect(page.locator('#tree .tree-item:text-is("MyRootDir")')).toBeVisible();
 });
 
 // --- file context menu -------------------------------------------------------
@@ -78,7 +78,7 @@ test('file ctx menu: new file creates sibling in parent dir', async ({page}) => 
     await rightClickNode(page, 'README');
     await clickMenuItem(page, 'New file');
 
-    await expect(page.locator('#tree .tree-description:text-is("SiblingFile")')).toBeVisible();
+    await expect(page.locator('#tree .tree-item:text-is("SiblingFile")')).toBeVisible();
 });
 
 test('file ctx menu: new dir creates sibling dir in parent dir', async ({page}) => {
@@ -88,7 +88,7 @@ test('file ctx menu: new dir creates sibling dir in parent dir', async ({page}) 
     await rightClickNode(page, 'README');
     await clickMenuItem(page, 'New dir');
 
-    await expect(page.locator('#tree .tree-description:text-is("SiblingDir")')).toBeVisible();
+    await expect(page.locator('#tree .tree-item:text-is("SiblingDir")')).toBeVisible();
 });
 
 test('file ctx menu: rename', async ({page}) => {
@@ -98,8 +98,8 @@ test('file ctx menu: rename', async ({page}) => {
     await rightClickNode(page, 'README');
     await clickMenuItem(page, 'Rename');
 
-    await expect(page.locator('#tree .tree-description:text-is("Renamed")')).toBeVisible();
-    await expect(page.locator('#tree .tree-description:text-is("README")')).toHaveCount(0);
+    await expect(page.locator('#tree .tree-item:text-is("Renamed")')).toBeVisible();
+    await expect(page.locator('#tree .tree-item:text-is("README")')).toHaveCount(0);
 });
 
 test('file ctx menu: move opens the move modal', async ({page}) => {
@@ -118,7 +118,7 @@ test('file ctx menu: delete removes the file', async ({page}) => {
     await rightClickNode(page, 'README');
     await clickMenuItem(page, 'Delete');
 
-    await expect(page.locator('#tree .tree-description:text-is("README")')).toHaveCount(0);
+    await expect(page.locator('#tree .tree-item:text-is("README")')).toHaveCount(0);
 });
 
 // --- directory context menu --------------------------------------------------
@@ -131,8 +131,8 @@ test('dir ctx menu: new file creates file inside directory', async ({page}) => {
     await clickMenuItem(page, 'New file');
 
     // Expand the dir to verify the child shows up.
-    await page.locator('#tree .tree-description:text-is("life")').click();
-    await expect(page.locator('#tree .tree-description:text-is("InsideLife")')).toBeVisible();
+    await page.locator('#tree .tree-item:text-is("life")').click();
+    await expect(page.locator('#tree .tree-item:text-is("InsideLife")')).toBeVisible();
 });
 
 test('dir ctx menu: new dir creates sub-directory', async ({page}) => {
@@ -142,8 +142,8 @@ test('dir ctx menu: new dir creates sub-directory', async ({page}) => {
     await rightClickNode(page, 'life');
     await clickMenuItem(page, 'New dir');
 
-    await page.locator('#tree .tree-description:text-is("life")').click();
-    await expect(page.locator('#tree .tree-description:text-is("SubDir")')).toBeVisible();
+    await page.locator('#tree .tree-item:text-is("life")').click();
+    await expect(page.locator('#tree .tree-item:text-is("SubDir")')).toBeVisible();
 });
 
 test('dir ctx menu: rename', async ({page}) => {
@@ -153,8 +153,8 @@ test('dir ctx menu: rename', async ({page}) => {
     await rightClickNode(page, 'life');
     await clickMenuItem(page, 'Rename');
 
-    await expect(page.locator('#tree .tree-description:text-is("happiness")')).toBeVisible();
-    await expect(page.locator('#tree .tree-description:text-is("life")')).toHaveCount(0);
+    await expect(page.locator('#tree .tree-item:text-is("happiness")')).toBeVisible();
+    await expect(page.locator('#tree .tree-item:text-is("life")')).toHaveCount(0);
 });
 
 test('dir ctx menu: delete removes the directory', async ({page}) => {
@@ -164,5 +164,5 @@ test('dir ctx menu: delete removes the directory', async ({page}) => {
     await rightClickNode(page, 'life');
     await clickMenuItem(page, 'Delete');
 
-    await expect(page.locator('#tree .tree-description:text-is("life")')).toHaveCount(0);
+    await expect(page.locator('#tree .tree-item:text-is("life")')).toHaveCount(0);
 });

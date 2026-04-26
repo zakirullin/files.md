@@ -741,7 +741,7 @@ function TreeView(root, container, options) {
     function setupContainerDropZone() {
         container.addEventListener('dragover', function (e) {
             e.preventDefault();
-            if (dropIndicator && !e.target.closest('.tree-description')) {
+            if (dropIndicator && !e.target.closest('.tree-item')) {
                 dropIndicator.remove();
                 dropIndicator = null;
             }
@@ -807,7 +807,7 @@ function TreeView(root, container, options) {
     function renderNode(node) {
         var li_outer = document.createElement("li");
         var span_desc = document.createElement("span");
-        span_desc.className = "tree-description";
+        span_desc.className = "tree-item";
         span_desc.tree_node = node;
 
         var needsGroupHeader = false;
@@ -1300,7 +1300,7 @@ async function folderContextMenu(e, node) {
     // Visually mark the targeted node as selected while the menu is open, so
     // scrolling the menu or moving the mouse doesn't make it unclear which
     // node the action applies to.
-    const span = e.target.closest('.tree-description');
+    const span = e.target.closest('.tree-item');
     if (span) span.classList.add('selected');
 
     openContextMenu(e, (item) => {

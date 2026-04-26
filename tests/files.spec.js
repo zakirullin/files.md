@@ -163,7 +163,11 @@ test('file is not renamed on select all and change', async ({ page }) => {
         init(document.getElementById("editor"));
     });
 
-    await clickAndExpectContent(page, 'README', '# README\nHello world');
+    await page.click(`#tree .tree-item:has-text('README')`);
+
+    await page.waitForTimeout(200);
+
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# README\nHello world');
     // click on cm-header cm-header-1
 
     await page.evaluate(() => {
@@ -176,9 +180,14 @@ test('file is not renamed on select all and change', async ({ page }) => {
     await page.keyboard.type('New text');
     await page.waitForTimeout(1000);
 
-    await clickAndExpectContent(page, 'Notes', '# Notes\nSome text');
-    await clickAndExpectContent(page, 'README', '# README\nNew text');
+    await page.click(`#tree .tree-item:has-text('Notes')`);
 
+    await page.waitForTimeout(200);
+
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# Notes\nSome text');
+    await page.click(`#tree .tree-item:has-text('README')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# README\nNew text');
     // Rename with existing content
     await page.waitForTimeout(100);
     await page.evaluate(() => {
@@ -187,13 +196,19 @@ test('file is not renamed on select all and change', async ({ page }) => {
     });
     await page.keyboard.type('2')
     await page.waitForTimeout(1000);
-    await clickAndExpectContent(page, 'README2', '# README2\nNew text');
+    await page.click(`#tree .tree-item:has-text('README2')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# README2\nNew text');
 });
 
 test('rename file via header removal', async ({ page }) => {
     await setup(page);
 
-    await clickAndExpectContent(page, 'README', '# README\nHello world');
+    await page.click(`#tree .tree-item:has-text('README')`);
+
+    await page.waitForTimeout(200);
+
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# README\nHello world');
     // click on cm-header cm-header-1
 
     await page.evaluate(() => {
@@ -205,15 +220,24 @@ test('rename file via header removal', async ({ page }) => {
     await page.keyboard.type('Newname');
     await page.waitForTimeout(1000);
 
-    await clickAndExpectContent(page, 'Notes', '# Notes\nSome text');
-    await clickAndExpectContent(page, 'Newname', '# Newname\nHello world');
+    await page.click(`#tree .tree-item:has-text('Notes')`);
+
+    await page.waitForTimeout(200);
+
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# Notes\nSome text');
+    await page.click(`#tree .tree-item:has-text('Newname')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# Newname\nHello world');
 });
 
 test('rename to empty name saves to untitled', async ({ page }) => {
     await setup(page);
 
-    await clickAndExpectContent(page, 'README', '# README\nHello world');
+    await page.click(`#tree .tree-item:has-text('README')`);
 
+    await page.waitForTimeout(200);
+
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# README\nHello world');
     await page.evaluate(() => {
         const cm = document.querySelector('.CodeMirror').CodeMirror;
         cm.setCursor(0, cm.getLine(0).length);
@@ -222,8 +246,14 @@ test('rename to empty name saves to untitled', async ({ page }) => {
     await page.keyboard.press('Backspace');
     await page.waitForTimeout(1000);
 
-    await clickAndExpectContent(page, 'Notes', '# Notes\nSome text');
-    await clickAndExpectContent(page, 'Untitled', '# Untitled\nHello world');
+    await page.click(`#tree .tree-item:has-text('Notes')`);
+
+    await page.waitForTimeout(200);
+
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# Notes\nSome text');
+    await page.click(`#tree .tree-item:has-text('Untitled')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# Untitled\nHello world');
 });
 
 test('create file and move', async ({ page }) => {
@@ -756,7 +786,7 @@ test('create file in selected folder', async ({ page }) => {
     await page.waitForTimeout(200);
 
     await page.click('#sidebar >> text=Project file');
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(500);
 
     const codeMirrorContent = await page.evaluate(() => {
         const cm = document.querySelector('.CodeMirror').CodeMirror;
@@ -884,7 +914,7 @@ test('pilaf should not be copied to happiness when opening link in editor2 after
 
     await page.waitForTimeout(500);
 
-    const nodeSel = (name) => `#tree .tree-description:text-is('${name}')`;
+    const nodeSel = (name) => `#tree .tree-item:text-is('${name}')`;
     const expand = async (dir) => {
         const locator = page.locator(nodeSel(dir));
         const isExpanded = await locator.evaluate(el => el.classList.contains('expanded'));
@@ -944,28 +974,6 @@ test('pilaf should not be copied to happiness when opening link in editor2 after
     expect(disk.life).toEqual(['Pilaf.md', 'Recipes.md']);
 });
 
-async function clickAndExpectContent(page, filePath, expectedContent) {
-    const parts = filePath.split('/');
-    const file = parts.pop();
-    const dirs = parts;
-
-    for (const dir of dirs) {
-        const isSelected = await page.locator(`#tree .tree-description:has-text('${dir}')`).evaluate(el => el.classList.contains('expanded'));
-        if (!isSelected) {
-            await page.click(`#tree .tree-description:has-text('${dir}')`);
-            await page.waitForTimeout(100);
-        }
-    }
-
-    await page.click(`#tree .tree-description:has-text('${file}')`);
-    await page.waitForTimeout(200);
-
-    const codeMirrorContent = await page.evaluate(() => {
-        const cm = document.querySelector('.CodeMirror').CodeMirror;
-        return cm.getValue();
-    });
-    expect(codeMirrorContent).toBe(expectedContent);
-}
 
 async function expectCurrentContent(page, content) {
     const codeMirrorContent = await page.evaluate(() => {

@@ -116,12 +116,19 @@ test('sync new files from server', async ({ page }) => {
     await setup(page);
 
     // Check that existing files are not removed
-    await clickAndExpectContent(page, 'Notes', '# Notes\nSome Text');
-    await clickAndExpectContent(page, 'README', '# README\nHello world');
-
+    await page.click(`#tree .tree-item:has-text('Notes')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# Notes\nSome Text');
+    await page.click(`#tree .tree-item:has-text('README')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# README\nHello world');
     // Check that new files are added
-    await clickAndExpectContent(page, 'File', '# File\ntest content');
-    await clickAndExpectContent(page, 'Another', '# Another\n*italic*');
+    await page.click(`#tree .tree-item:has-text('File')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# File\ntest content');
+    await page.click(`#tree .tree-item:has-text('Another')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# Another\n*italic*');
 });
 
 test('sync new files from client', async ({ page }) => {
@@ -173,9 +180,12 @@ test('sync existing files from client', async ({ page }) => {
     await setup(page);
 
     // Check that existing files are not removed
-    await clickAndExpectContent(page, 'README', '# README\nHello world');
-    await clickAndExpectContent(page, 'Notes', '# Notes\nSome Text');
-
+    await page.click(`#tree .tree-item:has-text('README')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# README\nHello world');
+    await page.click(`#tree .tree-item:has-text('Notes')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# Notes\nSome Text');
     // Trigger syncTexts, first time to get server state
     await page.evaluate(() => {
         window.dispatchEvent(new Event('focus'));
@@ -195,8 +205,12 @@ test('sync existing files from client', async ({ page }) => {
     await expectFileOnServer(page, 'Notes.md', 'Some Text');
 
     // Check that existing server files are preserved
-    await clickAndExpectContent(page, 'file', '# File\ntest content');
-    await clickAndExpectContent(page, 'another', '# Another\n*italic*');
+    await page.click(`#tree .tree-item:has-text('file')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# File\ntest content');
+    await page.click(`#tree .tree-item:has-text('another')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# Another\n*italic*');
 });
 
 test('get changes for current file from server', async ({ page }) => {
@@ -206,7 +220,9 @@ test('get changes for current file from server', async ({ page }) => {
     await setup(page);
 
     // Check that existing files are not removed
-    await clickAndExpectContent(page, 'file', '# File\ntest content');
+    await page.click(`#tree .tree-item:has-text('file')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# File\ntest content');
     await expectCurrentContent(page, '# File\ntest content');
 
     await createFileOnServer('File.md', 'test content\nadded');
@@ -223,7 +239,9 @@ test('send changes from current file to server', async ({ page }) => {
     await setup(page);
 
     // Check that existing files are not removed
-    await clickAndExpectContent(page, 'file', '# File\ntest content');
+    await page.click(`#tree .tree-item:has-text('file')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# File\ntest content');
     await expectCurrentContent(page, '# File\ntest content');
 
     // Update file on server, check that changes received
@@ -245,8 +263,11 @@ test('changed on both client and serve, should merge', async ({ page }) => {
 
     await setup(page);
 
-    await clickAndExpectContent(page, 'file', '# File\ntest content');
+    await page.click(`#tree .tree-item:has-text('file')`);
 
+    await page.waitForTimeout(200);
+
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# File\ntest content');
     // Disable sync by intercepting every API call and aborting it. Cleaner
     // than clearing the auth cookie — no "Wrong token" noise on the server,
     // and the client just gets a network error (which syncLocalFileWithServer
@@ -306,13 +327,27 @@ test('delete files on client will propagate to server as well', async ({ page })
 
     await page.waitForTimeout(300);
 
-    await clickAndExpectContent(page, 'Notes', '# Notes\nSome Text');
-    await clickAndExpectContent(page, 'README', '# README\nHello world');
+    await page.click(`#tree .tree-item:has-text('Notes')`);
 
-    await clickAndExpectContent(page, 'file', '# File\ntest content');
-    await clickAndExpectContent(page, 'another', '# Another\n*italic*');
+    await page.waitForTimeout(200);
 
-    await clickAndExpectContent(page, 'another', '# Another\n*italic*');
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# Notes\nSome Text');
+    await page.click(`#tree .tree-item:has-text('README')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# README\nHello world');
+    await page.click(`#tree .tree-item:has-text('file')`);
+
+    await page.waitForTimeout(200);
+
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# File\ntest content');
+    await page.click(`#tree .tree-item:has-text('another')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# Another\n*italic*');
+    await page.click(`#tree .tree-item:has-text('another')`);
+
+    await page.waitForTimeout(200);
+
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# Another\n*italic*');
     await page.keyboard.press('Meta+d');
 
     await page.waitForTimeout(1000);
@@ -338,13 +373,19 @@ test('files exist on both client and server, config is not removed on first sync
     await page.waitForTimeout(300);
 
     // Check that existing files are not removed
-    await clickAndExpectContent(page, 'Notes', '# Notes\nSome Text');
-    await clickAndExpectContent(page, 'README', '# README\nHello world');
-
+    await page.click(`#tree .tree-item:has-text('Notes')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# Notes\nSome Text');
+    await page.click(`#tree .tree-item:has-text('README')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# README\nHello world');
     // Check that new files are added
-    await clickAndExpectContent(page, 'file', '# File\ntest content');
-    await clickAndExpectContent(page, 'another', '# Another\n*italic*');
-
+    await page.click(`#tree .tree-item:has-text('file')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# File\ntest content');
+    await page.click(`#tree .tree-item:has-text('another')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# Another\n*italic*');
     // Trigger syncTexts
     await page.waitForTimeout(300);
     await page.evaluate(() => {
@@ -368,13 +409,19 @@ test('files exist on both client and server, serverFiles contains proper server 
     await page.waitForTimeout(300);
 
     // Check that existing files are not removed
-    await clickAndExpectContent(page, 'Notes', '# Notes\nSome Text');
-    await clickAndExpectContent(page, 'README', '# README\nHello world');
-
+    await page.click(`#tree .tree-item:has-text('Notes')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# Notes\nSome Text');
+    await page.click(`#tree .tree-item:has-text('README')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# README\nHello world');
     // Check that new files are added
-    await clickAndExpectContent(page, 'File', '# File\ntest content');
-    await clickAndExpectContent(page, 'Another', '# Another\n*italic*');
-
+    await page.click(`#tree .tree-item:has-text('File')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# File\ntest content');
+    await page.click(`#tree .tree-item:has-text('Another')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# Another\n*italic*');
     // Trigger syncTexts
     await page.evaluate(() => {
         window.dispatchEvent(new Event('focus'));
@@ -516,7 +563,13 @@ test('files exist on both client and server, serverFiles contains proper server 
     });
 
     // await page.pause();
-    await clickAndExpectContent(page, 'dir/file2', '# File2\ntest content2');
+    if (!await page.locator(`#tree .tree-item:text-is('dir')`).evaluate(el => el.classList.contains("expanded"))) {
+        await page.click(`#tree .tree-item:text-is('dir')`);
+        await page.waitForTimeout(100);
+    }
+    await page.click(`#tree .tree-item:has-text('file2')`);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector(".CodeMirror").CodeMirror.getValue())).toBe('# File2\ntest content2');
 });
 
 
@@ -596,28 +649,6 @@ function saltToken(token, salt = '') {
         .digest('hex');
 }
 
-async function clickAndExpectContent(page, filePath, expectedContent) {
-    const parts = filePath.split('/');
-    const file = parts.pop();
-    const dirs = parts;
-
-    for (const dir of dirs) {
-        const isSelected = await page.locator(`#tree .tree-description:text-is('${dir}')`).evaluate(el => el.classList.contains('expanded'));
-        if (!isSelected) {
-            await page.click(`#tree .tree-description:text-is('${dir}')`);
-            await page.waitForTimeout(100);
-        }
-    }
-
-    await page.click(`#tree .tree-description:has-text('${file}')`);
-    await page.waitForTimeout(200);
-
-    const codeMirrorContent = await page.evaluate(() => {
-        const cm = document.querySelector('.CodeMirror').CodeMirror;
-        return cm.getValue();
-    });
-    expect(codeMirrorContent).toBe(expectedContent);
-}
 
 async function expectCurrentContent(page, content) {
     const codeMirrorContent = await page.evaluate(() => {

@@ -14,7 +14,7 @@
 	padding: 0;
 }
 
-.tree-container li span.tree-description{
+.tree-container li span.tree-item{
 	white-space: nowrap;
 	overflow:hidden;
 	text-overflow: ellipsis;
@@ -37,7 +37,7 @@
 	font-size: 1.1em;
 }
 
-.tree-container li span.tree-description:hover{
+.tree-container li span.tree-item:hover{
 	background-color: var(--col-bg-active);
 }
 
@@ -63,7 +63,7 @@
 	transform: translateY(1px);
 }
 
-.tree-container ul ul li span.tree-description.tree-leaf {
+.tree-container ul ul li span.tree-item.tree-leaf {
 	padding-left: 2em;
 }
 
@@ -71,16 +71,16 @@
 	color: #b5b5b5;
 }
 
-.tree-container li[disabled=""]:hover span.tree-description{
+.tree-container li[disabled=""]:hover span.tree-item{
 	cursor: default;
 	background-color: inherit;
 }
 
-.tree-container span.tree-description.selected{
+.tree-container span.tree-item.selected{
 	background-color: var(--col-bg-active);
 }
 
-.tree-container span.tree-description.selected:hover{
+.tree-container span.tree-item.selected:hover{
 	background-color: var(--col-bg-active);
 }
 
@@ -111,15 +111,15 @@
 	border-radius: 5px;
 }
 
-.tree-description[draggable="true"] {
+.tree-item[draggable="true"] {
 	cursor: grab;
 }
 
-.tree-description[draggable="true"]:active {
+.tree-item[draggable="true"]:active {
 	cursor: grabbing;
 }
 
-/*.tree-container .tree-description[draggable="true"]:hover {*/
+/*.tree-container .tree-item[draggable="true"]:hover {*/
 /*	background-color: var(--color-bg-active);*/
 /*	!*border: 1px solid transparent;*!*/
 /*}*/

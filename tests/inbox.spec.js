@@ -8,7 +8,7 @@ test.beforeEach(async ({page}) => {
 });
 
 test('send message to chat', async ({ page }) => {
-    await page.click(`#tree .tree-description:has-text('today')`);
+    await page.click(`#tree .tree-item:has-text('today')`);
     await page.waitForSelector('#inbox');
     await page.keyboard.type('My message');
     await page.waitForTimeout(300);
@@ -24,7 +24,7 @@ test('send message to chat', async ({ page }) => {
 });
 
 test('select all in chat input selects input text, not bubbles', async ({page}) => {
-    await page.click(`#tree .tree-description:has-text('today')`);
+    await page.click(`#tree .tree-item:has-text('today')`);
     await page.waitForSelector('#inbox');
     await page.keyboard.type('First message');
     await page.waitForTimeout(300);
@@ -53,7 +53,7 @@ test('move to dir creates a new file inside that dir', async ({page}) => {
     });
     await page.evaluate(() => init(document.getElementById('editor')));
 
-    await page.click(`#tree .tree-description:has-text('today')`);
+    await page.click(`#tree .tree-item:has-text('today')`);
     await page.waitForSelector('#inbox');
     await page.keyboard.type('MyTask');
     await page.waitForTimeout(300);
@@ -84,7 +84,7 @@ test('move to root creates a new file at root', async ({page}) => {
     });
     await page.evaluate(() => init(document.getElementById('editor')));
 
-    await page.click(`#tree .tree-description:has-text('today')`);
+    await page.click(`#tree .tree-item:has-text('today')`);
     await page.waitForSelector('#inbox');
     await page.keyboard.type('RootMsg');
     await page.waitForTimeout(300);
@@ -119,7 +119,7 @@ test('move to existing file appends content', async ({page}) => {
     });
     await page.evaluate(() => init(document.getElementById('editor')));
 
-    await page.click(`#tree .tree-description:has-text('today')`);
+    await page.click(`#tree .tree-item:has-text('today')`);
     await page.waitForSelector('#inbox');
     await page.keyboard.type('Append me');
     await page.waitForTimeout(300);
@@ -133,7 +133,7 @@ test('move to existing file appends content', async ({page}) => {
     await page.locator('#search-results li[data-path="/Notes.md"]').click();
     await page.waitForSelector('.message', {state: 'detached'});
 
-    await page.click(`#tree .tree-description:has-text('Notes')`);
+    await page.click(`#tree .tree-item:has-text('Notes')`);
     await page.waitForTimeout(200);
     const content = await page.evaluate(() => document.querySelector('.CodeMirror').CodeMirror.getValue());
     expect(content).toContain('# Notes');
@@ -151,7 +151,7 @@ test('system dirs (archive, today) are hidden in move-to-file modal', async ({pa
     });
     await page.evaluate(() => init(document.getElementById('editor')));
 
-    await page.click(`#tree .tree-description:has-text('today')`);
+    await page.click(`#tree .tree-item:has-text('today')`);
     await page.waitForSelector('#inbox');
     await page.keyboard.type('Hello');
     await page.waitForTimeout(300);
@@ -181,7 +181,7 @@ test('send to chat and move to recent file', async ({ page }) => {
         init(document.getElementById("editor"));
     });
 
-    await page.click(`#tree .tree-description:has-text('today')`);
+    await page.click(`#tree .tree-item:has-text('today')`);
     await page.waitForSelector('#inbox');
     await page.keyboard.type('My message');
     await page.waitForTimeout(300);
@@ -195,7 +195,7 @@ test('send to chat and move to recent file', async ({ page }) => {
     await page.locator('.action-btn').filter({hasText: 'File'}).click({force: true});
     await page.waitForSelector('.message', {state: 'detached'});
 
-    await page.click(`#tree .tree-description:has-text('File')`);
+    await page.click(`#tree .tree-item:has-text('File')`);
     await page.waitForTimeout(200);
     const fileContent = await page.evaluate(() =>
         document.querySelector('.CodeMirror').CodeMirror.getValue());
