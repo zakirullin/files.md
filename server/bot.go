@@ -142,7 +142,7 @@ const (
 	CmdComplete                        = "c"
 	CmdPostpone                        = "post"
 	CmdShowLongItem                    = "item"
-	CmdShowLongItemFromInbox           = "item_i"
+	CmdShowLongItemFromToday           = "item_t"
 	CmdShowFile                        = "file"
 	CmdShowChecklist                   = "checklist"
 	CmdShowChecklistItem               = "check_show"
@@ -347,7 +347,7 @@ func (b *Bot) handlers() map[string]func([]string) error {
 		// Button's commands (callbacks)
 		CmdShowRenameFile:                  b.showRenameFile,
 		CmdShowLongItem:                    b.showLongItem,
-		CmdShowLongItemFromInbox:           b.showLongItemFromInbox,
+		CmdShowLongItemFromToday:           b.showLongItemFromInbox,
 		CmdShowFile:                        b.showFile,
 		CmdShowChecklist:                   b.showChecklist,
 		CmdCompleteListItem:                b.completeListItem,
@@ -1051,7 +1051,7 @@ func (b *Bot) ShowToday(_ []string) error {
 		}
 
 		if len([]rune(title)) >= maxHeaderLengthForMobile || txt.HasImage(block) {
-			cmd := tg.NewCmd(CmdShowLongItemFromInbox, []string{msgHash})
+			cmd := tg.NewCmd(CmdShowLongItemFromToday, []string{msgHash})
 			btn := tg.NewBtn(txt.Emoji(i18n.Emoji("eyes"), title), cmd)
 			kb.AddRow(btn)
 		} else {
@@ -1718,12 +1718,10 @@ func (b *Bot) moveToDirFromToday(params []string) error {
 		_ = journal.AddRecord(b.fs, fmt.Sprintf("📌 %s", fs.DisplayName(filename)), b.cfg.Timezone())
 	}
 
-	if toDir != fs.DirLater {
-		b.db.SetRecentCommand(CmdMoveToExistingNote)
-		// Move from dir is today, because quick command
-		// appears when file is in today dir
-		b.db.SetRecentCommandParams([]string{fs.Hash(filename), toDirHash})
-	}
+	b.db.SetRecentCommand(CmdMoveToExistingNote)
+	// Move from dir is today, because quick command
+	// appears when file is in today dir
+	b.db.SetRecentCommandParams([]string{fs.Hash(filename), toDirHash})
 
 	b.delAllKeyboards()
 	msg := txt.Emoji(i18n.Emoji("dir"), fmt.Sprintf(i18n.Tr("Moved to <b>%s</b>"), fs.DisplayName(toDir)))
@@ -1768,13 +1766,6 @@ func (b *Bot) moveToDir(params []string) error {
 
 		return b.createOrAdd(toDir, filename, content)
 	}, true, msgHashes...)
-
-	if toDir != fs.DirLater {
-		//b.db.SetRecentCommand(CmdMoveToExistingNote)
-		// Move from dir is today, because quick command
-		// appears when file is in today dir
-		//b.db.SetRecentCommandParams([]string{msgHash, toDirHash})
-	}
 
 	b.delAllKeyboards()
 	msg := txt.Emoji(i18n.Emoji("dir"), fmt.Sprintf(i18n.Tr("Moved to <b>%s</b>"), fs.DisplayName(toDir)))
