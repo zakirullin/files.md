@@ -11,7 +11,8 @@ You can store whole your life:
 - 💚 Journal, Habits
 - ✅ Checklists, Tasks
 
-All in plain `.md` files, locally. LLM-friendly.
+All in plain `.md` files, locally. LLM-friendly.  
+Chat bot for files access from anywhere.  
 
 Try it out: [app.files.md](https://app.files.md).  
 
@@ -36,6 +37,7 @@ Just drop your note into the chat-like input and press `Enter`.
 </div>
 
 That's it. Nothing to learn or setup.  
+Later you can hover a note to move it to any folder.  
 
 ## Web Application
 - Open [app.files.md](https://app.files.md) in Chrome browser
@@ -63,7 +65,7 @@ Leonardo da Vinci, Charles Darwin, Jules Verne and many others took notes using 
 You don't need to learn anything new to start taking notes.   
 It is going to be a well-familiar pattern: chatting with friends.  
 
-Only this time, we are going to send messages to the bot (or to the web app):  
+We are going to send messages to the bot (or to the web app):  
 
 <div align="center">
     <img src="https://github.com/zakirullin/files.md/raw/main/web/img/bot.gif" alt="Telegram Bot" title="Telegram Bot" width="350"/>
@@ -85,18 +87,6 @@ My friends and I have been using this setup for five years and it works well.
 
 Telegram bot: [@FilesMDBot](https://t.me/FilesMDBot) (other messengers will follow).
 
-## Taking notes in the web app
-Type in a note:
-<div align="center">
-    <img src="https://github.com/zakirullin/files.md/raw/main/web/img/note1.png" alt="Taking notes" title="Taking notes" width="350"/>
-</div>
-
-Press `Enter`. Then hover over the note (can be done later):
-<div align="center">
-    <img src="https://github.com/zakirullin/files.md/raw/main/web/img/note2.png" alt="Taking notes" title="Taking notes" width="350"/>
-</div>
-Click "To File", then select "brain" directory.  
-
 ## A real-world example
 1) I used [files.md](https://files.md) to grow my knowledge about brain and software development
 2) I added new notes to either `brain` or `dev` folders. One idea per note
@@ -112,8 +102,6 @@ All this activity helped me to:
 - **Think systematically and see the bigger picture**
 - **Write insightful texts**
 
-Are there enough features and plugins?  
-Enough to do the real work.  
 To achieve all that, **you'll have to use your brain**, not advanced templates or AI workflows.
 
 ## Second Brain? 🧠
