@@ -406,13 +406,13 @@ func IsChecklistItem(filename string) bool {
 	return validChecklistItem.MatchString(filename)
 }
 
-// SearchFiles performs search among all user files
+// SearchFilesByName performs search among all user .md files
 // Allowed query formats:
 // "directory" - return all notes from directories prefixed by this directory
 // "directory note_name" - search for this note_name in all matching directories
 // "note_name" - search for this note_name across all directories
 // "" - return all the notes
-func (fs FS) SearchFiles(query string) ([]File, error) {
+func (fs FS) SearchFilesByName(query string) ([]File, error) {
 	query = strings.ToLower(strings.TrimSpace(query))
 	// Check for directory traversal attack
 	if strings.Contains(query, "/") {
@@ -434,36 +434,65 @@ func (fs FS) SearchFiles(query string) ([]File, error) {
 		}
 	}
 
-	// Find match by notes directory name
-	var searchInDirs []string
-	notesDirs, err := fs.FilesAndDirs(DirUserRoot)
+	rootPath, err := fs.SafePath(DirUserRoot, "")
 	if err != nil {
 		return nil, fmt.Errorf("search notes: %w", err)
 	}
-	notesDirs = OnlyNoteDirs(notesDirs)
-	notesDirs = append(notesDirs, NewFile(DirUserRoot, "", DirUserRoot, 0, false, true, ""))
-	notesDirs = append(notesDirs, NewFile(DirJournal, Hash(DirJournal), DirJournal, 0, false, true, DirUserRoot))
-	notesDirs = append(notesDirs, NewFile(DirInsights, Hash(DirInsights), DirInsights, 0, false, true, DirUserRoot))
-	for _, noteDir := range notesDirs {
-		if strings.HasPrefix(noteDir.Name, supposedDir) {
-			searchInDirs = append(searchInDirs, noteDir.Name)
-		}
-	}
 
-	// If no matching directories are found, we search through all directories
-	if len(searchInDirs) == 0 {
-		for _, noteDir := range notesDirs {
-			searchInDirs = append(searchInDirs, noteDir.Name)
-		}
-		search = query
-	}
-
+	// Walk the whole tree once - up to 10 levels deep - and collect .md
+	// files. Filtering by dir prefix happens after the walk.
 	var notes []File
-	for _, dir := range searchInDirs {
-		// We can tolerate incomplete search
-		files, _ := fs.FilesAndDirs(dir)
-		files = OnlyUserMDFiles(files)
-		notes = append(notes, files...)
+	_ = afero.Walk(fs.backend, rootPath, func(p string, info os.FileInfo, err error) error {
+		if err != nil || info == nil {
+			return nil
+		}
+		base := filepath.Base(p)
+		if strings.HasPrefix(base, ".") {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if info.IsDir() {
+			rel, _ := filepath.Rel(rootPath, p)
+			if rel != "." && strings.Count(rel, string(filepath.Separator)) >= 10 {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if filepath.Ext(base) != MDExt {
+			return nil
+		}
+		relativeToUserRootPath, _ := filepath.Rel(rootPath, filepath.Dir(p))
+		if relativeToUserRootPath == "." || relativeToUserRootPath == "" {
+			relativeToUserRootPath = DirUserRoot
+		}
+		notes = append(notes, NewFile(
+			base, Hash(base), DisplayName(base),
+			Ctime(info), info.Size() > 0, false, relativeToUserRootPath,
+		))
+		return nil
+	})
+	notes = OnlyUserMDFiles(notes)
+
+	// Restrict to the matching top-level dir if the user typed one.
+	if supposedDir != "" {
+		var pruned []File
+		for _, n := range notes {
+			top := strings.SplitN(n.ParentDir, "/", 2)[0]
+			if top == DirUserRoot {
+				top = ""
+			}
+			if strings.HasPrefix(top, supposedDir) {
+				pruned = append(pruned, n)
+			}
+		}
+		if len(pruned) > 0 {
+			notes = pruned
+		} else {
+			// No dir matched - fall back to a name search across all notes.
+			search = query
+		}
 	}
 	notes = SortByCtimeDesc(notes)
 

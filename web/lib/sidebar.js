@@ -245,6 +245,12 @@ function renderSidebar(focusDir = '', modifiedPaths) {
             return;
         }
 
+        // Sidebar only lists .md files. Images, logs and other formats
+        // can sit in OPFS but cluttering the sidebar with them is noise.
+        if (!toFilename(path).endsWith('.md')) {
+            return;
+        }
+
         fileEntries.push(path);
     });
     fileEntries.sort((a, b) => a.localeCompare(b));

@@ -654,7 +654,7 @@ func (b *Bot) answerSearch(u Update) error {
 		return fmt.Errorf("insecure input '%s': %w", query, errInvalidInlineQuery)
 	}
 
-	matchedNotes, err := b.fs.SearchFiles(query)
+	matchedNotes, err := b.fs.SearchFilesByName(query)
 	if err != nil {
 		return fmt.Errorf("inline reply: %w", err)
 	}
@@ -666,9 +666,11 @@ func (b *Bot) answerSearch(u Update) error {
 
 	var results []interface{}
 	for id, note := range matchedNotes {
-		path := fmt.Sprintf("<code>%s/%s</code>", note.ParentDir, note.Name)
-		if note.ParentDir == fs.DirUserRoot {
-			path = note.Name
+		// Nested files: show the relative path without leading "/" so the
+		// search result reads like "happiness/sub/Note.md".
+		path := note.Name
+		if note.ParentDir != fs.DirUserRoot && note.ParentDir != "" {
+			path = fmt.Sprintf("<code>%s/%s</code>", note.ParentDir, note.Name)
 		}
 		article := tgbotapi.NewInlineQueryResultArticleHTML(strconv.Itoa(id), note.DisplayName, path)
 		results = append(results, article)
@@ -696,15 +698,21 @@ func (b *Bot) answerFileRequest(msg string) error {
 		return fmt.Errorf("insecure input '%s': %w", msg, errInvalidRequestFromInline)
 	}
 
-	dirAndFilename := strings.Split(msg, "/")
-	var dir, filename string
-	if len(dirAndFilename) == 1 {
+	// Split on the FIRST slash: dir is the top-level directory (what
+	// Unhash resolves against root), path is everything after it. Lets
+	// nested inline-search results like
+	// "triggers/habits/insights/2022 Habits.md" parse as
+	// (dir="triggers", path="habits/insights/2022 Habits.md").
+	msg = strings.TrimSpace(msg)
+	var dir, path string
+	if idx := strings.Index(msg, "/"); idx == -1 {
 		dir = fs.DirUserRoot
-		filename = strings.TrimSpace(dirAndFilename[0])
-	} else if len(dirAndFilename) == 2 {
-		dir = strings.TrimSpace(dirAndFilename[0])
-		filename = strings.TrimSpace(dirAndFilename[1])
+		path = msg
 	} else {
+		dir = strings.TrimSpace(msg[:idx])
+		path = strings.TrimSpace(msg[idx+1:])
+	}
+	if path == "" {
 		return fmt.Errorf("invalid inline query '%s': %w", msg, errInvalidRequestFromInline)
 	}
 
@@ -721,16 +729,16 @@ func (b *Bot) answerFileRequest(msg string) error {
 			if dir == fs.DirUserRoot {
 				// We have a file
 				b.db.SetRecentCommand(CmdMoveToExistingFile)
-				b.db.SetRecentCommandParams([]string{fs.ShortHash(filename)})
+				b.db.SetRecentCommandParams([]string{fs.ShortHash(path)})
 			} else {
 				// We have a note (a file placed in a subdirectory)
 				b.db.SetRecentCommand(CmdMoveToExistingNote)
-				b.db.SetRecentCommandParams([]string{fs.ShortHash(filename), fs.ShortHash(dir)})
+				b.db.SetRecentCommandParams([]string{fs.ShortHash(path), fs.ShortHash(dir)})
 			}
 
-			err := b.addToFile(dir, filename, content)
+			err := b.addToFile(dir, path, content)
 			if err != nil {
-				return fmt.Errorf("inline query: can't add to file %s: %w", filename, err)
+				return fmt.Errorf("inline query: can't add to file %s: %w", path, err)
 			}
 
 			return nil
@@ -740,12 +748,12 @@ func (b *Bot) answerFileRequest(msg string) error {
 		}
 
 		// Just an informative message
-		_, _ = b.tg.Send(b.userID, fmt.Sprintf(i18n.Tr("Saved to <b>%s</b>"), fs.DisplayName(filename)), nil, tg.MarkupHTML)
+		_, _ = b.tg.Send(b.userID, fmt.Sprintf(i18n.Tr("Saved to <b>%s</b>"), fs.DisplayName(path)), nil, tg.MarkupHTML)
 
 		return b.ShowHome(nil)
 	}
 
-	return b.showFile([]string{dir, filename})
+	return b.showFile([]string{dir, path})
 }
 
 func (b *Bot) createOrAdd(dir, filename, content string) error {
@@ -1602,9 +1610,18 @@ func (b *Bot) showFile(params []string) error {
 		return fmt.Errorf("show file: can't find dir: %w", err)
 	}
 
-	filename, err := b.fs.Unhash(dir, filenameHash)
-	if err != nil {
-		return fmt.Errorf("show file: can't find file: %w", err)
+	// Inline-search results pass a nested path like
+	// "habits/insights/2023 Habits.md" as the second param. Unhash only
+	// resolves immediate children of a dir, so for any value containing
+	// "/" we take it as a literal relative path.
+	var filename string
+	if strings.Contains(filenameHash, "/") {
+		filename = filenameHash
+	} else {
+		filename, err = b.fs.Unhash(dir, filenameHash)
+		if err != nil {
+			return fmt.Errorf("show file: can't find file: %w", err)
+		}
 	}
 
 	content, err := b.fs.Read(dir, filename)

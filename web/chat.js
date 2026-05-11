@@ -305,7 +305,7 @@ function getRecentlyModifiedFiles(n) {
     const entries = [];
     for (const filename in files) {
         const content = files[filename];
-        if (filename && content &&
+        if (filename && content && !filename.endsWith('/') &&
             ![
                 toFilename(CHAT_PATH),
                 toFilename(CONFIG_PATH),
