@@ -3,6 +3,8 @@
 # Files.md  
 Private, quiet space for thinking. A simple app for your `.md` files.  
 
+English · [简体中文](README.zh-CN.md)
+
 <img src="https://github.com/zakirullin/files.md/raw/main/web/img/appdark.png" alt="Files.md screenshot" title="Files.md"/>
 
 You can store your whole life:
