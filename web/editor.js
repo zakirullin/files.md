@@ -156,6 +156,23 @@ function initEditor(el) {
     };
 
     newEditor.on('inputRead', async function (cm, change) {
+        if (change.text.length === 1 && change.text[0] === '`') {
+            const cursor = cm.getCursor();
+            const line = cm.getLine(cursor.line);
+            const before = line.slice(0, cursor.ch);
+            const after = line.slice(cursor.ch);
+            // Trigger only on the third backtick at the start of a line.
+            if (!/^ {0,3}`{3}$/.test(before)) return;
+            if (after.length > 0) return;
+            // Skip when this ``` is closing an already-open fence.
+            if (cursor.line > 0) {
+                const prevState = cm.getStateAfter(cursor.line - 1);
+                if (prevState && prevState.fencedEndRE) return;
+            }
+            cm.replaceRange('\n\n```', cursor);
+            cm.setCursor({ line: cursor.line + 1, ch: 0 });
+            return;
+        }
         if (change.text.length === 1 && change.text[0] === '[') {
             const cursor = cm.getCursor();
             // Skip the link autocomplete when the [ is preceded by a
@@ -390,17 +407,7 @@ function initEditor(el) {
         }
     });
 
-    newEditor.getWrapperElement().addEventListener('mousedown', function (e) {
-        if (!isMetaKey(e)) return;
-
-        e.preventDefault();
-
-        const code = e.target.closest('.cm-inline-code');
-        if (!code) return;
-
-        const text = code.textContent;
-        navigator.clipboard.writeText(text);
-
+    function showCopiedToast() {
         const toast = document.createElement('div');
         toast.textContent = 'Copied!';
         toast.style.cssText = `
@@ -411,7 +418,46 @@ function initEditor(el) {
         `;
         document.body.appendChild(toast);
         setTimeout(() => document.body.removeChild(toast), 1000);
+    }
+
+    newEditor.getWrapperElement().addEventListener('mousedown', function (e) {
+        if (!isMetaKey(e)) return;
+
+        e.preventDefault();
+
+        const code = e.target.closest('.cm-inline-code');
+        if (!code) return;
+
+        navigator.clipboard.writeText(code.textContent);
+        showCopiedToast();
     }, true);
+
+    newEditor.on('renderLine', function (cm, lineHandle, el) {
+        if (el.querySelector('.code-copy-btn')) return;
+        const lineNo = lineHandle.lineNo();
+        if (lineNo == null) return;
+        const here = cm.getStateAfter(lineNo);
+        const prev = lineNo > 0 ? cm.getStateAfter(lineNo - 1) : null;
+        if (!(here && here.fencedEndRE && (!prev || !prev.fencedEndRE))) return;
+        if (/^\s*```\s*mermaid\b/.test(cm.getLine(lineNo))) return;
+        const btn = document.createElement('button');
+        btn.className = 'code-copy-btn';
+        btn.title = 'Copy';
+        btn.onmousedown = function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const begin = lineHandle.lineNo();
+            const lines = [];
+            for (let L = begin + 1, last = cm.lineCount(); L < last; L++) {
+                const st = cm.getStateAfter(L);
+                if (!st || !st.fencedEndRE) break;
+                lines.push(cm.getLine(L));
+            }
+            navigator.clipboard.writeText(lines.join('\n'));
+            showCopiedToast();
+        };
+        el.appendChild(btn);
+    });
 
     initAutoscroll(newEditor);
 

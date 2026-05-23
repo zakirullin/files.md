@@ -202,7 +202,9 @@
             //-----------------------------
             var $stub = document.createElement('span');
             $stub.className = stubClass + type;
-            $stub.textContent = '</>'; // PATCHED: shorter glyph than the upstream "<CODE>"
+            // PATCHED: empty span - icon is rendered via CSS mask on
+            // .hmd-fold-code-mermaid so it shares the copy button's color
+            // pipeline (same background-color + opacity yields same shade).
             var marker = info.marker = cm.markText(from, to, {
                 replacedWith: $stub,
             });

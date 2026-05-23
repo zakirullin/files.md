@@ -621,8 +621,33 @@ body.dragging * {
 }
 
 .cm-s-hypermd-light .CodeMirror-line.HyperMD-codeblock {
-    padding-left: 10px;
+    padding-left: 6px;
     color: var(--col-tx-alt) !important;
+}
+
+pre.HyperMD-codeblock-begin {
+    z-index: 5 !important;
+    overflow: visible !important;
+}
+
+.code-copy-btn {
+    position: absolute;
+    right: 8px;
+    top: 5px;
+    width: 15px;
+    height: 15px;
+    padding: 0;
+    border: none;
+    cursor: pointer;
+    background-color: var(--col-tx-alt);
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'><path fill-rule='evenodd' clip-rule='evenodd' d='M27 0c2.761 0 5 2.239 5 5v14c0 2.761-2.239 5-5 5h-3v3.333A4.667 4.667 0 0 1 19.333 32H4.667A4.667 4.667 0 0 1 0 27.333V12.667A4.667 4.667 0 0 1 4.667 8H8V5c0-2.761 2.239-5 5-5zM8 10H4.667A2.667 2.667 0 0 0 2 12.667v14.666A2.667 2.667 0 0 0 4.667 30h14.666A2.667 2.667 0 0 0 22 27.333V24h-9a5 5 0 0 1-5-5zm19-8H13a3 3 0 0 0-3 3v14a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V5a3 3 0 0 0-3-3z'/></svg>") center/contain no-repeat;
+    mask: url("data:image/svg+xml;utf8,<svg viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'><path fill-rule='evenodd' clip-rule='evenodd' d='M27 0c2.761 0 5 2.239 5 5v14c0 2.761-2.239 5-5 5h-3v3.333A4.667 4.667 0 0 1 19.333 32H4.667A4.667 4.667 0 0 1 0 27.333V12.667A4.667 4.667 0 0 1 4.667 8H8V5c0-2.761 2.239-5 5-5zM8 10H4.667A2.667 2.667 0 0 0 2 12.667v14.666A2.667 2.667 0 0 0 4.667 30h14.666A2.667 2.667 0 0 0 22 27.333V24h-9a5 5 0 0 1-5-5zm19-8H13a3 3 0 0 0-3 3v14a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V5a3 3 0 0 0-3-3z'/></svg>") center/contain no-repeat;
+    opacity: 0.55;
+    z-index: 10;
+}
+
+.code-copy-btn:hover {
+    opacity: 1;
 }
 
 .cm-s-hypermd-light .HyperMD-codeblock::before {

@@ -78,24 +78,28 @@ pre.CodeMirror-line:has(.hmd-fold-code-stub.hmd-fold-code-mermaid) {
 .hmd-fold-code-content.hmd-fold-code-selected {
     background: color-mix(in srgb, var(--color-neo-blue), transparent 65%);
 }
-.hmd-fold-code-stub.hmd-fold-code-mermaid {
+.hmd-fold-code-stub.hmd-fold-code-mermaid,
+.hmd-fold-code-stub.hmd-fold-code-mermaid.highlight,
+.hmd-fold-code-stub.hmd-fold-code-mermaid:hover {
     position: absolute;
     right: 8px;
-    top: 4px;
+    top: 5px;
+    width: 18px;
+    height: 18px;
     margin: 0 !important;
-    z-index: 1;
-    background: transparent !important;
+    z-index: 5;
     border: none !important;
-    color: var(--color-neo-orange) !important;
     padding: 0 !important;
-    line-height: 0 !important;
-    display: inline-flex;
-    align-items: center;
+    background: transparent !important;
+    background-color: var(--col-tx-alt) !important;
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M7 8L3 11.6923L7 16M17 8L21 11.6923L17 16M14 4L10 20' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>") center/contain no-repeat;
+    mask: url("data:image/svg+xml;utf8,<svg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M7 8L3 11.6923L7 16M17 8L21 11.6923L17 16M14 4L10 20' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>") center/contain no-repeat;
+    cursor: pointer;
+    color: var(--col-tx-alt) !important;
+    opacity: 0.55;
 }
-.hmd-fold-code-stub.hmd-fold-code-mermaid svg {
-    width: 16px;
-    height: 16px;
-    display: block;
+.hmd-fold-code-stub.hmd-fold-code-mermaid:hover {
+    opacity: 1;
 }
 .CodeMirror pre.CodeMirror-line:has(.cm-math):not(:has(.cm-math-1)) {
     line-height: 1.2 !important;
