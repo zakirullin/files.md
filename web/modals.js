@@ -260,55 +260,51 @@ class SearchModal {
         const list = document.getElementById('search-results');
         list.innerHTML = '';
 
-        // First dirs then files.
-        // We can either move message to a dir (creating new file).
-        // Or to an existing file, prepending text to a file.
-        let dirCount = 0;
+        const focusOnHover = (item) => {
+            item.onmousemove = () => {
+                document.querySelectorAll('#search-results li').forEach(li => li.classList.remove('focused'));
+                item.classList.add('focused');
+                this.focusedIndex = Array.from(list.children).indexOf(item);
+            };
+        };
+        const addDirItem = (dir) => {
+            const dataDir = dir === '/' ? '' : dir;
+            const item = document.createElement('li');
+            item.textContent = dir === '/' ? '/' : (dir + '/');
+            item.setAttribute('data-dir', dataDir);
+            item.onclick = () => this.moveToDir(dataDir);
+            focusOnHover(item);
+            list.appendChild(item);
+        };
+        const addFileItem = (path) => {
+            const item = document.createElement('li');
+            const title = trimPostfix(trimPostfix(toFilename(path), '.md'), '.txt');
+            const dirName = toDirPath(path);
+            item.textContent = dirName === '/' ? title : trimPrefix(`${dirName}/${title}`, '/');
+            item.setAttribute('data-path', path);
+            item.onclick = () => this.moveToFile(path);
+            focusOnHover(item);
+            list.appendChild(item);
+        };
+
         if (this.selectedMsgElement !== null) {
+            // Move-to-file order: /, then root files, then folders, then other files.
             const searchVal = (document.getElementById('search-input').value || '').toLowerCase();
             const dirs = this.getDirs().filter(d => searchVal === '' || d.toLowerCase().includes(searchVal));
-            dirs.forEach((dir) => {
-                const dataDir = dir === '/' ? '' : dir;
-                const listItem = document.createElement('li');
-                listItem.textContent = dir === '/' ? '/' : (dir + '/');
-                listItem.setAttribute('data-dir', dataDir);
-                listItem.onclick = () => this.moveToDir(dataDir);
-                listItem.onmousemove = () => {
-                    document.querySelectorAll('#search-results li').forEach(li => li.classList.remove('focused'));
-                    listItem.classList.add('focused');
-                    this.focusedIndex = Array.from(list.children).indexOf(listItem);
-                };
-                list.appendChild(listItem);
+            const files = results.filter(({path}) => path !== CONFIG_PATH && path !== CHAT_PATH);
+            const rootFiles = files.filter(({path}) => toDirPath(path) === '/');
+            const subFiles = files.filter(({path}) => toDirPath(path) !== '/');
+
+            if (dirs.includes('/')) addDirItem('/');
+            rootFiles.forEach(({path}) => addFileItem(path));
+            dirs.filter(d => d !== '/').forEach(addDirItem);
+            subFiles.forEach(({path}) => addFileItem(path));
+        } else {
+            results.forEach(({path}) => {
+                if (path === CONFIG_PATH) return;
+                addFileItem(path);
             });
-            dirCount = dirs.length;
         }
-
-        results.forEach(({path}, index) => {
-            if (path === CONFIG_PATH) {
-                return;
-            }
-            if (this.selectedMsgElement !== null && path === CHAT_PATH) {
-                return;
-            }
-
-            const listItem = document.createElement('li');
-            let title = trimPostfix(trimPostfix(toFilename(path), '.md'), '.txt');
-            let dirName = toDirPath(path);
-            if (dirName === '/') {
-                listItem.textContent = title;
-            } else {
-                listItem.textContent = trimPrefix(`${dirName}/${title}`, '/');
-            }
-            listItem.setAttribute('data-path', path);
-            listItem.onclick = () => this.moveToFile(path);
-
-            listItem.onmousemove = () => {
-                document.querySelectorAll('#search-results li').forEach(li => li.classList.remove('focused'));
-                listItem.classList.add('focused');
-                this.focusedIndex = dirCount + index;
-            };
-            list.appendChild(listItem);
-        });
 
         this.focusedIndex = 0;
         this.updateFocusedItem();
