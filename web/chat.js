@@ -279,7 +279,7 @@ function initChat() {
 
 function scrollToBottom() {
     setTimeout(function () {
-        chat.scrollTop = chat.scrollHeight;
+        chat.scrollTop = Math.max(0, chat.scrollHeight - chat.clientHeight);
     }, 100);
 }
 

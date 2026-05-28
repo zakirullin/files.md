@@ -7,6 +7,14 @@
     position: relative;
 }
 
+@media (max-width: 670px) {
+    #chat {
+        --chat-input-bottom-space: calc(72px + env(safe-area-inset-bottom, 0px));
+        padding-bottom: calc(24px + var(--chat-input-bottom-space));
+        scroll-padding-bottom: var(--chat-input-bottom-space);
+    }
+}
+
 #chat-container {
     display: flex;
     flex-direction: column;

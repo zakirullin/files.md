@@ -1,5 +1,32 @@
 const {test, expect} = require('@playwright/test');
 
+async function sendChatMessage(page, text, expectedCount) {
+    await page.locator('#chat-input').fill(text);
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.message')).toHaveCount(expectedCount);
+}
+
+async function getChatVisibilityMetrics(page) {
+    return await page.evaluate(() => {
+        const chat = document.getElementById('chat');
+        const input = document.getElementById('chat-input');
+        const lastMessage = chat.querySelector('.message:last-child');
+        const chatRect = chat.getBoundingClientRect();
+        const inputRect = input.getBoundingClientRect();
+        const lastRect = lastMessage.getBoundingClientRect();
+        const style = getComputedStyle(chat);
+
+        return {
+            bottomGap: chatRect.bottom - lastRect.bottom,
+            inputGap: inputRect.top - lastRect.bottom,
+            paddingBottom: parseFloat(style.paddingBottom),
+            scrollPaddingBottom: parseFloat(style.scrollPaddingBottom),
+            scrollTop: chat.scrollTop,
+            maxScrollTop: chat.scrollHeight - chat.clientHeight,
+        };
+    });
+}
+
 test.beforeEach(async ({page}) => {
     await page.goto('/index.html');
 
@@ -39,6 +66,57 @@ test('select all in chat input selects input text, not bubbles', async ({page}) 
 
     await expect(page.locator('#chat-input')).toHaveValue('');
     await expect(page.locator('.message-content')).toHaveText('First message');
+});
+
+test('mobile chat keeps the latest message clear of the composer', async ({page}) => {
+    await page.setViewportSize({width: 900, height: 700});
+    await page.evaluate(async () => {
+        const root = await navigator.storage.getDirectory();
+        const fh = await root.getFileHandle('File.md', {create: true});
+        const w = await fh.createWritable();
+        await w.write('# File');
+        await w.close();
+        window.getTemporaryStorageDirHandle = async () => navigator.storage.getDirectory();
+    });
+    await page.evaluate(() => init(document.getElementById('editor')));
+
+    await page.click(`#tree .tree-item:has-text('chat')`);
+    await page.waitForSelector('#chat');
+
+    const desktopPaddingBottom = await page.locator('#chat').evaluate(chat =>
+        parseFloat(getComputedStyle(chat).paddingBottom));
+    expect(desktopPaddingBottom).toBe(24);
+
+    await page.setViewportSize({width: 390, height: 360});
+
+    for (let i = 1; i <= 8; i++) {
+        await sendChatMessage(page, `Mobile thought ${i}`, i);
+    }
+
+    await expect.poll(async () => {
+        const metrics = await getChatVisibilityMetrics(page);
+        return Math.round(metrics.maxScrollTop - metrics.scrollTop);
+    }).toBe(0);
+
+    let metrics = await getChatVisibilityMetrics(page);
+    expect(metrics.paddingBottom).toBeGreaterThanOrEqual(96);
+    expect(metrics.scrollPaddingBottom).toBeGreaterThanOrEqual(72);
+    expect(metrics.bottomGap).toBeGreaterThanOrEqual(88);
+    expect(metrics.inputGap).toBeGreaterThanOrEqual(88);
+
+    await page.evaluate(async () => openFile('/File.md'));
+    await page.waitForSelector('.CodeMirror');
+    await page.evaluate(async () => openChat());
+    await page.waitForSelector('#chat');
+
+    await expect.poll(async () => {
+        const metrics = await getChatVisibilityMetrics(page);
+        return Math.round(metrics.maxScrollTop - metrics.scrollTop);
+    }).toBe(0);
+
+    metrics = await getChatVisibilityMetrics(page);
+    expect(metrics.bottomGap).toBeGreaterThanOrEqual(88);
+    expect(metrics.inputGap).toBeGreaterThanOrEqual(88);
 });
 
 test('move to dir creates a new file inside that dir', async ({page}) => {
