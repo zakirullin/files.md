@@ -1,18 +1,81 @@
+function cleanupEditor(editorInstance) {
+    if (!editorInstance) return;
+
+    if (editorInstance._tableScrollObserver) {
+        editorInstance._tableScrollObserver.disconnect();
+    }
+
+    editorInstance.off();
+}
+
+function wrapRenderedTables(root) {
+    if (!root || !root.querySelectorAll) return;
+
+    root.querySelectorAll('table').forEach((table) => {
+        if (table.closest('.hmd-table-scroll')) return;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'hmd-table-scroll';
+        table.parentNode.insertBefore(wrapper, table);
+        wrapper.appendChild(table);
+    });
+}
+
+function installTableScrollWrappers(cm) {
+    const wrapper = cm.getWrapperElement();
+
+    wrapRenderedTables(wrapper);
+
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+                if (node.matches && node.matches('table')) {
+                    wrapRenderedTables(node.parentNode);
+                    return;
+                }
+
+                wrapRenderedTables(node);
+            });
+        });
+    });
+
+    observer.observe(wrapper, {childList: true, subtree: true});
+    cm._tableScrollObserver = observer;
+}
+
+function getHorizontalTableScrollbar(e) {
+    if (!e.target.closest) return null;
+
+    const scroller = e.target.closest('.hmd-table-scroll');
+    if (!scroller || scroller.scrollWidth <= scroller.clientWidth) return null;
+
+    const scrollbarHeight = scroller.offsetHeight - scroller.clientHeight;
+    if (scrollbarHeight <= 0) return null;
+
+    const rect = scroller.getBoundingClientRect();
+    const withinX = e.clientX >= rect.left && e.clientX <= rect.right;
+    const withinScrollbarY = e.clientY >= rect.bottom - scrollbarHeight && e.clientY <= rect.bottom;
+
+    return withinX && withinScrollbarY ? scroller : null;
+}
+
 function initEditor(el) {
     if (window.editor !== undefined && el.id === 'editor-textarea' ) {
-        editor.off();
+        cleanupEditor(editor);
         const wrapper = editor.getWrapperElement();
         if (wrapper && wrapper.parentNode) {
             wrapper.parentNode.removeChild(wrapper);
         }
 
-        editor2.off();
+        cleanupEditor(editor2);
         const wrapper2 = editor2.getWrapperElement();
         if (wrapper2 && wrapper2.parentNode) {
             wrapper2.parentNode.removeChild(wrapper2);
         }
     } else if (window.editor2 !== undefined && el.id === 'editor2-textarea') {
-        editor2.off();
+        cleanupEditor(editor2);
         const wrapper = editor2.getWrapperElement();
         if (wrapper && wrapper.parentNode) {
             wrapper.parentNode.removeChild(wrapper);
@@ -197,6 +260,19 @@ function initEditor(el) {
             })
         }
     })
+
+    installTableScrollWrappers(newEditor);
+
+    newEditor.getWrapperElement().addEventListener('mousedown', function(e) {
+        const scroller = getHorizontalTableScrollbar(e);
+        if (!scroller) return;
+
+        scroller.classList.add('is-scrolling');
+        const stopScrolling = () => scroller.classList.remove('is-scrolling');
+        window.addEventListener('mouseup', stopScrolling, {once: true});
+        window.addEventListener('blur', stopScrolling, {once: true});
+        e.stopImmediatePropagation();
+    }, true);
 
     // Auto-select/highlight title when clicking on the first line
     // TODO clear on second click

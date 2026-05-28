@@ -141,6 +141,57 @@ test('should handle text selection correctly', async ({page}) => {
     }
 });
 
+test('dragging a rendered table horizontal scrollbar does not select editor text', async ({page}) => {
+    const table = [
+        '<table>',
+        '<tr><th>Alpha column</th><th>Beta column</th><th>Gamma column</th><th>Delta column</th><th>Epsilon column</th><th>Zeta column</th><th>Eta column</th><th>Theta column</th></tr>',
+        '<tr><td>Alpha cell with selectable text</td><td>Beta cell with selectable text</td><td>Gamma cell with selectable text</td><td>Delta cell with selectable text</td><td>Epsilon cell with selectable text</td><td>Zeta cell with selectable text</td><td>Eta cell with selectable text</td><td>Theta cell with selectable text</td></tr>',
+        '</table>',
+    ].join('');
+
+    await page.evaluate((content) => {
+        editor.setValue(`# Table drag\n\nNormal paragraph text remains selectable.\n\n${content}`);
+        editor.refresh();
+    }, table);
+
+    const scroller = page.locator('#editor-container .hmd-table-scroll').first();
+    await expect(scroller).toBeVisible();
+    await expect.poll(async () => {
+        return await scroller.evaluate((el) => el.scrollWidth > el.clientWidth);
+    }).toBe(true);
+
+    const tableCellUserSelect = await page.locator('#editor-container .hmd-table-scroll td').first().evaluate((el) => {
+        return window.getComputedStyle(el).userSelect;
+    });
+    expect(tableCellUserSelect).not.toBe('none');
+
+    await page.evaluate(() => editor.setCursor({line: 0, ch: 0}));
+    const box = await scroller.boundingBox();
+    expect(box).not.toBeNull();
+
+    const startX = box.x + 20;
+    const endX = box.x + box.width - 20;
+    const scrollbarY = box.y + box.height - 3;
+    const scrollBefore = await scroller.evaluate((el) => el.scrollLeft);
+
+    await page.mouse.move(startX, scrollbarY);
+    await page.mouse.down();
+    await page.mouse.move(endX, scrollbarY, {steps: 8});
+    await page.mouse.up();
+
+    await expect.poll(async () => {
+        return await scroller.evaluate((el) => el.scrollLeft);
+    }).toBeGreaterThan(scrollBefore);
+
+    await expect(page.locator('#editor-container .CodeMirror-selected')).toHaveCount(0);
+
+    await page.mouse.move(box.x + 20, box.y + 20);
+    await page.mouse.down();
+    const hasScrollingClass = await scroller.evaluate((el) => el.classList.contains('is-scrolling'));
+    await page.mouse.up();
+    expect(hasScrollingClass).toBe(false);
+});
+
 test('should handle text selection for word-wrap content', async ({page}) => {
     test.skip(!process.env.RUN_SELECTION, 'pixel-dependent; run with RUN_SELECTION=1');
     // Add some test content with various markdown elements
@@ -404,4 +455,3 @@ test('should handle partical text selection for word-wrap content', async ({page
         expect(selectionData.right).toBe(expectedSelections[i].right);
     }
 });
-
