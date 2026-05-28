@@ -43,11 +43,114 @@ test.afterEach(async ({}, testInfo) => {
     });
 });
 
+async function setMarkdownAndCursor(page, cursor = {line: 1, ch: 10}) {
+    await page.evaluate((cursorPos) => {
+        editor.setValue('# Heading\n**bold** text');
+        editor.setCursor(cursorPos);
+        editor.focus();
+        editor.refresh();
+    }, cursor);
+}
+
+async function getBoldTokenState(page) {
+    return await page.evaluate(() => {
+        const token = document.querySelector('#editor-container .cm-formatting-strong.hmd-hidden-token');
+        const style = token ? getComputedStyle(token) : null;
+
+        return {
+            hasRawLine: !!document.querySelector('#editor-container .hmd-raw-editing-line'),
+            hasHiddenStrongToken: !!token,
+            fontSize: style ? style.fontSize : null,
+            color: style ? style.color : null,
+        };
+    });
+}
+
 test('should load the Files.md editor', async ({page}) => {
     await expect(page).toHaveTitle('Files.md');
 
     await expect(page.locator('#sidebar')).toBeVisible();
     await expect(page.locator('#open-folder')).toBeVisible();
+});
+
+test('raw editing line preference is off by default', async ({page}) => {
+    await setMarkdownAndCursor(page);
+
+    await expect.poll(async () => {
+        const state = await getBoldTokenState(page);
+        return state.hasHiddenStrongToken;
+    }).toBe(true);
+
+    const state = await getBoldTokenState(page);
+    expect(state.hasRawLine).toBe(false);
+    expect(parseFloat(state.fontSize)).toBeLessThanOrEqual(1);
+    expect(await page.locator('#raw-editing-line-toggle').getAttribute('aria-pressed')).toBe('false');
+    expect(await page.evaluate(() => localStorage.getItem('rawEditingLine'))).toBe(null);
+    expect(await page.evaluate(() => editor.getOption('hmdRawEditingLine'))).toBe(false);
+});
+
+test('raw editing line preference toggles live and applies to both editors', async ({page}) => {
+    await setMarkdownAndCursor(page);
+    await page.click('#raw-editing-line-toggle');
+
+    await expect(page.locator('#raw-editing-line-toggle')).toHaveAttribute('aria-pressed', 'true');
+    await expect.poll(async () => {
+        return await page.evaluate(() => ({
+            stored: localStorage.getItem('rawEditingLine'),
+            editor: editor.getOption('hmdRawEditingLine'),
+            editor2: editor2.getOption('hmdRawEditingLine'),
+        }));
+    }).toEqual({stored: 'true', editor: true, editor2: true});
+
+    await expect.poll(async () => {
+        const state = await getBoldTokenState(page);
+        return state.hasRawLine;
+    }).toBe(true);
+
+    let state = await getBoldTokenState(page);
+    expect(state.hasHiddenStrongToken).toBe(true);
+    expect(parseFloat(state.fontSize)).toBeGreaterThan(5);
+    expect(state.color).not.toBe('rgba(0, 0, 0, 0)');
+
+    await page.evaluate(() => {
+        showEditor2();
+        editor2.setValue('# Split\n**bold** text');
+        editor2.setCursor({line: 1, ch: 10});
+        editor2.focus();
+        editor2.refresh();
+    });
+
+    await expect.poll(async () => {
+        return await page.evaluate(() => !!document.querySelector('#editor2-container .hmd-raw-editing-line'));
+    }).toBe(true);
+
+    await page.click('#raw-editing-line-toggle');
+    await expect(page.locator('#raw-editing-line-toggle')).toHaveAttribute('aria-pressed', 'false');
+    await expect.poll(async () => {
+        const offState = await getBoldTokenState(page);
+        return {
+            stored: await page.evaluate(() => localStorage.getItem('rawEditingLine')),
+            option: await page.evaluate(() => editor.getOption('hmdRawEditingLine')),
+            hasRawLine: offState.hasRawLine,
+        };
+    }).toEqual({stored: 'false', option: false, hasRawLine: false});
+});
+
+test('raw editing line preference persists after reload', async ({page}) => {
+    await page.click('#raw-editing-line-toggle');
+    await expect(page.locator('#raw-editing-line-toggle')).toHaveAttribute('aria-pressed', 'true');
+
+    await page.reload();
+    await page.waitForSelector('#tree', {timeout: 5000});
+    await setMarkdownAndCursor(page);
+
+    await expect.poll(async () => {
+        return await page.evaluate(() => ({
+            stored: localStorage.getItem('rawEditingLine'),
+            option: editor.getOption('hmdRawEditingLine'),
+            hasRawLine: !!document.querySelector('#editor-container .hmd-raw-editing-line'),
+        }));
+    }).toEqual({stored: 'true', option: true, hasRawLine: true});
 });
 
 test('should open markdown file via quick panel and see bold text formatting', async ({page}) => {
@@ -404,4 +507,3 @@ test('should handle partical text selection for word-wrap content', async ({page
         expect(selectionData.right).toBe(expectedSelections[i].right);
     }
 });
-

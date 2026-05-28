@@ -8,6 +8,7 @@ const SHOP_PATH = '/Shop.md';
 const WATCH_PATH = '/Watch.md';
 const LOG_PATH = '/archive/Log.txt';
 const OPEN_CHAT_AFTER_IDLE = 60 * 60 * 1000; // ms
+const RAW_EDITING_LINE_STORAGE_KEY = 'rawEditingLine';
 
 let openChatIdleTimer = null;
 let isChat = false;
@@ -16,6 +17,8 @@ let debug = false;
 // let debug = {dir: '', file: 'File.md', loaded: false};
 
 async function init() {
+    updateRawEditingLineToggle();
+
     // Ask the browser to mark our origin as persistent so the quota
     // manager can't evict the auth cookie + localStorage under disk
     // pressure. Chrome auto-grants for installed PWAs / high-engagement
@@ -111,6 +114,42 @@ async function init() {
     await syncMediaFiles();
     log(`Files initialized in: ${(performance.now() - perf).toFixed(3)} milliseconds`);
 
+}
+
+function getRawEditingLinePreference() {
+    return localStorage.getItem(RAW_EDITING_LINE_STORAGE_KEY) === 'true';
+}
+
+function setRawEditingLinePreference(enabled) {
+    localStorage.setItem(RAW_EDITING_LINE_STORAGE_KEY, enabled ? 'true' : 'false');
+    updateRawEditingLineToggle();
+    applyRawEditingLinePreference();
+}
+
+function toggleRawEditingLinePreference() {
+    setRawEditingLinePreference(!getRawEditingLinePreference());
+}
+
+function updateRawEditingLineToggle() {
+    const button = document.getElementById('raw-editing-line-toggle');
+    if (!button) {
+        return;
+    }
+
+    const enabled = getRawEditingLinePreference();
+    button.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+    button.setAttribute('data-tooltip', enabled ? 'Raw current line: on' : 'Raw current line');
+}
+
+function applyRawEditingLinePreference() {
+    const enabled = getRawEditingLinePreference();
+    [window.editor, window.editor2].forEach(cm => {
+        if (!cm || typeof cm.setOption !== 'function') {
+            return;
+        }
+
+        cm.setOption('hmdRawEditingLine', enabled);
+    });
 }
 
 // Logic for click-handling is in click.js => isWikiLink

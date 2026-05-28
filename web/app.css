@@ -503,6 +503,10 @@ button svg circle {
     stroke:  var(--col-tx) !important;
 }
 
+#raw-editing-line-toggle[aria-pressed="true"] svg {
+    stroke: var(--color-neo-orange) !important;
+}
+
 /* New-file icon: stroked rather than filled to match the other toolbar
    icons. SVG uses stroke="currentColor" so color drives the line color;
    nudge up 2px so it lines up with the folder/random-file icons that
@@ -903,4 +907,43 @@ pre.HyperMD-codeblock-end {
 
 .cm-formatting-task.cm-property {
     opacity: 0.6;
+}
+
+.CodeMirror pre.hmd-raw-editing-line span.hmd-hidden-token.cm-formatting-em,
+.CodeMirror pre.hmd-raw-editing-line span.hmd-hidden-token.cm-formatting-strong,
+.CodeMirror pre.hmd-raw-editing-line span.hmd-hidden-token.cm-formatting-strikethrough,
+.CodeMirror pre.hmd-raw-editing-line span.hmd-hidden-token.cm-formatting-code,
+.CodeMirror pre.hmd-raw-editing-line span.hmd-hidden-token.cm-formatting-link,
+.CodeMirror pre.hmd-raw-editing-line span.cm-url.hmd-hidden-token.cm-url {
+    color: var(--col-tx-alt) !important;
+    display: inline !important;
+    font-family: inherit !important;
+    font-size: inherit !important;
+    letter-spacing: 0 !important;
+}
+
+.cm-s-hypermd-light pre.hmd-raw-editing-line span.cm-formatting-header,
+.cm-s-hypermd-light pre.hmd-raw-editing-line span.cm-formatting-quote,
+.cm-s-hypermd-light pre.hmd-raw-editing-line span.cm-hmd-escape-backslash,
+.cm-s-hypermd-light pre.hmd-raw-editing-line span.cm-hmd-list-indent {
+    color: var(--col-tx-alt) !important;
+    display: inline !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+    letter-spacing: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.CodeMirror pre.hmd-raw-editing-line.HyperMD-codeblock .hmd-hidden-token {
+    display: inline !important;
+}
+
+.CodeMirror pre.hmd-raw-editing-line .cm-formatting-list-ul:has(+ .cm-formatting-task.hmd-hidden-token) {
+    display: inline !important;
+    width: auto !important;
+}
+
+.CodeMirror pre.hmd-raw-editing-line .cm-formatting-list-ul:has(+ .cm-formatting-task.hmd-hidden-token) + .cm-formatting-task.hmd-hidden-token {
+    margin-left: 0 !important;
 }

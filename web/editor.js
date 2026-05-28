@@ -1,3 +1,77 @@
+const RAW_EDITING_LINE_CLASS = 'hmd-raw-editing-line';
+
+function getRawEditingLinePreferenceValue() {
+    if (typeof getRawEditingLinePreference === 'function') {
+        return getRawEditingLinePreference();
+    }
+
+    return localStorage.getItem('rawEditingLine') === 'true';
+}
+
+function registerRawEditingLineOption() {
+    if (CodeMirror.defaults.hmdRawEditingLine !== undefined) {
+        return;
+    }
+
+    CodeMirror.defineOption('hmdRawEditingLine', false, function(cm, enabled) {
+        const state = cm.state.rawEditingLine || (cm.state.rawEditingLine = {
+            bound: false,
+            lineHandles: [],
+        });
+
+        state.enabled = !!enabled;
+        if (!state.update) {
+            state.update = () => updateRawEditingLine(cm);
+        }
+
+        if (state.enabled && !state.bound) {
+            cm.on('cursorActivity', state.update);
+            cm.on('changes', state.update);
+            cm.on('focus', state.update);
+            state.bound = true;
+        } else if (!state.enabled && state.bound) {
+            cm.off('cursorActivity', state.update);
+            cm.off('changes', state.update);
+            cm.off('focus', state.update);
+            state.bound = false;
+        }
+
+        state.update();
+    });
+}
+
+function updateRawEditingLine(cm) {
+    const state = cm.state.rawEditingLine;
+    if (!state) {
+        return;
+    }
+
+    state.lineHandles.forEach(lineHandle => {
+        cm.removeLineClass(lineHandle, 'text', RAW_EDITING_LINE_CLASS);
+    });
+    state.lineHandles = [];
+
+    if (!state.enabled) {
+        return;
+    }
+
+    const cursorLines = {};
+    cm.listSelections().forEach(selection => {
+        cursorLines[selection.head.line] = true;
+    });
+
+    Object.keys(cursorLines).forEach(line => {
+        const lineNo = Number(line);
+        if (lineNo < cm.firstLine() || lineNo > cm.lastLine()) {
+            return;
+        }
+
+        state.lineHandles.push(cm.addLineClass(lineNo, 'text', RAW_EDITING_LINE_CLASS));
+    });
+}
+
+registerRawEditingLineOption();
+
 function initEditor(el) {
     if (window.editor !== undefined && el.id === 'editor-textarea' ) {
         editor.off();
@@ -27,6 +101,7 @@ function initEditor(el) {
             math: true,
         },
         lineNumbers: false,
+        hmdRawEditingLine: getRawEditingLinePreferenceValue(),
         extraKeys: {
             // 'Shift-Space': 'autocomplete',
             'Cmd-[': false, 'Cmd-]': false,
@@ -52,6 +127,7 @@ function initEditor(el) {
     newEditor.setSize(null, '100%');
     newEditor.on('focus', function() {
         currentEditor = newEditor; // FIXME possible RC here? If isMessingWithCurrentEditor is hold, this would overwrite
+        currentEditor.setOption('hmdRawEditingLine', getRawEditingLinePreferenceValue());
         currentEditor.refresh(); // Cursor & hide tokens conflict if we don't call it
         closeChatModal();
         log('Focused to:', newEditor.path);
