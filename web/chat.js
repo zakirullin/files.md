@@ -28,7 +28,7 @@ async function loadChatConfig() {
     } catch (err) {
         // Initialize default config
         chatTabs = [
-            { name: 'Chat', file: 'Chat.md', visible: true }
+            { name: 'Chat', messages: [] }
         ];
         currentChatTab = 'Chat';
         await saveChatConfig();
@@ -44,10 +44,29 @@ async function saveChatConfig() {
     await write(CHAT_CONFIG_PATH, JSON.stringify(config, null, 2));
 }
 
-// Get current tab's file path
-function getCurrentChatFile() {
-    const tab = chatTabs.find(t => t.name === currentChatTab);
-    return tab ? tab.file : 'Chat.md';
+// Get current tab object
+function getCurrentTab() {
+    return chatTabs.find(t => t.name === currentChatTab) || chatTabs[0];
+}
+
+async function parseMessagesFromChat() {
+    const tab = getCurrentTab();
+    if (!tab) {
+        log('No current tab found, returning empty messages');
+        return { messages: [], text: '[]' };
+    }
+    const messages = tab.messages || [];
+    log(`parseMessagesFromChat: tab=${tab.name}, messages=${messages.length}`);
+    return { messages, text: JSON.stringify(messages) };
+}
+
+async function saveMessagesToChat(messages) {
+    const tab = getCurrentTab();
+    if (tab) {
+        tab.messages = messages;
+        await saveChatConfig();
+        lastChatText = JSON.stringify(messages);
+    }
 }
 
 // Add event listener for input changes
@@ -85,8 +104,18 @@ async function sendToChat() {
         hour: '2-digit',
         minute: '2-digit'
     });
-    const formattedContent = `\n- [ ] \`${timestamp}\` ${text}\n`;
-    await writeAtEnd(getCurrentChatFile(), formattedContent);
+    
+    const tab = getCurrentTab();
+    if (!tab.messages) tab.messages = [];
+    
+    tab.messages.push({
+        done: false,
+        text,
+        timestamp,
+        date: new Date().toDateString()
+    });
+    
+    await saveChatConfig();
 
     chatInput.value = '';
     chatIsClean = false;
@@ -137,9 +166,7 @@ function renderChatTabs() {
         chatContainer.insertBefore(tabsContainer, chatContainer.firstChild);
     }
     
-    const visibleTabs = chatTabs.filter(t => t.visible);
-    
-    tabsContainer.innerHTML = visibleTabs.map(tab => `
+    tabsContainer.innerHTML = chatTabs.map(tab => `
         <div class="chat-tab ${tab.name === currentChatTab ? 'active' : ''}" 
              data-tab-name="${escapeHtml(tab.name)}"
              draggable="true">
@@ -187,8 +214,7 @@ async function addNewChatTab() {
     
     const newTab = {
         name: newName,
-        file: `Chat-${newName}.md`,
-        visible: true
+        messages: []
     };
     
     chatTabs.push(newTab);
@@ -203,10 +229,11 @@ async function addNewChatTab() {
 async function closeChatTab(tabName) {
     if (tabName === 'Chat') return; // Can't close default tab
     
-    const tab = chatTabs.find(t => t.name === tabName);
-    if (!tab) return;
+    const tabIndex = chatTabs.findIndex(t => t.name === tabName);
+    if (tabIndex === -1) return;
     
-    tab.visible = false;
+    // Remove the tab completely
+    chatTabs.splice(tabIndex, 1);
     
     // If closing current tab, switch to Chat
     if (currentChatTab === tabName) {
@@ -261,25 +288,7 @@ function attachTabEventListeners() {
                     // Rename tab
                     const tabObj = chatTabs.find(t => t.name === oldName);
                     if (tabObj) {
-                        const oldFile = tabObj.file;
-                        const newFile = oldName === 'Chat' ? `Chat-${newName}.md` : 
-                                       oldFile.replace(oldName, newName);
-                        
-                        // Rename file if it exists
-                        try {
-                            const oldHandle = await getFileHandle(oldFile, true);
-                            const oldFileObj = await oldHandle.getFile();
-                            const content = await oldFileObj.text();
-                            await write(newFile, content);
-                            if (oldName !== 'Chat') {
-                                await deleteFile(oldFile);
-                            }
-                        } catch (err) {
-                            // File doesn't exist yet, that's ok
-                        }
-                        
                         tabObj.name = newName;
-                        tabObj.file = newFile;
                         if (currentChatTab === oldName) {
                             currentChatTab = newName;
                         }
@@ -295,13 +304,15 @@ function attachTabEventListeners() {
             nameSpan.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
+                    e.stopPropagation();
                     nameSpan.blur();
+                    return false;
                 } else if (e.key === 'Escape') {
                     e.preventDefault();
                     nameSpan.textContent = oldName;
                     nameSpan.blur();
                 }
-            }, { once: true });
+            });
         });
         
         // Drag and drop
@@ -408,94 +419,14 @@ async function toggleChatModal() {
 }
 
 async function parseMessagesFromChat() {
-    const chatFile = getCurrentChatFile();
-    const file = await ((await getFileHandle(chatFile, true)).getFile());
-    let chat = await file.text();
-
-    // Normalize line endings
-    chat = chat.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-    const lines = chat.split('\n');
-
-    const headerRegex = /^#### /;
-    // Block start: any `- [ ] ` / `- [x] ` checklist line (timestamp optional).
-    const timestampRegex = /^- \[[ xX]\] /;
-
-    const blocks = [];
-    let currentBlock = '';
-
-    for (const line of lines) {
-        const isHeader = headerRegex.test(line);
-        const isTimestamp = timestampRegex.test(line);
-
-        if (isHeader || isTimestamp) {
-            // Save previous block if exists
-            if (currentBlock.length > 0) {
-                blocks.push(currentBlock.trim());
-                currentBlock = '';
-            }
-
-            // Start new block
-            currentBlock = line;
-        } else {
-            // Continue current block
-            if (currentBlock.length > 0) {
-                currentBlock += '\n' + line;
-            }
-        }
+    const tab = getCurrentTab();
+    if (!tab) {
+        log('No current tab found, returning empty messages');
+        return { messages: [], text: '[]' };
     }
-
-    // Add final block
-    if (currentBlock.length > 0) {
-        blocks.push(currentBlock.trim());
-    }
-
-    // Parse blocks into messages
-    const messages = [];
-    let currentDate = null;
-
-    // TODO write clearer way
-    let numblocks = 0
-    for (let i = 0; i < blocks.length; i++) {
-        const block = blocks[i];
-
-        // Check if block is a date header
-        if (block.startsWith('####')) {
-            currentDate = block.replace(/^#+\s*/, '').trim();
-            numblocks++;
-            continue;
-        }
-
-        // Strip optional `- [ ]`/`- [x]` marker, then optional `HH:MM`
-        // timestamp. Lines without either are not chat entries.
-        let rest = block;
-        let mark = '';
-        const markerMatch = rest.match(/^- \[([ xX])\] /);
-        if (markerMatch) {
-            mark = markerMatch[1];
-            rest = rest.slice(markerMatch[0].length);
-        }
-        let timestamp = '';
-        const tsMatch = rest.match(/^`(\d{2}:\d{2})` /);
-        if (tsMatch) {
-            timestamp = tsMatch[1];
-            rest = rest.slice(tsMatch[0].length);
-        }
-        if (mark === '' && timestamp === '') {
-            continue;
-        }
-        const text = rest.trim();
-        if (text) {
-            messages.push({
-                index: i - numblocks,
-                done: mark === 'x' || mark === 'X',
-                text,
-                timestamp,
-                date: currentDate || new Date().toDateString(),
-            });
-        }
-    }
-
-    return { messages, text: chat };
+    const messages = tab.messages || [];
+    log(`parseMessagesFromChat: tab=${tab.name}, messages=${messages.length}`);
+    return { messages, text: JSON.stringify(messages) };
 }
 
 async function saveMessagesToChat(messages) {
@@ -530,30 +461,12 @@ async function saveMessagesToChat(messages) {
 //   - [x] `HH:MM` text    (new, done)
 // and rewrites it to the requested done/undone marker.
 async function toggleChatMessage(timestamp, text, done) {
-    const chatFile = getCurrentChatFile();
-    const handle = await getFileHandle(chatFile, true);
-    const file = await handle.getFile();
-    let content = await file.text();
-
-    const escapeRegex = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const marker = done ? 'x' : ' ';
-    const re = timestamp
-        ? new RegExp(`^(?:- \\[[ xX]\\] )?\`${escapeRegex(timestamp)}\` ${escapeRegex(text)}\\s*$`, 'm')
-        : new RegExp(`^- \\[[ xX]\\] ${escapeRegex(text)}\\s*$`, 'm');
-    const replacement = timestamp
-        ? `- [${marker}] \`${timestamp}\` ${text}`
-        : `- [${marker}] ${text}`;
-
-    if (!re.test(content)) {
-        logError('toggleChatMessage: line not found', {timestamp, text});
-        return;
+    const tab = getCurrentTab();
+    const msg = tab.messages.find(m => m.text === text && m.timestamp === timestamp);
+    if (msg) {
+        msg.done = done;
+        await saveChatConfig();
     }
-    content = content.replace(re, replacement);
-
-    const writable = await handle.createWritable();
-    await writable.write(content);
-    await writable.close();
-    lastChatText = content;
 }
 
 function initChat() {
@@ -1093,11 +1006,25 @@ function attachEventListeners() {
     // Enable editing on double-click
     chat.querySelectorAll('.message-content').forEach(content => {
         const originalText = content.textContent;
+        const message = content.closest('.message');
+        const copyBtn = message.querySelector('.copy-btn');
         
         content.addEventListener('dblclick', function (e) {
             e.stopPropagation();
             this.contentEditable = 'true';
             this.classList.add('editing');
+            
+            // Hide action buttons and change copy button to confirm
+            const actions = message.querySelector('.message-actions');
+            if (actions) actions.style.display = 'none';
+            if (copyBtn) {
+                copyBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>`;
+                copyBtn.title = 'Confirm';
+                copyBtn.classList.add('confirm-btn');
+            }
+            
             this.focus();
             
             // Move cursor to end
@@ -1109,31 +1036,30 @@ function attachEventListeners() {
             sel.addRange(range);
         });
         
-        content.addEventListener('keydown', async function (e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                this.blur();
-            } else if (e.key === 'Escape') {
-                e.preventDefault();
-                this.textContent = originalText;
-                this.blur();
+        const finishEdit = async function () {
+            if (!content.classList.contains('editing')) return;
+            
+            content.contentEditable = 'false';
+            content.classList.remove('editing');
+            
+            // Restore action buttons and copy button
+            const actions = message.querySelector('.message-actions');
+            if (actions) actions.style.display = '';
+            if (copyBtn) {
+                copyBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 4v12a2 2 0 002 2h8a2 2 0 002-2V7.242a2 2 0 00-.602-1.43L16.083 2.57A2 2 0 0014.685 2H10a2 2 0 00-2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M16 18v2a2 2 0 01-2 2H6a2 2 0 01-2-2V9a2 2 0 012-2h2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>`;
+                copyBtn.title = 'Copy';
+                copyBtn.classList.remove('confirm-btn');
             }
-        });
-        
-        content.addEventListener('blur', async function () {
-            if (!this.classList.contains('editing')) return;
             
-            this.contentEditable = 'false';
-            this.classList.remove('editing');
-            
-            const newText = this.textContent.trim();
+            const newText = content.textContent.trim();
             if (newText && newText !== originalText) {
-                const message = this.closest('.message');
                 const timestamp = message.dataset.timestamp;
                 const oldText = message.dataset.text;
                 
                 try {
-                    // Update the message in Chat.md
                     const { messages } = await parseMessagesFromChat();
                     const msgIndex = messages.findIndex(m => m.text === oldText && m.timestamp === timestamp);
                     if (msgIndex !== -1) {
@@ -1143,12 +1069,35 @@ function attachEventListeners() {
                     }
                 } catch (err) {
                     logError('Failed to save edited message:', err);
-                    this.textContent = originalText;
+                    content.textContent = originalText;
                 }
             } else if (!newText) {
-                this.textContent = originalText;
+                content.textContent = originalText;
+            }
+        };
+        
+        content.addEventListener('keydown', async function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                await finishEdit();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                content.textContent = originalText;
+                await finishEdit();
             }
         });
+        
+        content.addEventListener('blur', finishEdit);
+        
+        // Confirm button click
+        if (copyBtn) {
+            copyBtn.addEventListener('click', async function (e) {
+                if (this.classList.contains('confirm-btn')) {
+                    e.stopPropagation();
+                    await finishEdit();
+                }
+            });
+        }
     });
 }
 
@@ -1159,7 +1108,7 @@ async function renderMessages() {
         return;
     }
     lastChatText = text;
-    log(`Loaded ${messages.length} messages from ${CHAT_PATH}`);
+    log(`Loaded ${messages.length} messages from tab: ${currentChatTab}`);
 
     if (messages.length === 0) {
         chat.innerHTML = `
