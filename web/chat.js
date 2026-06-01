@@ -595,6 +595,25 @@ function attachEventListeners() {
         });
     });
 
+    chat.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('mousedown', function (e) { e.stopPropagation(); });
+        btn.addEventListener('click', async function (e) {
+            e.stopPropagation();
+            const message = btn.closest('.message');
+            const text = message.dataset.text;
+            
+            try {
+                await navigator.clipboard.writeText(text);
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                }, 1000);
+            } catch (err) {
+                logError('Failed to copy text:', err);
+            }
+        });
+    });
+
     chat.querySelectorAll('.to-file-btn').forEach(btn => {
         btn.addEventListener('click', function (e) {
             e.stopPropagation();
@@ -784,11 +803,62 @@ function attachEventListeners() {
 
     // Enable editing on double-click
     chat.querySelectorAll('.message-content').forEach(content => {
+        const originalText = content.textContent;
+        
         content.addEventListener('dblclick', function (e) {
             e.stopPropagation();
-            this.style.pointerEvents = 'auto';
+            this.contentEditable = 'true';
             this.classList.add('editing');
             this.focus();
+            
+            // Move cursor to end
+            const range = document.createRange();
+            const sel = window.getSelection();
+            range.selectNodeContents(this);
+            range.collapse(false);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        });
+        
+        content.addEventListener('keydown', async function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.blur();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                this.textContent = originalText;
+                this.blur();
+            }
+        });
+        
+        content.addEventListener('blur', async function () {
+            if (!this.classList.contains('editing')) return;
+            
+            this.contentEditable = 'false';
+            this.classList.remove('editing');
+            
+            const newText = this.textContent.trim();
+            if (newText && newText !== originalText) {
+                const message = this.closest('.message');
+                const timestamp = message.dataset.timestamp;
+                const oldText = message.dataset.text;
+                
+                try {
+                    // Update the message in Chat.md
+                    const { messages } = await parseMessagesFromChat();
+                    const msgIndex = messages.findIndex(m => m.text === oldText && m.timestamp === timestamp);
+                    if (msgIndex !== -1) {
+                        messages[msgIndex].text = newText;
+                        await saveMessagesToChat(messages);
+                        message.dataset.text = newText;
+                    }
+                } catch (err) {
+                    logError('Failed to save edited message:', err);
+                    this.textContent = originalText;
+                }
+            } else if (!newText) {
+                this.textContent = originalText;
+            }
         });
     });
 }
@@ -829,6 +899,12 @@ async function renderMessages() {
             <button class="complete-btn" title="Mark as done">
                 <svg width="22" height="22" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.5 17l6 6 13-13"/>
+                </svg>
+            </button>
+            <button class="copy-btn" title="Copy">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 4v12a2 2 0 002 2h8a2 2 0 002-2V7.242a2 2 0 00-.602-1.43L16.083 2.57A2 2 0 0014.685 2H10a2 2 0 00-2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M16 18v2a2 2 0 01-2 2H6a2 2 0 01-2-2V9a2 2 0 012-2h2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </button>
             <div class="message-content"

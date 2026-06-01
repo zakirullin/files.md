@@ -62,6 +62,45 @@
     transition: opacity 0.15s, background 0.15s, color 0.15s;
 }
 
+.copy-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    background: var(--col-bg);
+    color: var(--col-link);
+    opacity: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    border: 1px solid var(--col-border);
+    transition: opacity 0.2s, background 0.15s;
+    z-index: 2;
+}
+
+.copy-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.message:hover .copy-btn {
+    opacity: 1;
+}
+
+.copy-btn:hover {
+    background: var(--col-bg-active);
+}
+
+.copy-btn.copied {
+    color: var(--color-neo-orange);
+}
+
 .complete-btn svg {
     width: 20px;
     height: 20px;
@@ -153,9 +192,10 @@
 }
 
 .message-content.editing {
-    background: rgba(99, 102, 241, 0.1);
-    border: 1px solid var(--col-bg);
+    background: rgba(255, 165, 0, 0.15);
+    border: 2px solid var(--color-neo-orange);
     outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 165, 0, 0.1);
 }
 
 .message-content[contenteditable]:focus {
