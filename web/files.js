@@ -1077,13 +1077,16 @@ async function openFile(path, saveToHistory = true, el = 'editor-textarea') {
         } else {
             const codemirror = document.querySelector('.CodeMirror-wrap');
             codemirror.style.display = 'block';
-            chat.style.display = 'none';
-            chatInput.style.display = 'none';
+            const chatEl = document.getElementById('chat');
+            const chatInputEl = document.getElementById('chat-input');
+            const chatContainerEl = document.getElementById('chat-container');
+            if (chatEl) chatEl.style.display = 'none';
+            if (chatInputEl) chatInputEl.style.display = 'none';
+            if (chatContainerEl) chatContainerEl.style.display = 'none';
             isChat = false;
         }
         // chatButton.classList.remove('hidden');
-        chatContainer.style.display = 'none';
-        closeChatModal();
+        if (typeof closeChatModal === 'function') closeChatModal();
 
         const start = performance.now();
 

@@ -14,6 +14,119 @@
     background: var(--col-bg);
 }
 
+#chat-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 24px 0 24px;
+    background: var(--col-bg);
+    border-bottom: 1px solid var(--col-border);
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-shrink: 0;
+}
+
+#chat-tabs::-webkit-scrollbar {
+    height: 4px;
+}
+
+.chat-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--col-bg-alt);
+    border: 1px solid var(--col-border);
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    transition: background 0.2s;
+    position: relative;
+}
+
+.chat-tab:hover {
+    background: var(--col-bg-active);
+}
+
+.chat-tab.active {
+    background: var(--col-bg);
+    border-bottom: 2px solid var(--col-bg);
+    margin-bottom: -1px;
+}
+
+.chat-tab-name {
+    font-size: 14px;
+    color: var(--col-tx);
+}
+
+.chat-tab.active .chat-tab-name {
+    font-weight: 500;
+}
+
+.chat-tab-name.editing {
+    background: var(--col-bg-active);
+    border: 1px solid var(--col-link);
+    border-radius: 3px;
+    padding: 2px 4px;
+    outline: none;
+    min-width: 40px;
+}
+
+.chat-tab-close {
+    display: none;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--col-tx-alt);
+    cursor: pointer;
+    border-radius: 3px;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+}
+
+.chat-tab-close:hover {
+    background: var(--col-bg-active);
+    color: var(--col-tx);
+}
+
+.chat-tab:hover .chat-tab-close {
+    display: flex;
+}
+
+.chat-tab.dragging {
+    opacity: 0.5;
+}
+
+#add-chat-tab {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--col-border);
+    background: var(--col-bg-alt);
+    color: var(--col-link);
+    cursor: pointer;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+#add-chat-tab:hover {
+    background: var(--col-bg-active);
+}
+
+#add-chat-tab svg {
+    width: 16px;
+    height: 16px;
+}
+
 #chat-container.modal {
     position: fixed;
     bottom: 20px;

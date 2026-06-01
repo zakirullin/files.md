@@ -6,10 +6,49 @@ const chatContainer = document.getElementById('chat-container');
 
 const MAX_TITLE_LENGTH = 100;
 const RECENT_FILES = 1;
+const CHAT_CONFIG_PATH = 'chat-config.json';
 
 // Cache of the last Chat.md content we rendered from. renderMessages skips
 // work when the file's content hasn't changed.
 let lastChatText = null;
+
+// Chat tabs state
+let chatTabs = [];
+let currentChatTab = null;
+
+// Load chat tabs configuration
+async function loadChatConfig() {
+    try {
+        const handle = await getFileHandle(CHAT_CONFIG_PATH, true);
+        const file = await handle.getFile();
+        const content = await file.text();
+        const config = JSON.parse(content);
+        chatTabs = config.tabs || [];
+        currentChatTab = config.lastActiveTab || 'Chat';
+    } catch (err) {
+        // Initialize default config
+        chatTabs = [
+            { name: 'Chat', file: 'Chat.md', visible: true }
+        ];
+        currentChatTab = 'Chat';
+        await saveChatConfig();
+    }
+}
+
+// Save chat tabs configuration
+async function saveChatConfig() {
+    const config = {
+        tabs: chatTabs,
+        lastActiveTab: currentChatTab
+    };
+    await write(CHAT_CONFIG_PATH, JSON.stringify(config, null, 2));
+}
+
+// Get current tab's file path
+function getCurrentChatFile() {
+    const tab = chatTabs.find(t => t.name === currentChatTab);
+    return tab ? tab.file : 'Chat.md';
+}
 
 // Add event listener for input changes
 chatInput.addEventListener('input', autoResize);
@@ -47,7 +86,7 @@ async function sendToChat() {
         minute: '2-digit'
     });
     const formattedContent = `\n- [ ] \`${timestamp}\` ${text}\n`;
-    await writeAtEnd(CHAT_PATH, formattedContent);
+    await writeAtEnd(getCurrentChatFile(), formattedContent);
 
     chatInput.value = '';
     chatIsClean = false;
@@ -81,8 +120,254 @@ async function openChat() {
         chatInput.focus();
     }
     isChat = true;
+    
+    await loadChatConfig();
+    renderChatTabs();
     await renderMessages();
     scrollToBottom();
+}
+
+// Render chat tabs UI
+function renderChatTabs() {
+    let tabsContainer = document.getElementById('chat-tabs');
+    if (!tabsContainer) {
+        tabsContainer = document.createElement('div');
+        tabsContainer.id = 'chat-tabs';
+        // Insert at the beginning of chat-container
+        chatContainer.insertBefore(tabsContainer, chatContainer.firstChild);
+    }
+    
+    const visibleTabs = chatTabs.filter(t => t.visible);
+    
+    tabsContainer.innerHTML = visibleTabs.map(tab => `
+        <div class="chat-tab ${tab.name === currentChatTab ? 'active' : ''}" 
+             data-tab-name="${escapeHtml(tab.name)}"
+             draggable="true">
+            <span class="chat-tab-name">${escapeHtml(tab.name)}</span>
+            ${tab.name !== 'Chat' ? `
+                <button class="chat-tab-close" title="Close tab">
+                    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            ` : ''}
+        </div>
+    `).join('') + `
+        <button id="add-chat-tab" title="New tab">
+            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </button>
+    `;
+    
+    attachTabEventListeners();
+}
+
+// Switch to a different tab
+async function switchChatTab(tabName) {
+    if (currentChatTab === tabName) return;
+    
+    currentChatTab = tabName;
+    await saveChatConfig();
+    renderChatTabs();
+    await renderMessages();
+    scrollToBottom();
+}
+
+// Add a new chat tab
+async function addNewChatTab() {
+    let counter = 1;
+    let newName = `tag${counter}`;
+    
+    // Find next available tag name
+    while (chatTabs.some(t => t.name === newName)) {
+        counter++;
+        newName = `tag${counter}`;
+    }
+    
+    const newTab = {
+        name: newName,
+        file: `Chat-${newName}.md`,
+        visible: true
+    };
+    
+    chatTabs.push(newTab);
+    currentChatTab = newName;
+    await saveChatConfig();
+    renderChatTabs();
+    await renderMessages();
+    scrollToBottom();
+}
+
+// Close a chat tab (hide but keep data)
+async function closeChatTab(tabName) {
+    if (tabName === 'Chat') return; // Can't close default tab
+    
+    const tab = chatTabs.find(t => t.name === tabName);
+    if (!tab) return;
+    
+    tab.visible = false;
+    
+    // If closing current tab, switch to Chat
+    if (currentChatTab === tabName) {
+        currentChatTab = 'Chat';
+    }
+    
+    await saveChatConfig();
+    renderChatTabs();
+    await renderMessages();
+    scrollToBottom();
+}
+
+// Attach event listeners to tab elements
+function attachTabEventListeners() {
+    const tabs = document.querySelectorAll('.chat-tab');
+    tabs.forEach(tab => {
+        const tabName = tab.dataset.tabName;
+        
+        tab.addEventListener('click', async (e) => {
+            if (e.target.closest('.chat-tab-close')) return;
+            await switchChatTab(tabName);
+        });
+        
+        // Double-click to rename
+        const nameSpan = tab.querySelector('.chat-tab-name');
+        nameSpan.addEventListener('dblclick', async (e) => {
+            e.stopPropagation();
+            const oldName = tabName;
+            nameSpan.contentEditable = 'true';
+            nameSpan.classList.add('editing');
+            nameSpan.focus();
+            
+            const range = document.createRange();
+            const sel = window.getSelection();
+            range.selectNodeContents(nameSpan);
+            sel.removeAllRanges();
+            sel.addRange(range);
+            
+            const finishEdit = async () => {
+                if (!nameSpan.classList.contains('editing')) return;
+                nameSpan.contentEditable = 'false';
+                nameSpan.classList.remove('editing');
+                
+                const newName = nameSpan.textContent.trim();
+                if (newName && newName !== oldName) {
+                    // Check if name already exists
+                    if (chatTabs.some(t => t.name === newName && t.name !== oldName)) {
+                        nameSpan.textContent = oldName;
+                        return;
+                    }
+                    
+                    // Rename tab
+                    const tabObj = chatTabs.find(t => t.name === oldName);
+                    if (tabObj) {
+                        const oldFile = tabObj.file;
+                        const newFile = oldName === 'Chat' ? `Chat-${newName}.md` : 
+                                       oldFile.replace(oldName, newName);
+                        
+                        // Rename file if it exists
+                        try {
+                            const oldHandle = await getFileHandle(oldFile, true);
+                            const oldFileObj = await oldHandle.getFile();
+                            const content = await oldFileObj.text();
+                            await write(newFile, content);
+                            if (oldName !== 'Chat') {
+                                await deleteFile(oldFile);
+                            }
+                        } catch (err) {
+                            // File doesn't exist yet, that's ok
+                        }
+                        
+                        tabObj.name = newName;
+                        tabObj.file = newFile;
+                        if (currentChatTab === oldName) {
+                            currentChatTab = newName;
+                        }
+                        await saveChatConfig();
+                        renderChatTabs();
+                    }
+                } else {
+                    nameSpan.textContent = oldName;
+                }
+            };
+            
+            nameSpan.addEventListener('blur', finishEdit, { once: true });
+            nameSpan.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    nameSpan.blur();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    nameSpan.textContent = oldName;
+                    nameSpan.blur();
+                }
+            }, { once: true });
+        });
+        
+        // Drag and drop
+        tab.addEventListener('dragstart', (e) => {
+            tab.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', tabName);
+        });
+        
+        tab.addEventListener('dragend', () => {
+            tab.classList.remove('dragging');
+        });
+        
+        tab.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            const dragging = document.querySelector('.chat-tab.dragging');
+            if (!dragging || dragging === tab) return;
+            
+            const tabsContainer = document.getElementById('chat-tabs');
+            const allTabs = [...tabsContainer.querySelectorAll('.chat-tab')];
+            const draggingIndex = allTabs.indexOf(dragging);
+            const targetIndex = allTabs.indexOf(tab);
+            
+            if (draggingIndex < targetIndex) {
+                tab.after(dragging);
+            } else {
+                tab.before(dragging);
+            }
+        });
+        
+        tab.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            const tabsContainer = document.getElementById('chat-tabs');
+            const allTabs = [...tabsContainer.querySelectorAll('.chat-tab')];
+            const newOrder = allTabs.map(t => t.dataset.tabName);
+            
+            // Reorder chatTabs array
+            const reordered = [];
+            newOrder.forEach(name => {
+                const tabObj = chatTabs.find(t => t.name === name);
+                if (tabObj) reordered.push(tabObj);
+            });
+            chatTabs.forEach(t => {
+                if (!reordered.includes(t)) reordered.push(t);
+            });
+            chatTabs = reordered;
+            
+            await saveChatConfig();
+        });
+        
+        // Close button
+        const closeBtn = tab.querySelector('.chat-tab-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                await closeChatTab(tabName);
+            });
+        }
+    });
+    
+    const addBtn = document.getElementById('add-chat-tab');
+    if (addBtn) {
+        addBtn.addEventListener('click', addNewChatTab);
+    }
 }
 
 async function openChatModal() {
@@ -93,6 +378,8 @@ async function openChatModal() {
     chat.style.display = 'flex';
     chatInput.style.display = 'block';
 
+    await loadChatConfig();
+    renderChatTabs();
     chatInput.focus();
     await renderMessages();
     scrollToBottom();
@@ -121,7 +408,8 @@ async function toggleChatModal() {
 }
 
 async function parseMessagesFromChat() {
-    const file = await ((await getFileHandle(CHAT_PATH, true)).getFile());
+    const chatFile = getCurrentChatFile();
+    const file = await ((await getFileHandle(chatFile, true)).getFile());
     let chat = await file.text();
 
     // Normalize line endings
@@ -231,7 +519,7 @@ async function saveMessagesToChat(messages) {
         });
     });
 
-    await write(CHAT_PATH, content);
+    await write(getCurrentChatFile(), content);
     lastChatText = content;
 }
 
@@ -242,7 +530,8 @@ async function saveMessagesToChat(messages) {
 //   - [x] `HH:MM` text    (new, done)
 // and rewrites it to the requested done/undone marker.
 async function toggleChatMessage(timestamp, text, done) {
-    const handle = await getFileHandle(CHAT_PATH, true);
+    const chatFile = getCurrentChatFile();
+    const handle = await getFileHandle(chatFile, true);
     const file = await handle.getFile();
     let content = await file.text();
 
