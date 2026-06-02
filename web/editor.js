@@ -75,7 +75,7 @@ function initEditor(el) {
         // Exclude local-file extensions (md, image types) so `![](img.png)`
         // isn't mistaken for a domain.
         if (/^[a-z0-9-]+(\.[a-z0-9-]+)+(\/|$)/i.test(path)
-            && !/\.(md|png|jpg|jpeg|gif|webp|mp4|webm|mov|mp3|ogg|oga|wav)$/i.test(path)) {
+            && !/\.(md|png|jpg|jpeg|gif|webp|mp4|webm|mov|mp3|ogg|oga|weba|wav)$/i.test(path)) {
             return 'https://' + path;
         }
 

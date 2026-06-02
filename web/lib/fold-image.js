@@ -48,7 +48,7 @@
                 // blob: URL with no extension. Browsers require `muted` for
                 // video autoplay.
                 const isVideo = /\.(mp4|webm|mov)(\?|$)/i.test(rawurl);
-                const isAudio = /\.(mp3|ogg|oga|wav)(\?|$)/i.test(rawurl);
+                const isAudio = /\.(mp3|ogg|oga|weba|wav)(\?|$)/i.test(rawurl);
                 let media;
                 if (isVideo) {
                     media = document.createElement("video");

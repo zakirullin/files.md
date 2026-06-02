@@ -102,10 +102,10 @@ let server = {files: {}, media: {}, timestamps: {}, mediaTimestamp: 0}; // In-me
 let mediaIndex = {};
 
 const SERVER_STORAGE_KEY = 'server'; // If scheme is migrated, I believe it's better to introduce a new key, because for now old keys aren't removed.
-const SUPPORTED_EXTENSIONS = ['md', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'mp4', 'webm', 'mov', 'mp3', 'ogg', 'oga', 'wav'];
+const SUPPORTED_EXTENSIONS = ['md', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'mp4', 'webm', 'mov', 'mp3', 'ogg', 'oga', 'weba', 'wav'];
 
 function isMediaPath(path) {
-    return /\.(png|jpg|jpeg|gif|webp|mp4|webm|mov|mp3|ogg|oga|wav)$/i.test(path);
+    return /\.(png|jpg|jpeg|gif|webp|mp4|webm|mov|mp3|ogg|oga|weba|wav)$/i.test(path);
 }
 const SYSTEM_DIRS = ['media', 'archive', 'journal', 'habits', 'triggers', 'insights'];
 const CONFIG_PATH = '/config.json';
@@ -869,7 +869,9 @@ function getImageExtension(mimeType) {
         'audio/ogg': 'ogg',
         'audio/wav': 'wav',
         'audio/x-wav': 'wav',
-        'audio/webm': 'webm'
+        // audio-only WebM gets the dedicated .weba extension so fold-image.js
+        // routes it through the <audio> path (the video regex still owns .webm).
+        'audio/webm': 'weba'
     };
     return extensions[mimeType] || 'png';
 }
