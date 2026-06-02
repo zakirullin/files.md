@@ -7,3 +7,8 @@ fslog
 tests/node_modules/
 tests/test-results/
 tests/playwright-report/
+
+# 文档与工作流模板（本地保留，不纳入版本控制）
+.spec-workflow/
+CLAUDE.md
+docs/
