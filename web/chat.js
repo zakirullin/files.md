@@ -15,6 +15,7 @@ let lastChatText = null;
 // Chat tabs state
 let chatTabs = [];
 let currentChatTab = null;
+let pendingCloseTab = null; // Tab pending confirmation to close
 
 // Load chat tabs configuration
 async function loadChatConfig() {
@@ -37,11 +38,15 @@ async function loadChatConfig() {
 
 // Save chat tabs configuration
 async function saveChatConfig() {
-    const config = {
-        tabs: chatTabs,
-        lastActiveTab: currentChatTab
-    };
-    await write(CHAT_CONFIG_PATH, JSON.stringify(config, null, 2));
+    try {
+        const config = {
+            tabs: chatTabs,
+            lastActiveTab: currentChatTab
+        };
+        await write(CHAT_CONFIG_PATH, JSON.stringify(config, null, 2));
+    } catch (err) {
+        logError('saveChatConfig error:', err);
+    }
 }
 
 // Get current tab object
@@ -225,25 +230,56 @@ async function addNewChatTab() {
     scrollToBottom();
 }
 
-// Close a chat tab (hide but keep data)
+// Close a chat tab (show confirmation dialog first)
 async function closeChatTab(tabName) {
     if (tabName === 'Chat') return; // Can't close default tab
-    
-    const tabIndex = chatTabs.findIndex(t => t.name === tabName);
-    if (tabIndex === -1) return;
-    
-    // Remove the tab completely
-    chatTabs.splice(tabIndex, 1);
-    
-    // If closing current tab, switch to Chat
-    if (currentChatTab === tabName) {
-        currentChatTab = 'Chat';
-    }
-    
-    await saveChatConfig();
-    renderChatTabs();
-    await renderMessages();
-    scrollToBottom();
+
+    const tab = chatTabs.find(t => t.name === tabName);
+    if (!tab) return;
+
+    // Store pending close tab and show confirmation dialog
+    pendingCloseTab = tabName;
+    const dialog = document.getElementById('confirm-close-tab');
+    const confirmBtn = document.getElementById('confirm-close-btn');
+    const cancelBtn = document.getElementById('cancel-close-btn');
+
+    dialog.showModal();
+
+    // Confirm button - actually close the tab
+    const confirmHandler = async (e) => {
+        e.stopPropagation(); // Prevent dialog close event from firing cancelHandler
+
+        const tabToClose = pendingCloseTab;
+        cleanup();
+
+        const tabIndex = chatTabs.findIndex(t => t.name === tabToClose);
+        if (tabIndex !== -1) {
+            chatTabs.splice(tabIndex, 1);
+            if (currentChatTab === tabToClose) {
+                currentChatTab = 'Chat';
+            }
+            await saveChatConfig();
+            renderChatTabs();
+            await renderMessages();
+            scrollToBottom();
+        }
+        dialog.close();
+    };
+
+    // Cancel button - just close dialog
+    const cancelHandler = () => {
+        cleanup();
+        dialog.close();
+    };
+
+    const cleanup = () => {
+        pendingCloseTab = null;
+        confirmBtn.removeEventListener('click', confirmHandler);
+        cancelBtn.removeEventListener('click', cancelHandler);
+    };
+
+    confirmBtn.addEventListener('click', confirmHandler);
+    cancelBtn.addEventListener('click', cancelHandler);
 }
 
 // Attach event listeners to tab elements
@@ -429,46 +465,6 @@ async function parseMessagesFromChat() {
     return { messages, text: JSON.stringify(messages) };
 }
 
-async function saveMessagesToChat(messages) {
-    // Group messages by date
-    const messagesByDate = {};
-    messages.forEach(msg => {
-        const date = msg.date || todayHeader().replace('#### ', '');
-        if (!messagesByDate[date]) {
-            messagesByDate[date] = [];
-        }
-        messagesByDate[date].push(msg);
-    });
-
-    let content = '';
-    Object.entries(messagesByDate).forEach(([date, msgs]) => {
-        if (content) content += '\n';
-        content += `#### ${date}\n`;
-        msgs.forEach(msg => {
-            const tsPart = msg.timestamp ? `\`${msg.timestamp}\` ` : '';
-            content += `- [${msg.done ? 'x' : ' '}] ${tsPart}${msg.text}\n`;
-        });
-    });
-
-    await write(getCurrentChatFile(), content);
-    lastChatText = content;
-}
-
-// Toggle the checkbox marker on a single chat line in place.
-// Matches any of the three shapes the line might be in on disk:
-//   `HH:MM` text          (legacy)
-//   - [ ] `HH:MM` text    (new, not done)
-//   - [x] `HH:MM` text    (new, done)
-// and rewrites it to the requested done/undone marker.
-async function toggleChatMessage(timestamp, text, done) {
-    const tab = getCurrentTab();
-    const msg = tab.messages.find(m => m.text === text && m.timestamp === timestamp);
-    if (msg) {
-        msg.done = done;
-        await saveChatConfig();
-    }
-}
-
 function initChat() {
     chatInput.addEventListener('keydown', async function (e) {
         if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
@@ -477,6 +473,15 @@ function initChat() {
             autoResize();
         }
     });
+}
+
+async function toggleChatMessage(timestamp, text, done) {
+    const tab = getCurrentTab();
+    const msg = tab.messages.find(m => m.text === text && m.timestamp === timestamp);
+    if (msg) {
+        msg.done = done;
+        await saveChatConfig();
+    }
 }
 
 function scrollToBottom() {
@@ -934,15 +939,13 @@ function attachEventListeners() {
 
             const destinations = [];
             (async () => {
-                for (const msg of msgs) {
-                    const [header, body] = extractHeaderAndBody(msg, MAX_TITLE_LENGTH);
+                for (const msgText of msgs) {
+                    const [header, body] = extractHeaderAndBody(msgText, MAX_TITLE_LENGTH);
                     const path = joinPath('/', btn.dataset.dir, sanitizeFilename(header)) + '.md';
                     destinations.push(path);
-                    for (const msg of msgs) {
-                        await moveFromChat(msg, async () => {
-                            await write(path, body)
-                        });
-                    }
+                    await moveFromChat(msgText, async () => {
+                        await write(path, body)
+                    });
                 }
                 await renderMessages();
                 // Reload from disk - write() above creates new files (and
@@ -1019,7 +1022,7 @@ function attachEventListeners() {
             if (actions) actions.style.display = 'none';
             if (copyBtn) {
                 copyBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>`;
                 copyBtn.title = 'Confirm';
                 copyBtn.classList.add('confirm-btn');

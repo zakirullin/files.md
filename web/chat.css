@@ -214,6 +214,16 @@
     color: var(--color-neo-orange);
 }
 
+.copy-btn.confirm-btn {
+    background: var(--col-bg-active, #4a4a4a) !important;
+    color: #fff !important;
+    opacity: 1 !important;
+}
+
+.copy-btn.confirm-btn svg path {
+    stroke: #fff !important;
+}
+
 .complete-btn svg {
     width: 20px;
     height: 20px;
@@ -653,4 +663,65 @@
 .modal-reversed #search-input, .modal-reversed #move-input {
     margin-top: 8px;
     margin-bottom: 0 !important;
+}
+
+#confirm-close-tab {
+    border: none;
+    border-radius: 8px;
+    padding: 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    max-width: 300px;
+    background: var(--bg-secondary, #2a2a2a);
+    color: var(--text, #e0e0e0);
+}
+
+#confirm-close-tab::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.confirm-content {
+    padding: 20px;
+    text-align: center;
+}
+
+.confirm-message {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0 0 8px 0;
+}
+
+.confirm-submessage {
+    font-size: 13px;
+    color: var(--text-secondary, #888);
+    margin: 0 0 20px 0;
+}
+
+.confirm-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.confirm-btn {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    background: var(--bg-hover, #3a3a3a);
+    color: var(--text, #e0e0e0);
+    transition: background-color 0.2s;
+}
+
+.confirm-btn:hover {
+    background: var(--bg-active, #4a4a4a);
+}
+
+.confirm-btn.danger {
+    background: #d9534f;
+    color: white;
+}
+
+.confirm-btn.danger:hover {
+    background: #c9302c;
 }
