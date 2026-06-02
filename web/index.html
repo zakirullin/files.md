@@ -120,7 +120,14 @@
     </div>
     <div id="chat-container" style="display: none">
         <div id="chat" style="display: none;"></div>
-        <textarea id="chat-input" style="display: none;" class="input-field" placeholder="Dump your thoughts..." rows="1"></textarea>
+        <div id="chat-input-wrapper" style="display: none;">
+            <textarea id="chat-input" class="input-field" placeholder="Dump your thoughts..." rows="1"></textarea>
+            <button id="chat-submit-btn" title="Send">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
         <button id="close-chat" onclick="closeChatModal()" title="Close chat" style="display: none">×</button>
         <button id="fullscreen-chat" onclick="openChat()" title="Toggle fullscreen" style="display: none">⛶</button>
     </div>

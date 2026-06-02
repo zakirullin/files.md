@@ -3,6 +3,7 @@ let chatIsClean = true; // Are there any unsaved changes?
 const chat = document.getElementById('chat');
 const chatInput = document.getElementById('chat-input');
 const chatContainer = document.getElementById('chat-container');
+const chatInputWrapper = document.getElementById('chat-input-wrapper');
 
 const MAX_TITLE_LENGTH = 100;
 const RECENT_FILES = 1;
@@ -146,7 +147,7 @@ async function openChat() {
     const codemirror = document.querySelector('.CodeMirror-wrap');
     codemirror.style.display = 'none';
     chat.style.display = 'flex';
-    chatInput.style.display = 'block';
+    chatInputWrapper.style.display = 'block';
     hideEditor2();
 
     const searchModal = document.getElementById('search');
@@ -421,9 +422,9 @@ async function openChatModal() {
     chatContainer.classList.add('modal');
     chatContainer.style.display = 'flex';
     chat.style.display = 'block';
-    chatInput.style.display = 'block';
+    chatInputWrapper.style.display = 'block';
     chat.style.display = 'flex';
-    chatInput.style.display = 'block';
+    chatInputWrapper.style.display = 'block';
 
     await loadChatConfig();
     renderChatTabs();
@@ -437,7 +438,7 @@ function closeChatModal() {
     if (!isChat) {
         chatContainer.style.display = 'none';
         chat.style.display = 'none';
-        chatInput.style.display = 'none';
+        chatInputWrapper.style.display = 'none';
     }
 }
 
@@ -466,13 +467,25 @@ async function parseMessagesFromChat() {
 }
 
 function initChat() {
+    let isComposing = false;
+    chatInput.addEventListener('compositionstart', function () { isComposing = true; });
+    chatInput.addEventListener('compositionend', function () { isComposing = false; });
     chatInput.addEventListener('keydown', async function (e) {
-        if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+        if (e.key === 'Enter' && !e.shiftKey && !isComposing) {
             e.preventDefault();
             await sendToChat();
             autoResize();
         }
     });
+
+    const submitBtn = document.getElementById('chat-submit-btn');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', async function () {
+            await sendToChat();
+            autoResize();
+            chatInput.focus();
+        });
+    }
 }
 
 async function toggleChatMessage(timestamp, text, done) {
@@ -1022,7 +1035,7 @@ function attachEventListeners() {
             if (actions) actions.style.display = 'none';
             if (copyBtn) {
                 copyBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>`;
                 copyBtn.title = 'Confirm';
                 copyBtn.classList.add('confirm-btn');

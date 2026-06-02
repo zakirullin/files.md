@@ -1078,7 +1078,7 @@ async function openFile(path, saveToHistory = true, el = 'editor-textarea') {
             const codemirror = document.querySelector('.CodeMirror-wrap');
             codemirror.style.display = 'block';
             const chatEl = document.getElementById('chat');
-            const chatInputEl = document.getElementById('chat-input');
+            const chatInputEl = document.getElementById('chat-input-wrapper');
             const chatContainerEl = document.getElementById('chat-container');
             if (chatEl) chatEl.style.display = 'none';
             if (chatInputEl) chatInputEl.style.display = 'none';
