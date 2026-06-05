@@ -21,6 +21,7 @@ import (
 	"github.com/zakirullin/files.md/server/fs"
 	"github.com/zakirullin/files.md/server/habits"
 	"github.com/zakirullin/files.md/server/journal"
+	"github.com/zakirullin/files.md/server/llm"
 	"github.com/zakirullin/files.md/server/userconfig"
 )
 
@@ -124,6 +125,9 @@ func router(serverLogger *log.Logger) *http.ServeMux {
 		r.HandleFunc("/syncMediaFilenames", corsMiddleware(panicMiddleware(tokenMiddleware(gzipMiddleware(SyncMediaFilenames)))))
 		r.HandleFunc("/syncMediaFile", corsMiddleware(panicMiddleware(tokenMiddleware(gzipMiddleware(SyncMediaFile)))))
 		r.HandleFunc("/issuePermanentToken", corsMiddleware(panicMiddleware(IssueToken)))
+		llmHandler := llm.NewHandler(llm.FromServerConfig(config.ServerCfg))
+		r.HandleFunc("/llmStatus", corsMiddleware(panicMiddleware(llm.AuthErrorJSON(http.HandlerFunc(tokenMiddleware(llmHandler.Status))).ServeHTTP)))
+		r.HandleFunc("/llmChat", corsMiddleware(panicMiddleware(llm.AuthErrorJSON(http.HandlerFunc(tokenMiddleware(llmHandler.Chat))).ServeHTTP)))
 
 		// Deprecated due to cryptic names :) Will be removed soon.
 		r.HandleFunc("/syncTexts", corsMiddleware(panicMiddleware(tokenMiddleware(gzipMiddleware(SyncFilenames)))))

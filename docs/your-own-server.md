@@ -28,8 +28,46 @@ CERT_DIR=/opt/files.md
 TOKENS_DIR=/opt/files.md/tokens
 LOG_FILE=server.log
 API_URL=https://api.yourdomain.com
-APP_URL=https://app.youdomain.com
+APP_URL=https://app.yourdomain.com
 ```
+
+### Optional LLM assistant
+LLM assistant is disabled unless you configure a provider on your server. The server calls an OpenAI-compatible chat completions API and keeps the provider key out of the browser.
+
+Add placeholder values like these to `/app/.env`:
+```
+LLM_PROVIDER_BASE_URL=https://api.example.com/v1
+LLM_MODEL=<MODEL_NAME>
+LLM_API_KEY=<PROVIDER_API_KEY>
+
+# Optional timeout and limits
+LLM_TIMEOUT_SECONDS=30
+LLM_MAX_BODY_BYTES=262144
+LLM_MAX_PROMPT_CHARS=8000
+LLM_MAX_CONTEXT_BLOCKS=8
+LLM_MAX_CONTEXT_BYTES=131072
+LLM_MAX_RESPONSE_BYTES=262144
+LLM_MAX_OUTPUT_TOKENS=1024
+LLM_USER_RATE_PER_MINUTE=10
+LLM_IP_RATE_PER_MINUTE=60
+LLM_USER_CONCURRENCY=2
+LLM_USER_DAILY_QUOTA=100
+```
+
+Use your provider's real base URL, model name, and API key only in your private server environment. Prefer `https` provider URLs; use `http` only for an intentionally configured local or private gateway.
+
+Privacy behavior:
+- Ordinary chat capture still writes to local Markdown and does not call the LLM provider.
+- Only content you explicitly select or request for an assistant action is sent to the configured provider.
+- Files.md does not send whole folders, unrelated sync data, or your whole vault as background LLM context.
+- The external provider's own retention policy applies to anything you choose to send.
+
+Current LLM limitations:
+- Responses are non-streaming.
+- There is no whole-vault context or retrieval index.
+- Model output is shown as a draft until you choose to copy, insert, append to `Chat.md`, or discard it.
+- Files.md does not automatically mutate Markdown after an LLM response.
+- Files.md does not automatically create a separate AI transcript file.
 
 Deploy a systemd service:
 ```bash

@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/kelseyhightower/envconfig"
 )
@@ -24,10 +25,31 @@ type Config struct {
 	ServerLogFile     string `default:"/tmp/server.log" envconfig:"LOG_FILE"`
 	StorageQuotaKB    int64  `default:"1024" envconfig:"STORAGE_QUOTA_KB"` // 1MB
 	UnlimitedQuotaIDs string `envconfig:"UNLIMITED_QUOTA_IDS"`
+
+	LLMProviderBaseURL   string `envconfig:"LLM_PROVIDER_BASE_URL"`
+	LLMModel             string `envconfig:"LLM_MODEL"`
+	LLMAPIKey            string `envconfig:"LLM_API_KEY"`
+	LLMTimeoutSeconds    int    `default:"30" envconfig:"LLM_TIMEOUT_SECONDS"`
+	LLMMaxBodyBytes      int64  `default:"262144" envconfig:"LLM_MAX_BODY_BYTES"`
+	LLMMaxPromptChars    int    `default:"8000" envconfig:"LLM_MAX_PROMPT_CHARS"`
+	LLMMaxContextBlocks  int    `default:"8" envconfig:"LLM_MAX_CONTEXT_BLOCKS"`
+	LLMMaxContextBytes   int64  `default:"131072" envconfig:"LLM_MAX_CONTEXT_BYTES"`
+	LLMMaxResponseBytes  int64  `default:"262144" envconfig:"LLM_MAX_RESPONSE_BYTES"`
+	LLMMaxOutputTokens   int    `default:"1024" envconfig:"LLM_MAX_OUTPUT_TOKENS"`
+	LLMUserRatePerMinute int    `default:"10" envconfig:"LLM_USER_RATE_PER_MINUTE"`
+	LLMIPRatePerMinute   int    `default:"60" envconfig:"LLM_IP_RATE_PER_MINUTE"`
+	LLMUserConcurrency   int    `default:"2" envconfig:"LLM_USER_CONCURRENCY"`
+	LLMUserDailyQuota    int    `default:"100" envconfig:"LLM_USER_DAILY_QUOTA"`
 }
 
 func (c Config) APIHost() string { return hostOf(c.APIURL) }
 func (c Config) AppHost() string { return hostOf(c.AppURL) }
+func (c Config) LLMTimeout() time.Duration {
+	if c.LLMTimeoutSeconds <= 0 {
+		return 30 * time.Second
+	}
+	return time.Duration(c.LLMTimeoutSeconds) * time.Second
+}
 
 func hostOf(rawURL string) string {
 	if rawURL == "" {
