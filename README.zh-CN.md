@@ -228,8 +228,8 @@ _第二大脑越来越好。_
 - 归档：`archive/*.md`
 - 配置：`config.json`
 
-这份结构也可以在 [files.md/llms.txt](https://files.md/llms.txt) 取到。
-你可以直接复制到 `CLAUDE.md` 或 `AGENTS.md`，让你的 AI 助手理解整个目录布局。
+这份结构也可以在 [files.md/AGENTS.md](https://files.md/AGENTS.md) 取到。
+把它作为 `AGENTS.md` 放进你的知识库——你的文件就成了 AI 可以参与的鲜活个人空间。
 
 ## 快捷键
 

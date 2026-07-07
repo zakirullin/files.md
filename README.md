@@ -244,8 +244,8 @@ Although, you're free to use whatever structure you want.
 - Archive: `archive/*.md`
 - Config: `config.json`
 
-Scheme is also available at [files.md/llms.txt](https://files.md/llms.txt).  
-You can copy-paste it into `CLAUDE.md` or `AGENTS.md`, so that your AI agent would understand the structure.  
+Scheme is also available at [files.md/AGENTS.md](https://files.md/AGENTS.md).  
+Place it as `AGENTS.md` in your knowledge base - your files become a live personal space AI can work with.  
 
 ## Hotkeys
 
