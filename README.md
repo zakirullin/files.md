@@ -56,7 +56,7 @@ Maybe. But this time:
 - Open a local folder to persist changes  
 - Occasionally hit force-refresh (`Cmd+Shift+R`) to get new updates.  
 
-P.S. For now, Chromium-based browsers (like [Brave](https://github.com/zakirullin/files.md/issues/61)) are best at [File System API support](https://caniuse.com/native-filesystem-api).  
+P.S. For now, Chromium-based browsers (like Chrome, [Brave](https://github.com/zakirullin/files.md/issues/61)) are best at [File System API support](https://caniuse.com/native-filesystem-api).  
 
 ## Dump your thoughts
 Open the chat (`Cmd+Enter`) and send a message:
