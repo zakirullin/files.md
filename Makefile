@@ -146,3 +146,15 @@ deploy_binary: # deploy as regular binary, kinda deprecated, but ok for simple s
 	rm /tmp/server && \
 	printf "$${GREEN}Successfully deployed!$${RESET}\n"
 
+lite:
+	go run .
+
+lite_build: # current-OS binary, stripped
+	go build -trimpath -ldflags "-s -w" -o lite .
+
+lite_win: # Windows .exe, no console window (silent GUI)
+	GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w -H windowsgui" -o lite.exe .
+
+lite_win_console: # Windows .exe, keeps console for debugging
+	GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o lite.exe .
+
