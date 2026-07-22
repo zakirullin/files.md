@@ -22,9 +22,9 @@ You can use this app for Second Brain, Zettelkasten, Notes, Journaling, Tasks, C
 
 > Own your data as plain local files.  
 > Own the software that opens those files.   
-> Grow your knowledge with files and your own brain.  
+> Grow your personal workspace with files.  
 > Grow the software around it with an LLM.  
-> **Plain files and self-owned software can last through the ages**.  
+> **Local files and owned software last ages**.  
 
 **I have been building this project for 5 years**. Consider **[supporting on GitHub 💚](https://github.com/sponsors/zakirullin)**.  
 
@@ -56,7 +56,7 @@ Maybe. But this time:
 - Open a local folder to persist changes  
 - Occasionally hit force-refresh (`Cmd+Shift+R`) to get new updates.  
 
-P.S. For now, Chrome-based browsers are best at [File System API support](https://caniuse.com/native-filesystem-api).  
+P.S. For now, Chromium-based browsers (like Chrome, [Brave](https://github.com/zakirullin/files.md/issues/61)) are best at [File System API support](https://caniuse.com/native-filesystem-api).  
 
 ## Dump your thoughts
 Open the chat (`Cmd+Enter`) and send a message:
@@ -95,9 +95,7 @@ Don't worry - it's much simpler than that by default.
 
 [Telegram Bot](https://t.me/FilesMDBot). *Other messengers will follow...*
 
-## How to think deeply 
-**Connect ideas. Let them compound. Think through.**
-
+## How to think deeply
 I used [app.files.md](https://app.files.md) to improve my thinking in brain and software development area.  
 
 How I did that:  
@@ -135,7 +133,7 @@ To achieve all that, **you'll have to use your brain**, not advanced templates o
 My friends and I have been using this simple setup for five years, and it works well.
 
 ## Second Brain?
-I'll quote [I Deleted My Second Brain](https://www.joanwestenberg.com/i-deleted-my-second-brain-692aa40d59d5f06dd5131e43/):
+I'll quote [I Deleted My Second Brain](https://web.archive.org/web/20260518143828/https://www.joanwestenberg.com/i-deleted-my-second-brain-692aa40d59d5f06dd5131e43/):
 
 > Obsidian is a brilliant piece of software. I love it, dearly. But like anything, without restraint, it can also be a trap. Markdown files in nested folders. Plugins that track your productivity. Graph views that suggest omniscience. There’s an illusion of mastery in watching your notes web into constellations. But constellations are projections. They tell stories. They do not guarantee understanding.
 >
@@ -246,8 +244,7 @@ Although, you're free to use whatever structure you want.
 - Archive: `archive/*.md`
 - Config: `config.json`
 
-Scheme is also available at [files.md/llms.txt](https://files.md/llms.txt).  
-You can copy-paste it into `CLAUDE.md` or `AGENTS.md`, so that your AI agent would understand the structure.  
+Place [AGENTS.md](https://github.com/zakirullin/cognitive-load/blob/main/web/AGENTS.md) in your knowledge base - so that your files become a live personal space AI can work with.  
 
 ## Hotkeys
 
@@ -364,6 +361,7 @@ Read 4K randomly from SSD = 150,000 ns
 ```
 
 ## ADRs (Architecture Decision Records)
+- `20.06.2026` Backlinks are now inserted automatically whenever we link a note. For our workspace to be cross-platform (so you can view it even in GitHub), we insert backlinks on the fly, and not infer them dynamically. That way from any viewer backlinks would work.  
 - `01.06.2026` Audio and video are now supported. I believe enriching journal with these kind of media can be useful for our emotional healing.  
 - `24.05.2026` Unfold everything (images, math, mermaid) in viewport immediately. It prevents flickering and doesn't add performance penalty. P.S. We should also schedule full document unfold on viewportChange, otherwise latex/mermaid block off the viewport won't be folded.  
 - `22.05.2026` Added Mermaid support. It was decided to lazy-load the script, because mermaid.min.js size is 3MB. It's quite a load to load synchronously for such a small app. 

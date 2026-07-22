@@ -210,7 +210,15 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
                     var openTag_1, endTag_1, mathLevel;
                     if ((tmp = stream.match(/^\${1,2}/, false))) {
                         var lvl = tmp[0].length;
-                        if (lvl === 2 || stream.string.slice(stream.pos).match(/[^\\]\$/)) {
+                        // PATCHED: inline `$...$` must not have whitespace right
+                        // after the opening `$` ("$ x") nor right before the
+                        // closing `$` ("x $"), matching the common rule - so
+                        // prose like "I have $5 and $10" or "$asdfsdf $" stays
+                        // plain text. The `[^\\\s]\$` requires the closing `$` to
+                        // be preceded by a non-space, non-backslash char. $$
+                        // (display math) is unaffected.
+                        var spaceAfter = /\s/.test(stream.string.charAt(stream.pos + lvl));
+                        if (lvl === 2 || (!spaceAfter && stream.string.slice(stream.pos).match(/[^\\\s]\$/))) {
                             // $$ may span lines, $ must be paired on same line
                             openTag_1 = tmp[0];
                             endTag_1 = tmp[0];
@@ -343,6 +351,11 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
             if (state.hmdHashtag !== 0 /* NONE */) {
                 ans += " " + modeCfg.tokenTypeOverrides.hashtag;
             }
+            // PATCHED: mark lines containing an image so CSS can scope url-hiding
+            // without a per-span :has(.cm-image) probe.
+            if (/image-marker/.test(ans)) {
+                ans += " line-hmd-image-line";
+            }
             /** Try to capture some internal functions from CodeMirror Markdown mode closure! */
             if (!rawClosure.htmlBlock && state.htmlState)
                 rawClosure.htmlBlock = state.f;
@@ -454,6 +467,14 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
                     else if (tokenIsListBullet) {
                         // no space before bullet!
                         ans += " line-HyperMD-list-line line-HyperMD-list-line-" + listLevel;
+                        // PATCHED: line-level marks for task/ordered items so CSS can
+                        // use plain classes instead of per-line :has() probes.
+                        // state.taskList is set by the markdown mode while it consumes
+                        // this very bullet token, before the task token is reached.
+                        if (state.taskList)
+                            ans += " line-HyperMD-task-line";
+                        if (/formatting-list-ol/.test(ans))
+                            ans += " line-HyperMD-list-line-ol";
                     }
                 }
                 //#endregion

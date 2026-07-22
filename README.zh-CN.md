@@ -127,7 +127,7 @@
 我和我的朋友用这套朴素的方法已经五年了，效果一直很好。
 
 ## 第二大脑？
-我想引用 [I Deleted My Second Brain](https://www.joanwestenberg.com/i-deleted-my-second-brain-692aa40d59d5f06dd5131e43/) 里的一段话：
+我想引用 [I Deleted My Second Brain](https://web.archive.org/web/20260518143828/https://www.joanwestenberg.com/i-deleted-my-second-brain-692aa40d59d5f06dd5131e43/) 里的一段话：
 
 > Obsidian 是一款出色的软件，我深爱它。但任何东西失去节制都会变成陷阱。嵌套文件夹里的 Markdown 文件、追踪你生产力的插件、暗示某种全知感的关系图谱——看着自己的笔记编织成星座般的网络，会让人产生一种掌控的幻觉。但星座只是投影。它们讲故事，却并不等于理解。
 >
@@ -228,8 +228,8 @@ _第二大脑越来越好。_
 - 归档：`archive/*.md`
 - 配置：`config.json`
 
-这份结构也可以在 [files.md/llms.txt](https://files.md/llms.txt) 取到。
-你可以直接复制到 `CLAUDE.md` 或 `AGENTS.md`，让你的 AI 助手理解整个目录布局。
+这份结构也可以在 [files.md/AGENTS.md](https://files.md/AGENTS.md) 取到。
+把它作为 `AGENTS.md` 放进你的知识库——你的文件就成了 AI 可以参与的鲜活个人空间。
 
 ## 快捷键
 

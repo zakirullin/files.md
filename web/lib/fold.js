@@ -163,6 +163,11 @@ var __extends = (this && this.__extends) || (function () {
                     }
                 }
                 cm.listSelections().forEach(function (selection) {
+                    // PATCHED, only a collapsed caret unfolds a widget it sits
+                    // in. A non-empty selection (e.g. dragging/hovering over an
+                    // image fold) must not unfold it.
+                    if (CodeMirror.cmpPos(selection.anchor, selection.head) !== 0)
+                        return;
                     addPosition(selection.anchor);
                     addPosition(selection.head);
                 });

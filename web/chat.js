@@ -62,6 +62,7 @@ async function sendToChat() {
     });
     const formattedContent = `\n- [ ] \`${timestamp}\` ${text}\n`;
     await writeAtEnd(CHAT_PATH, formattedContent);
+    markSyncDirty();
 
     chatInput.value = '';
     chatIsClean = false;
@@ -157,8 +158,9 @@ async function toggleMicRecording() {
             const timestamp = now.toLocaleTimeString('en-US', {
                 hour12: false, hour: '2-digit', minute: '2-digit',
             });
-            const formattedContent = `\n- [ ] \`${timestamp}\` ![](media/${fileName})\n`;
+            const formattedContent = `\n- [ ] \`${timestamp}\` ![](media/${encodeLinkPath(fileName)})\n`;
             await writeAtEnd(CHAT_PATH, formattedContent);
+            markSyncDirty();
 
             chatIsClean = false;
             await renderMessages();
@@ -351,6 +353,7 @@ async function saveMessagesToChat(messages) {
     });
 
     await write(CHAT_PATH, content);
+    markSyncDirty();
     lastChatText = content;
 }
 
@@ -383,6 +386,7 @@ async function toggleChatMessage(timestamp, text, done) {
     const writable = await handle.createWritable();
     await writable.write(content);
     await writable.close();
+    markSyncDirty();
     lastChatText = content;
 }
 
@@ -489,7 +493,7 @@ chatInput.addEventListener('paste', async (e) => {
 
             const saved = await writeMediaFile(fileName, file);
             if (saved) {
-                const imageMarkdown = `![${fileName}](media/${fileName})\n`;
+                const imageMarkdown = `![${fileName}](media/${encodeLinkPath(fileName)})\n`;
 
                 const cursorPos = chatInput.selectionStart;
                 const textBefore = chatInput.value.substring(0, cursorPos);
@@ -573,39 +577,61 @@ function attachEventListeners() {
     });
 
     chat.addEventListener('mousedown', function (e) {
-        // If clicking outside messages, prepare for multi-select
+        // Mousedown in empty space (the margins around centered messages, or
+        // the gaps between them): draw a marquee rectangle and select every
+        // message it touches.
         if (!e.target.closest('.message')) {
-            let allMessages = Array.from(chat.querySelectorAll('.message'));
-            let startMessage = null;
+            if (e.button !== 0) return;
+            e.preventDefault(); // don't start a native text selection
+            const startX = e.clientX, startY = e.clientY;
+            const messages = Array.from(chat.querySelectorAll('.message'));
+            const additive = isMetaKey(e) || e.shiftKey;
+            const preselected = additive
+                ? messages.filter(m => m.classList.contains('selected'))
+                : [];
+            let rectEl = null;
+            let dragging = false;
+
+            const intersects = (a, b) =>
+                a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
 
             function handleMouseMove(e) {
-                const currentMessage = e.target.closest('.message');
-                if (currentMessage) {
-                    document.getSelection().removeAllRanges(); // Prevent text selection
+                const dx = e.clientX - startX, dy = e.clientY - startY;
+                if (!dragging && Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
+                dragging = true;
+                document.getSelection().removeAllRanges();
 
-                    if (!startMessage) {
-                        startMessage = currentMessage;
-                        document.querySelectorAll('.message.selected').forEach(m => m.classList.remove('selected'));
-                        currentMessage.classList.add('selected');
-                    } else if (currentMessage !== startMessage) {
-                        // Select range like normal message selection
-                        const startIndex = allMessages.indexOf(startMessage);
-                        const endIndex = allMessages.indexOf(currentMessage);
-                        const minIndex = Math.min(startIndex, endIndex);
-                        const maxIndex = Math.max(startIndex, endIndex);
-
-                        document.querySelectorAll('.message.selected').forEach(m => m.classList.remove('selected'));
-
-                        for (let i = minIndex; i <= maxIndex; i++) {
-                            allMessages[i].classList.add('selected');
-                        }
-                    }
+                if (!rectEl) {
+                    rectEl = document.createElement('div');
+                    rectEl.className = 'chat-marquee';
+                    document.body.appendChild(rectEl);
+                    chat.classList.add('block-selecting');
                 }
+
+                const left = Math.min(startX, e.clientX);
+                const top = Math.min(startY, e.clientY);
+                const width = Math.abs(dx), height = Math.abs(dy);
+                rectEl.style.left = left + 'px';
+                rectEl.style.top = top + 'px';
+                rectEl.style.width = width + 'px';
+                rectEl.style.height = height + 'px';
+
+                const marquee = {left, top, right: left + width, bottom: top + height};
+                messages.forEach(m => {
+                    const hit = intersects(marquee, m.getBoundingClientRect());
+                    m.classList.toggle('selected', hit || preselected.includes(m));
+                });
             }
 
             function handleMouseUp() {
                 document.removeEventListener('mousemove', handleMouseMove);
                 document.removeEventListener('mouseup', handleMouseUp);
+                if (rectEl) rectEl.remove();
+                chat.classList.remove('block-selecting');
+                // Plain click on empty space (no drag): clear the selection.
+                if (!dragging && !additive) {
+                    document.querySelectorAll('.message.selected').forEach(m => m.classList.remove('selected'));
+                }
             }
 
             document.addEventListener('mousemove', handleMouseMove);
@@ -645,6 +671,9 @@ function attachEventListeners() {
 
         let startMessage = message;
         let allMessages = Array.from(chat.querySelectorAll('.message'));
+        const downX = e.clientX;
+        const downY = e.clientY;
+        const onLink = e.target.closest('a') !== null;
 
         function handleMouseMove(e) {
             const currentMessage = e.target.closest('.message');
@@ -664,9 +693,24 @@ function attachEventListeners() {
             }
         }
 
-        function handleMouseUp() {
+        function handleMouseUp(e) {
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
+
+            // Select message text on click
+            const dragged = Math.abs(e.clientX - downX) > 4 || Math.abs(e.clientY - downY) > 4;
+            if (dragged || onLink) {
+                return;
+            }
+            const content = startMessage.querySelector('.message-content');
+            if (!content) {
+                return;
+            }
+            const range = document.createRange();
+            range.selectNodeContents(content);
+            const selection = document.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
         }
 
         document.addEventListener('mousemove', handleMouseMove);
@@ -941,7 +985,7 @@ async function renderMessages() {
         chat.innerHTML = `
             <div class="empty-state">
                 <img class="empty-icon" src="img/icon.png" alt="">
-                <div class="empty-title">Free your head</div>
+                <div class="empty-title">Free your mind</div>
             </div>
         `;
         return;

@@ -105,6 +105,7 @@ init_server: # create directories and configuration files on the server
 		sudo chown -R www-data:www-data /app /var/log/files.md /opt/files.md'
 	echo "$$ENV_FILE" | ssh $(host) 'sudo tee /app/.env > /dev/null && sudo chown www-data:www-data /app/.env'
 	echo "$$SERVICE_FILE" | ssh $(host) 'sudo tee /etc/systemd/system/filesmd.service > /dev/null'
+	ssh $(host) 'sudo systemctl daemon-reload && sudo systemctl enable filesmd.service'
 	@echo 'Directories created and permissions set successfully.'
 
 deploy_systemd: # deploy as systemd service

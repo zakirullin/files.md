@@ -209,6 +209,17 @@
                                 // if (DEBUG) console.log("HEAD DOM PATCHED")
                                 changed = true;
                             }
+                            // PATCHED: mirror the task token's hidden state onto the
+                            // preceding list bullet span, so CSS needs no
+                            // :has(+ .cm-formatting-task) sibling probe.
+                            if (span.type === 'task') {
+                                var bullet = domParent.previousElementSibling;
+                                if (bullet && /cm-formatting-list/.test(bullet.className)) {
+                                    if (shallHideTokens ? addClass(bullet, hideClassName) : rmClass(bullet, hideClassName)) {
+                                        changed = true;
+                                    }
+                                }
+                            }
                         }
                         //FIXME: if leading formatting token is separated into two, the latter will not be hidden/shown!
                         // search for the tailing token
@@ -263,7 +274,15 @@
                 if (!isHiddenLinkHref) {
                     for (var iLineRange = 0; iLineRange < rangesInLine.length; iLineRange++) {
                         var userRange = rangesInLine[iLineRange];
-                        if (cm_utils_1.rangesIntersect(spanRange, userRange)) {
+                        // PATCHED, only a collapsed caret (or a synthetic
+                        // reveal range, e.g. fenced-block ``` lines) reveals
+                        // inline tokens. A non-empty selection keeps the line
+                        // active (so the inactive-line class / header markup
+                        // stays correct).
+                        var isCaret = userRange.reveal ||
+                            (userRange[0].line === userRange[1].line &&
+                                userRange[0].ch === userRange[1].ch);
+                        if (isCaret && cm_utils_1.rangesIntersect(spanRange, userRange)) {
                             shallHideTokens = false;
                             break;
                         }
@@ -298,6 +317,10 @@
                 // clean CodeMirror measure cache
                 delete lv.measure.heights;
                 lv.measure.cache = {};
+                // PATCHED: revealed/hidden tokens change the line's height;
+                // codemirror.js only re-measures off-screen lines that carry
+                // this flag.
+                lv.mustMeasure = true;
             }
             return changed;
         };
@@ -346,7 +369,11 @@
                 var fenceLine = ~~fenceLineStr;
                 if (activedLines[fenceLine]) continue;
                 var lineLen = cm.getLine(fenceLine).length;
-                activedLines[fenceLine] = [[{ line: fenceLine, ch: 0 }, { line: fenceLine, ch: lineLen }]];
+                // PATCHED, tag as a synthetic reveal range so procLine still
+                // shows the ``` tokens even though it's not a collapsed caret.
+                var fenceRange = [{ line: fenceLine, ch: 0 }, { line: fenceLine, ch: lineLen }];
+                fenceRange.reveal = true;
+                activedLines[fenceLine] = [fenceRange];
             }
             this._rangesInLine = activedLines;
             if (DEBUG)

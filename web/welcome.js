@@ -62,11 +62,11 @@ async function getTemporaryStorageDirHandle() {
         await createFiles(WELCOME_FILES, root);
 
         // Retouch My project.md file, so it appears in chat's quick buttons for better demo.
-        if (!archived.has('My project.md')) {
+        if (!archived.has('My Project.md')) {
             await new Promise(r => setTimeout(r, 10));
-            const fh = await root.getFileHandle('My project.md', { create: true });
+            const fh = await root.getFileHandle('My Project.md', { create: true });
             const w = await fh.createWritable();
-            await w.write(WELCOME_FILES['My project.md'].content);
+            await w.write(WELCOME_FILES['My Project.md'].content);
             await w.close();
         }
 
@@ -117,7 +117,7 @@ class MemFile {
         this.name = name;
         this.content = content;
         // We want "My project.md" to appear in chat's quick buttons, for better demo.
-        this.lastModified = Date.now() + (name === 'My project.md' ? 1 : 0);
+        this.lastModified = Date.now() + (name === 'My Project.md' ? 1 : 0);
         this.parent = null;
     }
 
@@ -298,12 +298,12 @@ const WELCOME_FILES = {
         },
     },
     "happiness/": {
-        "Meditation.md": {
-            "content": "Once you are relaxed, picture yourself living in an abundant world. In this abundant world, there are no restraints or limitations. Good things flow past you continuously. Imagine every abundant thing you have ever desired – car, home, friends, love, joy, wealth, success, peace of mind, challenge. Visualize yourself living your life surrounded by this abundance. Repeat this visualization several times a day until it begins to feel real to you. Open your arms, your heart, and your mind. Get out of the way, and let it happen.\n\n[Boredom is just an emotion](/happiness/Boredom%20is%20just%20an%20emotion.md)",
+        "Abundant meditation.md": {
+            "content": "Once you are relaxed, picture yourself living in an abundant world.\nIn this abundant world, there are no restraints or limitations.\nGood things flow past you continuously.\nImagine every abundant thing you have ever desired - car, home, friends, love, joy, wealth, success, peace of mind, challenge.\nVisualize yourself living your life surrounded by this abundance.\n\n![](img/tomas_sanchez.jpg)\n\nThe deeper meaning behind abundance visualization isn't necessarily about accumulating material possessions like money or cars.\n\nTrue abundance thinking is more about recognizing that in a world without artificial limitations, we would understand that our value and fulfillment don't come from external possessions. Instead, it's about cultivating an internal sense of “enough” and recognizing the richness that already exists in our lives.\n\n// If you had abundance without limitations, what would you do?\n\n// What stops you from doing it now?\n\n[Boredom is just an emotion](/happiness/Boredom%20is%20just%20an%20emotion.md)",
             isFile: true,
         },
         "Boredom is just an emotion.md": {
-            "content": "It's not an indicator that you're doing something wrong in your life\n\nBefore we had phones and technologies we would just sit around the fire and we would talk and we wouldn't call that boring that was just life\n\nAnd bow we have that endless need for entertainment, anything when nothing is happening we think it's wrong and we need to fix it\n\nNon eventfulness is just a part of our life and you can embrace it as peace or you can frantically try to create more chaos\n\n[Meditation](/happiness/Meditation.md)",
+            "content": "It's not an indicator that you're doing something wrong in your life.\n\nBefore we had phones and technologies, we would just sit around the fire and we would talk. We wouldn't call that boring, that was just life.\n\n![](img/tomas_sanchez.jpg)\n\nAnd now we have that endless need for entertainment. When nothing is happening, we think it's wrong and we need to fix it.\n\nNon eventfulness is just a part of our life, and you can embrace it as peace, or you can frantically try to create more chaos.\n\n[Abundant meditation](/happiness/Abundant meditation.md)",
             isFile: true,
         },
     },
@@ -373,7 +373,7 @@ const WELCOME_FILES = {
             "$\\LaTeX$ is fully supported: $e^{i\\pi} + 1 = 0$\n" +
             "\n" +
             "[Links](/Links.md)\n" +
-            "[My project](/My%20project.md)",
+            "[My Project](/My%20Project.md)",
         isFile: true,
     },
     "Hotkeys.md": {
@@ -401,7 +401,7 @@ const WELCOME_FILES = {
             "[Markdown Guide](/Markdown%20Guide.md)",
         isFile: true,
     },
-    "My project.md": {
+    "My Project.md": {
         "content":
             "You can dump project related thoughts here.\n" +
             "\n" +

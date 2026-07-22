@@ -58,7 +58,9 @@ func main() {
 			if !ok {
 				return match
 			}
-			url := "/" + strings.ReplaceAll(target, " ", "%20")
+			// Escape parens too - an unescaped ) in a path closes the
+			// markdown link early (mirrors web's encodeLinkPath).
+			url := "/" + strings.NewReplacer(" ", "%20", "(", "%28", ")", "%29").Replace(target)
 			changed = true
 			return fmt.Sprintf("[%s](%s)", name, url)
 		})

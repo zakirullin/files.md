@@ -134,7 +134,7 @@ function createAutocompleteDict() {
 
         const filename = toFilename(path);
         const key = `${filename.replace(/\.md$/, '')}`;
-        const url = path.replace(/ /g, '%20');
+        const url = encodeLinkPath(path);
         const filePath = `${filename.replace(/\.md$/, '')}](${url})`;
 
         entries.push({
@@ -163,7 +163,7 @@ function createAutocompleteDict() {
                 return;
             }
             const key = `${filename.replace(/\.md$/, '')}`;
-            const url = `${dir}/${filename}`.replace(/ /g, '%20');
+            const url = encodeLinkPath(`${dir}/${filename}`);
             const filePath = `${filename.replace(/\.md$/, '')}](${url})`;
 
             lowPriorityEntries.push({
@@ -180,6 +180,18 @@ function createAutocompleteDict() {
     });
 
     return dict;
+}
+
+// Called when the link autocomplete inserts a completion. For a classic
+// `[name](/path.md)` file link, add a backlink in the target pointing back to
+// the file we inserted from. Ignores wiki/emoji completions (no `](`).
+function onLinkPicked(completionText) {
+    const text = completionText || '';
+    const open = text.lastIndexOf('](');
+    if (open === -1 || text.slice(-1) !== ')') return;
+    const url = text.slice(open + 2, -1);
+    const targetPath = url.replace(/%20/g, ' ').replace(/%28/g, '(').replace(/%29/g, ')');
+    addBacklink(currentEditor.path, targetPath);
 }
 
 async function newFile(parentDir) {
@@ -530,6 +542,7 @@ function showEditor2() {
     editor2Container.style.display = 'flex';
     editor2Container.offsetHeight; // Force reflow
     editor2Container.classList.add('show');
+    document.getElementById('content').classList.add('editor2-open');
 
     editor.refresh();
     editor2.focus();
@@ -544,6 +557,7 @@ function hideEditor2() {
     const editor2Container = document.getElementById('editor2-container');
 
     editor2Container.classList.remove('show');
+    document.getElementById('content').classList.remove('editor2-open');
     restoreEditorPos();
 
     // Clear editor2's path so a subsequent openFile for the same path
@@ -757,6 +771,15 @@ window.addEventListener('keydown', async (event) => {
         }
     }
 }, true);
+
+// Cmd/Ctrl+S: no need, everything is autosaved
+document.addEventListener('keydown', (event) => {
+    if ((event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey && event.key === 's') {
+        event.preventDefault();
+        const keystroke = navigator.platform.toLowerCase().includes('mac') ? '⌘S' : 'Ctrl+S';
+        showToast(`It is autosaved, no need to press ${keystroke} :)`);
+    }
+});
 
 document.addEventListener('keydown', (event) => {
     // TODO cursor shouldn't jump to top once we hit "esc".

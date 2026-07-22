@@ -495,12 +495,12 @@ test('files exist on both client and server, serverFiles contains proper server 
                 lastClientModified: expect.any(Number),
                 path: '/happiness/Boredom is just an emotion.md'
             },
-            'Meditation.md': {
+            'Abundant meditation.md': {
                 isFile: true,
                 hash: expect.any(Number),
                 lastModified: expect.any(Number),
                 lastClientModified: expect.any(Number),
-                path: '/happiness/Meditation.md'
+                path: '/happiness/Abundant meditation.md'
             }
         },
         '🪴 Welcome.md': {
@@ -524,12 +524,12 @@ test('files exist on both client and server, serverFiles contains proper server 
             lastClientModified: expect.any(Number),
             path: '/Links.md'
         },
-        'My project.md': {
+        'My Project.md': {
             isFile: true,
             hash: expect.any(Number),
             lastModified: expect.any(Number),
             lastClientModified: expect.any(Number),
-            path: '/My project.md'
+            path: '/My Project.md'
         },
         'Markdown Guide.md': {
             isFile: true,

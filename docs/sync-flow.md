@@ -155,7 +155,7 @@ sequenceDiagram
         S->>L: scan fslog for this user
         S->>S: deletes = DeletesLog(uid, req.serverTime+1)<br/>→ {"foo.md": <ts of A's delete>}<br/>(no suppression: B didn't delete it)
         S-->>B: response.deleted = {"foo.md": <ts>}<br/>response.files = [archive/foo.md, ...]
-        B->>B: for each (path, deletedAt) in response.deleted:<br/>local = getMemFile(path)<br/>if local && local.lastModified ≤ deletedAt:<br/>  await remove(path); removeServerFile(path)
+        B->>B: for each (path, deletedAt) in response.deleted:<br/>local = getMemFile(path)<br/>if local && local.lastModified ≤ deletedAt:<br/>  await remove(path)#59; removeServerFile(path)
         B->>B: write archive/foo.md from response.files
     end
 

@@ -99,6 +99,17 @@
         background: var(--col-bg-alt);
     }
 
+    #open-folder {
+        color: var(--color-neo-blue);
+    }
+    #open-folder svg {
+        stroke: var(--color-neo-blue);
+    }
+    #open-folder:hover, #open-folder:hover svg {
+        color: var(--color-neo-orange);
+        stroke: var(--color-neo-orange);
+    }
+
     .message.own {
         background: color-mix(in srgb, var(--col-bg) 60%, transparent);
     }

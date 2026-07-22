@@ -30,6 +30,13 @@ function initEditor(el) {
         extraKeys: {
             // 'Shift-Space': 'autocomplete',
             'Cmd-[': false, 'Cmd-]': false,
+            // Jump to doc end, then leave breathing room below the cursor so the
+            // last line isn't pinned to the bottom edge. Scoped to this explicit
+            // jump only - a global cursorScrollMargin would also shift the view
+            // on every keystroke near an edge.
+            'Cmd-Down': cm => { cm.execCommand('goDocEnd'); cm.scrollIntoView(cm.getCursor(), 300); },
+            'Cmd-End': cm => { cm.execCommand('goDocEnd'); cm.scrollIntoView(cm.getCursor(), 300); },
+            'Ctrl-End': cm => { cm.execCommand('goDocEnd'); cm.scrollIntoView(cm.getCursor(), 300); },
             // Mac's default delWrappedLineLeft is a no-op at column 0, so
             // Cmd-Backspace gets stuck at the line start instead of joining
             // with the previous line. Fall back to delCharBefore there.
@@ -72,6 +79,9 @@ function initEditor(el) {
         }
 
         path = path.replace(/%20/g, ' ');
+        // Decode parens escaped by encodeLinkPath when the link was written,
+        // so the bare-filename lookup below matches the real file.
+        path = path.replace(/%28/g, '(').replace(/%29/g, ')');
 
         // TODO really dirty fix for links like:
         // ../media/image.png, remove
@@ -120,6 +130,8 @@ function initEditor(el) {
     newEditor.hmdReadLink = async function (path) {
         path = path.replace(/\|.*]$/, '');
         path = path.replace('[', '').replace(']', '');
+        // Decode parens escaped by encodeLinkPath when the link was written.
+        path = path.replace(/%28/g, '(').replace(/%29/g, ')');
 
         // Handle action links
         if (path === 'cmd:openDir') {
@@ -228,6 +240,13 @@ function initEditor(el) {
         }
     }, true);
 
+    // Edits flip the sync dot to "unsynced" until the server acks them.
+    // Programmatic loads (openFile's setValue) are not user edits.
+    newEditor.on('change', function () {
+        if (isMessingWithCurrentEditor) return;
+        markSyncDirty();
+    });
+
     // Force '# ' to remain at first line.
     newEditor.on('change', function (cm, change) {
         if (change.from.line === 0) {
@@ -264,7 +283,7 @@ function initEditor(el) {
                             imageUrl: URL.createObjectURL(file)
                         };
 
-                        const markdownImageSyntax = `![](media/${fileName})\n`;
+                        const markdownImageSyntax = `![](media/${encodeLinkPath(fileName)})\n`;
                         currentEditor.replaceSelection(markdownImageSyntax);
                         log(`Media saved as: ${fileName}`);
                     } else {

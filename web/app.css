@@ -395,7 +395,7 @@ a:hover {
    ideal left padding would go negative - in that case content snaps
    to the editor1 container's left edge, but its width still equals
    --normal-width so no re-flow happens. */
-#content:has(#editor2-container.show) .CodeMirror-scroll {
+#content.editor2-open .CodeMirror-scroll {
     padding-top: 2em;
     padding-bottom: 2em;
     padding-left: max(0px, calc((100% - var(--normal-width)) / 2 - 25vw));
@@ -548,16 +548,18 @@ a:hover {
 
 /*Hide bulletpoints when tasks. Also drop the list-marker margin so checklist
   items don't inherit the bullet shift - they sit flush with the doc-body
-  edge whether folded (rendered checkbox) or unfolded (raw `- [ ] text`). */
-.cm-formatting-list-ul:has(+ .cm-formatting-task) {
+  edge whether folded (rendered checkbox) or unfolded (raw `- [ ] text`).
+  HyperMD-task-line comes from the mode (hypermd.js); hide-token.js mirrors
+  the task token's hmd-hidden-token onto the bullet span. */
+pre.HyperMD-task-line span.cm-formatting-list-ul {
     width: 0;
 }
-.cm-s-hypermd-light pre.HyperMD-list-line span.cm-formatting-list-ul:has(+ .cm-formatting-task) {
+.cm-s-hypermd-light pre.HyperMD-list-line.HyperMD-task-line span.cm-formatting-list-ul {
     margin-left: 0;
 }
 
 /* Hide the list formatting only when task formatting IS hidden */
-.cm-formatting-list-ul:has(+ .cm-formatting-task.hmd-hidden-token) {
+pre.HyperMD-task-line span.cm-formatting-list-ul.hmd-hidden-token {
     display: none;
     width: 0;
 }
@@ -566,7 +568,7 @@ a:hover {
     /*background-color: red;*/
 }
 
-.cm-formatting-list-ul:has(+ .cm-formatting-task.hmd-hidden-token) + .cm-formatting-task.hmd-hidden-token {
+pre.HyperMD-task-line span.cm-formatting-list-ul.hmd-hidden-token + .cm-formatting-task.hmd-hidden-token {
     width: 1em;
     overflow: hidden;
     margin-right: 2px;
@@ -577,8 +579,9 @@ a:hover {
     display: none !important;
 }
 
-/*Hide (...) in links. Don't hide links after images*/
-.CodeMirror span:not(:has(.cm-image)) > span.cm-url.hmd-hidden-token.cm-url {
+/*Hide (...) in links. Don't hide links after images.
+  hmd-image-line comes from the mode (hypermd.js). */
+.CodeMirror pre:not(.hmd-image-line) span.cm-url.hmd-hidden-token.cm-url {
     display: inline;
     font-size: 0 !important;
     letter-spacing: -1ch;
@@ -1008,31 +1011,32 @@ pre.HyperMD-codeblock-end {
     padding-inline-start: 24px !important;
 }
 
-/* Indent for wrapped list lines. */
-.cm-s-hypermd-light pre.CodeMirror-line.HyperMD-list-line:not(:has(.cm-formatting-task)) {
+/* Indent for wrapped list lines. HyperMD-task-line / HyperMD-list-line-ol
+   come from the mode (hypermd.js). */
+.cm-s-hypermd-light pre.CodeMirror-line.HyperMD-list-line:not(.HyperMD-task-line) {
     text-indent: -1.2em;
     padding-left: 1.2em;
 }
-.cm-s-hypermd-light pre.CodeMirror-line.HyperMD-list-line:has(.cm-formatting-list-ol):not(:has(.cm-formatting-task)) {
+.cm-s-hypermd-light pre.CodeMirror-line.HyperMD-list-line.HyperMD-list-line-ol:not(.HyperMD-task-line) {
     text-indent: -1.75em;
     padding-left: 1.75em;
 }
 
-.cm-s-hypermd-light pre.CodeMirror-line.HyperMD-list-line-2:not(:has(.cm-formatting-task)) {
+.cm-s-hypermd-light pre.CodeMirror-line.HyperMD-list-line-2:not(.HyperMD-task-line) {
     text-indent: -2.8em;
     padding-left: 2.8em;
 }
 /*Ordered list*/
-.cm-s-hypermd-light pre.CodeMirror-line.HyperMD-list-line-2:has(.cm-formatting-list-ol):not(:has(.cm-formatting-task)) {
+.cm-s-hypermd-light pre.CodeMirror-line.HyperMD-list-line-2.HyperMD-list-line-ol:not(.HyperMD-task-line) {
     text-indent: -3.60em;
     padding-left: 3.60em;
 }
-.cm-s-hypermd-light pre.CodeMirror-line.HyperMD-list-line-3:not(:has(.cm-formatting-task)) {
+.cm-s-hypermd-light pre.CodeMirror-line.HyperMD-list-line-3:not(.HyperMD-task-line) {
     text-indent: -4.8em;
     padding-left: 4.8em;
 }
 /*Ordered list*/
-.cm-s-hypermd-light pre.CodeMirror-line.HyperMD-list-line-3:has(.cm-formatting-list-ol):not(:has(.cm-formatting-task)) {
+.cm-s-hypermd-light pre.CodeMirror-line.HyperMD-list-line-3.HyperMD-list-line-ol:not(.HyperMD-task-line) {
     text-indent: -5.3em;
     padding-left: 5.3em;
 }
@@ -1046,4 +1050,21 @@ pre.HyperMD-codeblock-end {
 
 .cm-formatting-task.cm-property {
     opacity: 0.6;
+}
+
+#sync-status {
+    position: fixed;
+    right: 12px;
+    bottom: 12px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--col-tx-alt);
+    opacity: 0.35;
+    z-index: 100;
+}
+
+#sync-status.bad {
+    background: var(--color-neo-orange);
+    opacity: 1;
 }

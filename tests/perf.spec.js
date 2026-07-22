@@ -275,6 +275,134 @@ test('edit big file (5000 lines)', async ({page}) => {
     await benchTyping(page, 'Big5k.md', 5000, 'Big5k.md');
 });
 
+// Same as 'edit big file' but with representative content - lists, tasks,
+// quotes and tables, not just prose. Plain prose understates real typing
+// cost: the per-line CSS (:has probes before they were reworked, table
+// re-measure passes) only fires on structured content.
+test('edit mixed big file (5000 lines)', async ({page}) => {
+    test.setTimeout(60000);
+    await page.evaluate(async () => {
+        window.getTemporaryStorageDirHandle = async function () {
+            const root = await navigator.storage.getDirectory();
+            const fh = await root.getFileHandle('Mixed5k.md', {create: true});
+            const w = await fh.createWritable();
+            let buf = '';
+            let line = 0;
+            let block = 0;
+            while (line < 5000) {
+                buf += `## Section ${block}\n\n`;
+                buf += `Prose line ${line} with **bold**, *italic*, and \`code\` and a [link](note.md).\n`;
+                buf += `- bullet item one for block ${block}\n`;
+                buf += `- bullet item two with **bold**\n`;
+                buf += `- [ ] task item ${block}\n`;
+                buf += `- [x] done item ${block}\n`;
+                buf += `> quote line one for block ${block}\n`;
+                buf += `> quote line two\n\n`;
+                line += 10;
+                if (block % 15 === 0) {
+                    buf += `| Col A | Col B | Col C |\n| --- | --- | --- |\n| a${block} | b | c |\n| d | e${block} | f |\n\n`;
+                    line += 5;
+                }
+                block++;
+            }
+            await w.write(buf);
+            await w.close();
+            return root;
+        };
+    });
+    await page.evaluate(() => init(document.getElementById('editor')));
+    await page.waitForTimeout(300);
+    await page.evaluate(async () => { await openFile('/Mixed5k.md'); });
+    await page.waitForTimeout(800);
+
+    const samples = [];
+    for (let i = 0; i < RUNS; i++) {
+        const ms = await page.evaluate(() => {
+            const cm = document.querySelector('.CodeMirror').CodeMirror;
+            let target = Math.floor(cm.lineCount() / 2);
+            while (!/^Prose/.test(cm.getLine(target))) target++;
+            cm.setCursor({line: target, ch: cm.getLine(target).length});
+            const t = performance.now();
+            for (let k = 0; k < 100; k++) {
+                cm.replaceRange('x', cm.getCursor());
+            }
+            return performance.now() - t;
+        });
+        samples.push(ms);
+        await page.evaluate(() => {
+            const cm = document.querySelector('.CodeMirror').CodeMirror;
+            for (let k = 0; k < 100; k++) cm.undo();
+        });
+        await page.waitForTimeout(50);
+    }
+
+    console.log(`Mixed5k.md (100 char inserts mid-doc): ${median(samples).toFixed(1)} ms (samples: ${samples.map(s => s.toFixed(0)).join(', ')})`);
+});
+
+// Enter is a structural edit - it inserts a new line node instead of
+// changing text in place - so it exercises a different, heavier path than
+// char inserts (line DOM insertion, view array splice, sibling-selector
+// invalidation, layout of following lines).
+test('enter in mixed big file (5000 lines)', async ({page}) => {
+    test.setTimeout(60000);
+    await page.evaluate(async () => {
+        window.getTemporaryStorageDirHandle = async function () {
+            const root = await navigator.storage.getDirectory();
+            const fh = await root.getFileHandle('MixedEnter5k.md', {create: true});
+            const w = await fh.createWritable();
+            let buf = '';
+            let line = 0;
+            let block = 0;
+            while (line < 5000) {
+                buf += `## Section ${block}\n\n`;
+                buf += `Prose line ${line} with **bold**, *italic*, and \`code\` and a [link](note.md).\n`;
+                buf += `- bullet item one for block ${block}\n`;
+                buf += `- bullet item two with **bold**\n`;
+                buf += `- [ ] task item ${block}\n`;
+                buf += `- [x] done item ${block}\n`;
+                buf += `> quote line one for block ${block}\n`;
+                buf += `> quote line two\n\n`;
+                line += 10;
+                if (block % 15 === 0) {
+                    buf += `| Col A | Col B | Col C |\n| --- | --- | --- |\n| a${block} | b | c |\n| d | e${block} | f |\n\n`;
+                    line += 5;
+                }
+                block++;
+            }
+            await w.write(buf);
+            await w.close();
+            return root;
+        };
+    });
+    await page.evaluate(() => init(document.getElementById('editor')));
+    await page.waitForTimeout(300);
+    await page.evaluate(async () => { await openFile('/MixedEnter5k.md'); });
+    await page.waitForTimeout(800);
+
+    const samples = [];
+    for (let i = 0; i < RUNS; i++) {
+        const ms = await page.evaluate(() => {
+            const cm = document.querySelector('.CodeMirror').CodeMirror;
+            let target = Math.floor(cm.lineCount() / 2);
+            while (!/^Prose/.test(cm.getLine(target))) target++;
+            cm.setCursor({line: target, ch: cm.getLine(target).length});
+            const t = performance.now();
+            for (let k = 0; k < 100; k++) {
+                cm.execCommand('hmdNewlineAndContinue'); // what Enter is bound to
+            }
+            return performance.now() - t;
+        });
+        samples.push(ms);
+        await page.evaluate(() => {
+            const cm = document.querySelector('.CodeMirror').CodeMirror;
+            for (let k = 0; k < 100; k++) cm.undo();
+        });
+        await page.waitForTimeout(100);
+    }
+
+    console.log(`MixedEnter5k.md (100 Enters mid-doc): ${median(samples).toFixed(1)} ms (samples: ${samples.map(s => s.toFixed(0)).join(', ')})`);
+});
+
 // Reference run for comparison: same setup as 'edit big file', but the
 // viewportMargin: Infinity that files.js sets ~200ms after open is reset
 // to a finite value. Demonstrates that rendering all 5000 lines in the DOM

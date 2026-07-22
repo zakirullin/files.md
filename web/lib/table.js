@@ -428,11 +428,22 @@ function tableEnterCell(cm) {
             start = i + 1;
         }
     }
-    let end = text.indexOf('|', start);
-    if (end < 0) end = text.length;
-    while (start < end && text[start] === ' ') start++;
-    while (end > start && text[end - 1] === ' ') end--;
-    cm.setSelection({line: target, ch: start}, {line: target, ch: end});
+    const cellStart = start; // right after the opening pipe
+    let cellEnd = text.indexOf('|', start);
+    if (cellEnd < 0) cellEnd = text.length;
+    let from = cellStart, to = cellEnd;
+    while (from < to && text[from] === ' ') from++;
+    while (to > from && text[to - 1] === ' ') to--;
+    if (from === to) {
+        // Empty cell: land the cursor between the padding spaces, not glued
+        // to the pipe. Normalise to " cursor " (add spaces if missing).
+        if (text.slice(cellStart, cellEnd) !== '  ') {
+            cm.replaceRange('  ', {line: target, ch: cellStart}, {line: target, ch: cellEnd});
+        }
+        cm.setCursor({line: target, ch: cellStart + 1});
+    } else {
+        cm.setSelection({line: target, ch: from}, {line: target, ch: to});
+    }
     return true;
 }
 

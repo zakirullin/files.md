@@ -526,6 +526,15 @@
     user-select: none;
 }
 
+/* Rubber-band rectangle drawn while drag-selecting chat messages. */
+.chat-marquee {
+    position: fixed;
+    z-index: 50;
+    pointer-events: none;
+    border: 1px solid var(--color-neo-orange);
+    background: color-mix(in srgb, var(--color-neo-orange), transparent 90%);
+}
+
 #open-chat-modal {
     position: fixed;
     bottom: 20px;

@@ -2006,6 +2006,9 @@
     this.size = this.rest ? lineNo(lst(this.rest)) - lineN + 1 : 1;
     this.node = this.text = null;
     this.hidden = lineIsHidden(doc, line);
+    // PATCHED: freshly built views must get a real height measurement even
+    // when they are outside the visible window (see updateHeightsInViewport).
+    this.mustMeasure = true;
   }
 
   // Create a range of LineView objects for the given lines.
@@ -2106,6 +2109,9 @@
       else if (type == "widget") { updateLineWidgets(cm, lineView, dims); }
     }
     lineView.changes = null;
+    // PATCHED: content/class/widget changes can change the line's height,
+    // so re-measure it even off-screen (see updateHeightsInViewport).
+    lineView.mustMeasure = true;
   }
 
   // Lines with gutter elements, widgets or a background class need to
@@ -2146,15 +2152,89 @@
     return buildLineContent(cm, lineView)
   }
 
+  // PATCHED: typing usually leaves a line's token structure intact - only
+  // one text node's data changes. Swapping in the freshly built <pre>
+  // (replaceChild below) makes the browser treat the keystroke as a node
+  // insertion among all rendered lines: with viewportMargin: Infinity that
+  // re-runs sibling-selector (incl. :has) invalidation and re-walks block
+  // layout across the whole document. When the built line's element
+  // structure matches the existing DOM, patch the differing text nodes in
+  // place instead - a characterData change cannot affect selector matching
+  // and keeps layout dirtying local to the line. Returns false (caller
+  // falls back to replaceChild) on any structural difference: token
+  // boundaries moved, folds/widgets appeared, etc.
+  function patchLineTextInPlace(lineView, built) {
+    var oldPre = lineView.text, newPre = built.pre;
+    if (!oldPre || !oldPre.parentNode) { return false }
+    var textPatches = [], nodePairs = [];
+    // hide-token toggles this class on existing spans after render; ignore
+    // it so the line being typed on still takes the fast path.
+    function cls(el) {
+      var c = el.className;
+      return typeof c == "string" ? c.replace(/(?:^|\s)hmd-hidden-token(?=\s|$)/g, "") : c
+    }
+    function match(oldN, newN) {
+      if (oldN.nodeType != newN.nodeType) { return false }
+      if (oldN.nodeType == 3) {
+        if (oldN.data != newN.data) { textPatches.push(oldN, newN.data); }
+        nodePairs.push(newN, oldN);
+        return true
+      }
+      if (oldN.nodeType != 1 || oldN.tagName != newN.tagName || cls(oldN) !== cls(newN)) { return false }
+      var oa = oldN.attributes, na = newN.attributes;
+      if (oa.length != na.length) { return false }
+      for (var i = 0; i < na.length; i++) {
+        var name = na[i].name;
+        if (name != "class" && oldN.getAttribute(name) !== na[i].value) { return false }
+      }
+      var oc = oldN.childNodes, nc = newN.childNodes;
+      if (oc.length != nc.length) { return false }
+      for (var j = 0; j < nc.length; j++) {
+        if (!match(oc[j], nc[j])) { return false }
+      }
+      nodePairs.push(newN, oldN);
+      return true
+    }
+    // Compare the pres' subtrees but not the pres themselves - the old
+    // node carries extra state classes (activeline etc.) that the caller
+    // handles via bgClass/textClass.
+    var oldKids = oldPre.childNodes, newKids = newPre.childNodes;
+    if (oldKids.length != newKids.length) { return false }
+    for (var i = 0; i < newKids.length; i++) {
+      if (!match(oldKids[i], newKids[i])) { return false }
+    }
+    // The measure maps built by buildLineContent reference nodes of the
+    // discarded newPre; point them at the retained old nodes. Validate
+    // every entry before mutating anything.
+    var lookup = new Map();
+    for (var p = 0; p < nodePairs.length; p += 2) { lookup.set(nodePairs[p], nodePairs[p + 1]); }
+    var maps = [lineView.measure.map];
+    if (lineView.measure.maps) { maps = maps.concat(lineView.measure.maps); }
+    var remapped = [];
+    for (var mi = 0; mi < maps.length; mi++) {
+      for (var k = 2; k < maps[mi].length; k += 3) {
+        var target = lookup.get(maps[mi][k]);
+        if (!target) { return false }
+        remapped.push(maps[mi], k, target);
+      }
+    }
+    for (var r = 0; r < remapped.length; r += 3) { remapped[r][remapped[r + 1]] = remapped[r + 2]; }
+    for (var t = 0; t < textPatches.length; t += 2) { textPatches[t].data = textPatches[t + 1]; }
+    return true
+  }
+
   // Redraw the line's text. Interacts with the background and text
   // classes because the mode may output tokens that influence these
   // classes.
   function updateLineText(cm, lineView) {
     var cls = lineView.text.className;
     var built = getLineContent(cm, lineView);
-    if (lineView.text == lineView.node) { lineView.node = built.pre; }
-    lineView.text.parentNode.replaceChild(built.pre, lineView.text);
-    lineView.text = built.pre;
+    // PATCHED: in-place fast path, see patchLineTextInPlace.
+    if (!patchLineTextInPlace(lineView, built)) {
+      if (lineView.text == lineView.node) { lineView.node = built.pre; }
+      lineView.text.parentNode.replaceChild(built.pre, lineView.text);
+      lineView.text = built.pre;
+    }
     if (built.bgClass != lineView.bgClass || built.textClass != lineView.textClass) {
       lineView.bgClass = built.bgClass;
       lineView.textClass = built.textClass;
@@ -3564,6 +3644,21 @@
       if (hasLinesInBetween) {
         let startLine = sFrom.line;
         let endLine = sTo.line;
+        // PATCHED: per-line character-accurate rects are O(n) in lines and emit
+        // one measured <div> per line. On a huge selection (cmd+a with
+        // viewportMargin: Infinity, the whole doc rendered) that is thousands
+        // of divs - drawing and then compositing them while scrolling freezes
+        // the editor. For a large middle region fall back to a single
+        // full-width block (the original CodeMirror behavior); first/last lines
+        // stay character-accurate. The cap keeps normal selections pretty.
+        if (endLine - startLine > 200) {
+          // Content wraps at --normal-width (the editor centers text at that
+          // fixed width), so the block ends at leftSide + that width - same
+          // right edge as a regular selection, never the full editor width.
+          let normalWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--normal-width'));
+          let blockWidth = normalWidth ? normalWidth : rightSide - leftSide;
+          drawSelectionRect(leftSide, leftEnd.bottom, blockWidth, rightStart.top);
+        } else {
         // start and end lines are handled already, so we exclude them
         for (let lineNum = startLine + 1; lineNum <= endLine - 1; lineNum++) {
           let line = getLine(doc, lineNum);
@@ -3584,6 +3679,7 @@
             let width = right - left ;
             drawSelectionRect(left, firstCharPos.top, width + left, firstCharPos.bottom);
           });
+        }
         }
       }
     }
@@ -3679,14 +3775,29 @@
   function updateHeightsInViewport(cm) {
     var display = cm.display;
     var prevBottom = display.lineDiv.offsetTop;
-    var viewTop = Math.max(0, display.scroller.getBoundingClientRect().top);
+    var scrollerRect = display.scroller.getBoundingClientRect();
+    var viewTop = Math.max(0, scrollerRect.top);
     var oldHeight = display.lineDiv.getBoundingClientRect().top;
     var mustScroll = 0;
+    // PATCHED: with viewportMargin: Infinity every line is rendered, and
+    // measuring them all (getBoundingClientRect per line) on every update
+    // made each keystroke cost O(document size) - the dominant share of
+    // big-file typing lag. Only lines that were just (re)built
+    // (lineView.mustMeasure) or lie near the visible window can have a
+    // changed height; the rest keep their stored height. Gated on wrapping
+    // because the non-wrapping branch also scans line widths for maxLine.
+    var skipFrom = scrollerRect.top - 1000, skipTo = scrollerRect.bottom + 1000;
     for (var i = 0; i < display.view.length; i++) {
       var cur = display.view[i], wrapping = cm.options.lineWrapping;
       var height = (void 0), width = 0;
       if (cur.hidden) { continue }
       oldHeight += cur.line.height;
+      // PATCHED: skip off-screen lines with a trusted stored height.
+      if (!cur.mustMeasure && wrapping &&
+          (oldHeight < skipFrom || oldHeight - cur.line.height > skipTo)) {
+        continue;
+      }
+      cur.mustMeasure = false;
       if (ie && ie_version < 8) {
         var bot = cur.node.offsetTop + cur.node.offsetHeight;
         height = bot - prevBottom;
@@ -7935,7 +8046,9 @@
   function rangeForUnit(cm, pos, unit) {
     if (unit == "char") { return new Range(pos, pos) }
     if (unit == "word") { return cm.findWordAt(pos) }
-    if (unit == "line") { return new Range(Pos(pos.line, 0), clipPos(cm.doc, Pos(pos.line + 1, 0))) }
+    // PATCHED: end line-select at the line's own end, not column 0 of the next
+    // line.
+    if (unit == "line") { return new Range(Pos(pos.line, 0), Pos(pos.line, getLine(cm.doc, pos.line).text.length)) }
     var result = unit(cm, pos);
     return new Range(result.from, result.to)
   }
@@ -9155,7 +9268,13 @@
       }),
 
       refreshCursor: methodOp(function() { // PATCHED. We do this partial refresh to avoid flickering when showing tokens via hide-token.js.
-        regChange(this);
+        // regChange(this) rebuilt every rendered line - with
+        // viewportMargin: Infinity that re-rendered the whole document on
+        // each cursor line change (Enter, arrows). The caret only needs a
+        // fresh measurement pass: hide-token already patched the line's DOM
+        // and cleared its measure cache, so a forced display update redraws
+        // the cursor from up-to-date coordinates without rebuilding lines.
+        this.curOp.forceUpdate = true;
       }),
 
       swapDoc: methodOp(function(doc) {

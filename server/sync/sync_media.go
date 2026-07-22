@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	MaxMediaSize          = 40 << 30  // 30 MB
+	MaxMediaSize          = 65 << 30  // 65 MB
 	MaxMediaFilenamesSize = 512 << 10 // 512 KB
 )
 

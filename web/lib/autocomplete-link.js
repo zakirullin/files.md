@@ -80,6 +80,11 @@
 
       CodeMirror.on(result, "select", showPreview)
       CodeMirror.on(result, "close", hidePreview)
+      // PATCHED: notify the app when a completion is inserted, so it can add a
+      // backlink in the linked-to file.
+      CodeMirror.on(result, "pick", function (completion) {
+        if (typeof onLinkPicked === 'function') onLinkPicked(completion.text)
+      })
 
       return result
     }
