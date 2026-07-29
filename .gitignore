@@ -7,3 +7,6 @@ fslog
 tests/node_modules/
 tests/test-results/
 tests/playwright-report/
+lite.exe
+lite
+*.exe

@@ -4,6 +4,20 @@ github.com/davecgh/go-spew/spew
 # github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.2-0.20221020003552-4126fa611266
 ## explicit; go 1.16
 github.com/go-telegram-bot-api/telegram-bot-api/v5
+# github.com/jchv/go-webview2 v0.0.0-20260205173254-56598839c808
+## explicit; go 1.16
+github.com/jchv/go-webview2
+github.com/jchv/go-webview2/internal/w32
+github.com/jchv/go-webview2/pkg/edge
+github.com/jchv/go-webview2/webviewloader
+# github.com/jchv/go-winloader v0.0.0-20250406163304-c1995be93bd1
+## explicit; go 1.14
+github.com/jchv/go-winloader
+github.com/jchv/go-winloader/internal/loader
+github.com/jchv/go-winloader/internal/memloader
+github.com/jchv/go-winloader/internal/pe
+github.com/jchv/go-winloader/internal/vmem
+github.com/jchv/go-winloader/internal/winloader
 # github.com/joho/godotenv v1.5.1
 ## explicit; go 1.12
 github.com/joho/godotenv
@@ -44,6 +58,9 @@ golang.org/x/exp/slog/internal/buffer
 # golang.org/x/net v0.25.0
 ## explicit; go 1.18
 golang.org/x/net/idna
+# golang.org/x/sys v0.20.0
+## explicit; go 1.18
+golang.org/x/sys/windows
 # golang.org/x/text v0.16.0
 ## explicit; go 1.18
 golang.org/x/text/runes
