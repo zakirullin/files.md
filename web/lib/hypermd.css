@@ -1,5 +1,14 @@
 @charset "UTF-8";
-.CodeMirror .hmd-fold-math, .CodeMirror pre.HyperMD-table-row .cm-hmd-table-sep {
+.CodeMirror .hmd-fold-math {
+    display: inline-block;
+    vertical-align: baseline;
+    margin: 0 0.15em;
+    text-indent: 0;
+}
+.CodeMirror pre.CodeMirror-line * {
+    text-indent: 0;
+}
+.CodeMirror pre.HyperMD-table-row .cm-hmd-table-sep {
     display: inline-block;
     vertical-align: middle;
 }
@@ -15,7 +24,7 @@
 }
 .CodeMirror .cm-math {
     line-height: inherit;
-    vertical-align: middle;
+    vertical-align: baseline;
 }
 
 .CodeMirror span.hmd-hidden-token.cm-formatting-em, .CodeMirror span.hmd-hidden-token.cm-formatting-strong, .CodeMirror span.hmd-hidden-token.cm-formatting-strikethrough, .CodeMirror span.hmd-hidden-token.cm-formatting-code, .CodeMirror span.hmd-hidden-token.cm-formatting-link {
@@ -543,33 +552,39 @@ pre.CodeMirror-line:has(.hmd-fold-code-stub.hmd-fold-code-mermaid) {
       the doc-body left edge - applied as margin on the marker span itself so
       cursor positioning isn't affected (cursor stays at line column 0). */
     margin-left: 0.5em;
+    display: inline-block;
+    min-width: 0.9em;
     color: #666;
+    text-indent: 0;
+}
+.cm-s-hypermd-light span.cm-formatting-list-ol {
+    min-width: 1.5em;
 }
 /*PATCHED, progressive indent for nested list markers so each nesting level
   steps further right. Margin on the marker span keeps cursor placement intact. */
 .cm-s-hypermd-light pre.HyperMD-list-line-2 span.cm-formatting-list {
-    margin-left: 1.5em;
+    margin-left: 2.0em;
 }
 .cm-s-hypermd-light pre.HyperMD-list-line-3 span.cm-formatting-list {
-    margin-left: 2.5em;
-}
-.cm-s-hypermd-light pre.HyperMD-list-line-4 span.cm-formatting-list {
     margin-left: 3.5em;
 }
+.cm-s-hypermd-light pre.HyperMD-list-line-4 span.cm-formatting-list {
+    margin-left: 5.0em;
+}
 .cm-s-hypermd-light pre.HyperMD-list-line-5 span.cm-formatting-list {
-    margin-left: 4.5em;
-}
-.cm-s-hypermd-light pre.HyperMD-list-line-6 span.cm-formatting-list {
-    margin-left: 5.5em;
-}
-.cm-s-hypermd-light pre.HyperMD-list-line-7 span.cm-formatting-list {
     margin-left: 6.5em;
 }
+.cm-s-hypermd-light pre.HyperMD-list-line-6 span.cm-formatting-list {
+    margin-left: 8.0em;
+}
+.cm-s-hypermd-light pre.HyperMD-list-line-7 span.cm-formatting-list {
+    margin-left: 9.5em;
+}
 .cm-s-hypermd-light pre.HyperMD-list-line-8 span.cm-formatting-list {
-    margin-left: 7.5em;
+    margin-left: 11.0em;
 }
 .cm-s-hypermd-light pre.HyperMD-list-line-9 span.cm-formatting-list {
-    margin-left: 8.5em;
+    margin-left: 12.5em;
 }
 /*PATCHED*/
 .cm-s-hypermd-light span.cm-formatting-list.cm-list-2 {

@@ -584,9 +584,11 @@ a:hover {
   the task token's hmd-hidden-token onto the bullet span. */
 pre.HyperMD-task-line span.cm-formatting-list-ul {
     width: 0;
+    min-width: 0 !important;
 }
 .cm-s-hypermd-light pre.HyperMD-list-line.HyperMD-task-line span.cm-formatting-list-ul {
     margin-left: 0;
+    min-width: 0 !important;
 }
 
 /* Hide the list formatting only when task formatting IS hidden */
@@ -1055,31 +1057,38 @@ pre.HyperMD-codeblock-end {
 /* Indent for wrapped list lines. HyperMD-task-line / HyperMD-list-line-ol
    come from the mode (hypermd.js). */
 .cm-s-hypermd-light pre.CodeMirror-line.HyperMD-list-line:not(.HyperMD-task-line) {
-    text-indent: -1.2em;
-    padding-left: 1.2em;
+    text-indent: -1.4em;
+    padding-left: 1.4em;
 }
 .cm-s-hypermd-light pre.CodeMirror-line.HyperMD-list-line.HyperMD-list-line-ol:not(.HyperMD-task-line) {
-    text-indent: -1.75em;
-    padding-left: 1.75em;
+    text-indent: -2.0em;
+    padding-left: 2.0em;
 }
 
 .cm-s-hypermd-light pre.CodeMirror-line.HyperMD-list-line-2:not(.HyperMD-task-line) {
-    text-indent: -2.8em;
-    padding-left: 2.8em;
+    text-indent: -1.4em;
+    padding-left: 2.9em;
 }
 /*Ordered list*/
 .cm-s-hypermd-light pre.CodeMirror-line.HyperMD-list-line-2.HyperMD-list-line-ol:not(.HyperMD-task-line) {
-    text-indent: -3.60em;
-    padding-left: 3.60em;
+    text-indent: -2.0em;
+    padding-left: 3.5em;
 }
 .cm-s-hypermd-light pre.CodeMirror-line.HyperMD-list-line-3:not(.HyperMD-task-line) {
-    text-indent: -4.8em;
-    padding-left: 4.8em;
+    text-indent: -1.4em;
+    padding-left: 4.4em;
 }
 /*Ordered list*/
 .cm-s-hypermd-light pre.CodeMirror-line.HyperMD-list-line-3.HyperMD-list-line-ol:not(.HyperMD-task-line) {
-    text-indent: -5.3em;
-    padding-left: 5.3em;
+    text-indent: -2.0em;
+    padding-left: 5.0em;
+}
+
+/* Prevent descendant elements (such as KaTeX math widgets, fold stubs, list markers)
+   from inheriting negative text-indent from list lines or quote lines, which shifts their
+   rendered contents backward and causes horizontal overlapping. */
+.cm-s-hypermd-light pre.CodeMirror-line * {
+    text-indent: 0;
 }
 
 
