@@ -311,8 +311,21 @@ function initEditor(el) {
         }
     });
 
+    // Open an empty line under the title
+    const openFirstLine = cm => {
+        if (cm.lastLine() === 0) {
+            cm.replaceRange('\n', {line: 0, ch: cm.getLine(0).length});
+        } else if (cm.getLine(1) !== '') {
+            cm.replaceRange('\n', {line: 1, ch: 0});
+        }
+        cm.setCursor({line: 1, ch: 0});
+        cm.focus();
+    };
+
     // Editor keybindings
     newEditor.addKeyMap({
+        'Cmd-O': openFirstLine,
+        'Ctrl-O': openFirstLine,
         'Enter': function (cm) { // If header is selected, enter should move cursor to next line
             if (tableEnterCell(cm)) return;
             const cursor = cm.getCursor();
