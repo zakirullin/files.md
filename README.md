@@ -244,7 +244,7 @@ Although, you're free to use whatever structure you want.
 - Archive: `archive/*.md`
 - Config: `config.json`
 
-Place [AGENTS.md](https://github.com/zakirullin/cognitive-load/blob/main/web/AGENTS.md) in your knowledge base - so that your files become a live personal space AI can work with.  
+Place [AGENTS.md](https://github.com/zakirullin/files.md/blob/main/web/AGENTS.md) in your knowledge base - so that your files become a live personal space AI can work with.  
 
 ## Hotkeys
 
