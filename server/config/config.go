@@ -19,6 +19,8 @@ type Config struct {
 	APIURL            string `default:"" envconfig:"API_URL"`
 	AppURL            string `default:"" envconfig:"APP_URL"`
 	ServerCertDir     string `default:"/tmp" envconfig:"CERT_DIR"`
+	CertFile          string `default:"" envconfig:"CERT_FILE"`
+	KeyFile           string `default:"" envconfig:"KEY_FILE"`
 	TokensDir         string `default:"/tmp" envconfig:"TOKENS_DIR"`
 	TokensSalt        string `envconfig:"TOKENS_SALT"`
 	ServerLogFile     string `default:"/tmp/server.log" envconfig:"LOG_FILE"`

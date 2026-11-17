@@ -56,6 +56,24 @@ func Serve(apiHost, appHost, certDir, logFilename string) {
 
 	serverLogger.Printf("Resolved hosts: api_host=%q app_host=%q cert_dir=%q", apiHost, appHost, certDir)
 
+	// Use pre-issued cert files (e.g. Tailscale certs)
+	if config.ServerCfg.CertFile != "" && config.ServerCfg.KeyFile != "" {
+		srv := &http.Server{
+			Addr:         ":443",
+			IdleTimeout:  2 * time.Minute,
+			ReadTimeout:  30 * time.Second,
+			WriteTimeout: 2 * time.Minute,
+			ErrorLog:     serverLogger,
+		}
+		srv.Handler = router(serverLogger)
+		serverLogger.Printf("Starting HTTPS server on %s (cert_file=%q)", srv.Addr, config.ServerCfg.CertFile)
+		err := srv.ListenAndServeTLS(config.ServerCfg.CertFile, config.ServerCfg.KeyFile)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+
 	// For local environment.
 	// TODO make it more explicit
 	if certDir == "" {
