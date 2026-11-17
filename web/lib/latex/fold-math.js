@@ -132,6 +132,11 @@
         };
         marker.on("clear", function () { mathRenderer.clear(); });
         marker["mathRenderer"] = mathRenderer;
+        // PATCHED: trigger measurement immediately for synchronously pre-rendered math
+        // so CodeMirror's line height model updates without waiting for subsequent edits.
+        if (preRendered) {
+            marker.changed();
+        }
         if (!preRendered) {
             core_1.tryToRun(function () {
                 if (DEBUG)
