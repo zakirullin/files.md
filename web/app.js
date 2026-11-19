@@ -11,6 +11,7 @@ const CHATLOG_PATH = '/archive/Chatlog.md';   // append-only log of everything a
 // "To Archive" collects records here, one file per year
 const archivePath = () => `/archive/Archive ${new Date().getFullYear()}.md`;
 const OPEN_CHAT_AFTER_IDLE = 60 * 60 * 1000; // ms
+const STUCK_LOAD_TIMEOUT = 10 * 1000; // ms
 
 let openChatIdleTimer = null;
 let isChat = false;
@@ -62,6 +63,13 @@ async function init() {
         }
     }
 
+    // Saved folder handle can hang silently, ask to reopen it
+    const stuckTimer = setTimeout(() => {
+        isLoadingLocalFiles = false;
+        document.getElementById('open-folder').style.display = 'flex';
+        alert('Can\'t access folder.\n\nPlease, reopen the folder again and check "Allow on every visit" checkbox');
+    }, STUCK_LOAD_TIMEOUT);
+
     const savedDirHandle = await getSavedRootDirHandle();
     const hasSavedLocalDir = savedDirHandle instanceof FileSystemDirectoryHandle;
     if (hasSavedLocalDir) {
@@ -89,6 +97,7 @@ async function init() {
             document.getElementById('open-folder').style.display = 'flex';
             // TODO maybe ask user to check "Allow on every visit" on left part of the sidebar
             await removeSavedRootDirHandle();
+            clearTimeout(stuckTimer);
             alert('Can\'t access folder.\n\nPlease, reopen the folder again and check "Allow on every visit" checkbox');
         }
     }
@@ -97,6 +106,7 @@ async function init() {
 
     let perf = performance.now();
     files = await loadLocalFiles(rootDirHandle);
+    clearTimeout(stuckTimer);
     log(`Files loaded in ${performance.now() - perf}ms`);
 
     initChat();
