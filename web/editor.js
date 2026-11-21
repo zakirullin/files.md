@@ -73,6 +73,30 @@ function initEditor(el) {
         log('Focused to:', newEditor.path);
     });
 
+    // Flash the line when typing jumps to an off-screen cursor
+    newEditor.on('beforeChange', function (cm, change) {
+        if (!cm.hasFocus() || !change.origin || !(change.origin[0] === '+' || change.origin === 'paste')) {
+            return;
+        }
+        const top = cm.cursorCoords(null, 'local').top;
+        const info = cm.getScrollInfo();
+        if (top < info.top || top > info.top + info.clientHeight) {
+            cm.state.flashCursorLine = true;
+        }
+    });
+    newEditor.on('changes', function (cm) {
+        if (!cm.state.flashCursorLine) {
+            return;
+        }
+        cm.state.flashCursorLine = false;
+        // Center the cursor so there's context around it
+        const top = cm.cursorCoords(null, 'local').top;
+        cm.scrollTo(null, top - cm.getScrollInfo().clientHeight / 2);
+        const line = cm.getLineHandle(cm.getCursor().line);
+        cm.addLineClass(line, 'background', 'hmd-flash-line');
+        setTimeout(() => cm.removeLineClass(line, 'background', 'hmd-flash-line'), 1500);
+    });
+
     newEditor.hmdResolveURL = function (path) {
         if (typeof path === 'undefined') {
             return path
@@ -326,6 +350,10 @@ function initEditor(el) {
     newEditor.addKeyMap({
         'Cmd-O': openFirstLine,
         'Ctrl-O': openFirstLine,
+        'Shift-Cmd-Up': cm => moveTaskItem(cm, -1),
+        'Shift-Cmd-Down': cm => moveTaskItem(cm, 1),
+        'Shift-Ctrl-Up': cm => moveTaskItem(cm, -1),
+        'Shift-Ctrl-Down': cm => moveTaskItem(cm, 1),
         'Enter': function (cm) { // If header is selected, enter should move cursor to next line
             if (tableEnterCell(cm)) return;
             const cursor = cm.getCursor();
@@ -603,3 +631,55 @@ KatexRenderer.prototype.clear = function () {
 KatexRenderer.prototype.isReady = function () {
     return true;
 };
+
+const TASK_ITEM_RE = /^(\s*)[-*+] \[[ xX]\] /;
+
+// Move a checkbox item (with its nested lines) past its sibling
+function moveTaskItem(cm, dir) {
+    if (cm.somethingSelected()) {
+        return CodeMirror.Pass;
+    }
+    const cur = cm.getCursor();
+    const m = cm.getLine(cur.line).match(TASK_ITEM_RE);
+    if (!m) {
+        return CodeMirror.Pass;
+    }
+    const indent = m[1].length;
+    const isChild = l => {
+        const text = cm.getLine(l);
+        return text.trim() !== '' && text.match(/^\s*/)[0].length > indent;
+    };
+    const isSibling = l => {
+        const sm = cm.getLine(l).match(TASK_ITEM_RE);
+        return sm && sm[1].length === indent;
+    };
+    const blockEnd = l => {
+        while (l < cm.lastLine() && isChild(l + 1)) l++;
+        return l;
+    };
+
+    const start = cur.line;
+    const end = blockEnd(start);
+    let first, mid, last;
+    if (dir < 0) {
+        let prev = start - 1;
+        while (prev >= 0 && isChild(prev)) prev--;
+        if (prev < 0 || !isSibling(prev)) {
+            return;
+        }
+        [first, mid, last] = [prev, start - 1, end];
+    } else {
+        if (end + 1 > cm.lastLine() || !isSibling(end + 1)) {
+            return;
+        }
+        [first, mid, last] = [start, end, blockEnd(end + 1)];
+    }
+
+    const upper = cm.getRange({line: first, ch: 0}, {line: mid, ch: cm.getLine(mid).length});
+    const lower = cm.getRange({line: mid + 1, ch: 0}, {line: last, ch: cm.getLine(last).length});
+    const newLine = dir < 0 ? first + (cur.line - start) : cur.line + (last - mid);
+    cm.operation(() => {
+        cm.replaceRange(lower + '\n' + upper, {line: first, ch: 0}, {line: last, ch: cm.getLine(last).length});
+        cm.setCursor({line: newLine, ch: cur.ch});
+    });
+}

@@ -407,13 +407,13 @@ a:hover {
     text-overflow: ellipsis;
 }
 
-.CodeMirror-scroll {
-    padding: 2em 0;
+.CodeMirror .CodeMirror-lines {
+    padding-top: 2em;
 }
 
 /*Center editor1 when there's no editor2*/
 .CodeMirror-scroll {
-    padding: 2em calc((100% - var(--normal-width)) / 2);
+    padding: 0 calc((100% - var(--normal-width)) / 2);
 }
 
 /* When editor2 opens, shift editor1's content into the left half of the
@@ -427,8 +427,6 @@ a:hover {
    to the editor1 container's left edge, but its width still equals
    --normal-width so no re-flow happens. */
 #content.editor2-open .CodeMirror-scroll {
-    padding-top: 2em;
-    padding-bottom: 2em;
     padding-left: max(0px, calc((100% - var(--normal-width)) / 2 - 25vw));
     padding-right: calc(100% - var(--normal-width) - max(0px, calc((100% - var(--normal-width)) / 2 - 25vw)));
 }
@@ -1117,4 +1115,16 @@ pre.HyperMD-codeblock-end {
 body:has(#search:not([style*="display: none"])) :is(#sidebar, #content),
 body:has(#move:not([style*="display: none"])) :is(#sidebar, #content) {
     opacity: 0.4;
+}
+
+.CodeMirror-linebackground.hmd-flash-line {
+    left: -3px;
+    right: -3px;
+    border-radius: 4px;
+    animation: hmd-flash-line 1.5s ease-out forwards;
+}
+
+@keyframes hmd-flash-line {
+    0%, 40% { background: color-mix(in srgb, var(--col-link), transparent 88%); }
+    100% { background: transparent; }
 }
